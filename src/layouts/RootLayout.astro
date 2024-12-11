@@ -1,21 +1,20 @@
 ---
 import "@/styles/globals.css";
 import { ViewTransitions } from "astro:transitions";
-import { Sidebar } from "./Sidebar.tsx";
+import { AppSidebar } from "@/components/sidebar/AppSidebar";
+import { AppHeader } from "@/components/sidebar/AppHeader";
 import { Toaster } from "react-hot-toast";
-import { SidebarItem } from "@/components/Sidebar";
+import { Toaster: SonnerToaster } from "sonner";
 
 interface Props {
   title?: string;
-  sideBarItems?: SidebarItem[];
   isSidebarOpen?: boolean;
 }
 
-const { title = "Tutly" } = Astro.props;
-const { sideBarItems, isSidebarOpen } = Astro.props;
+const { title = "Tutly", isSidebarOpen = true } = Astro.props;
 
 const pathname = Astro.url.pathname;
-const user = Astro.locals.user;
+const user = Astro.locals.user!;
 
 // @ts-ignore
 globalThis.pathname = pathname;
@@ -50,19 +49,18 @@ globalThis.pathname = pathname;
       <div class="loader-shimmer"></div>
     </div>
     <Toaster client:load />
-    {
-      user && (
-        <Sidebar
-          client:load
-          pathname={pathname}
-          user={user}
-          sideBarItems={sideBarItems ?? []}
-          isSidebarOpen={isSidebarOpen!}
-        >
-          <slot />
-        </Sidebar>
-      )
-    }
+    {user && (
+      <div class="flex min-h-screen " transition:persist="sidebar-layout">
+        <AppSidebar client:load user={user} pathname={pathname} isSidebarOpen={isSidebarOpen} />
+        <main class="flex-1 w-full">
+          <AppHeader client:load user={user} pathname={pathname} />
+          <div class="p-4">
+            <slot />
+          </div>
+        </main>
+      </div>
+    )}
+    <SonnerToaster richColors client:load />
   </body>
 </html>
 
@@ -81,11 +79,7 @@ globalThis.pathname = pathname;
     position: absolute;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-      transparent 0%,
-      hsl(var(--primary)) 50%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg, transparent 0%, hsl(var(--primary)) 50%, transparent 100%);
     transform: translateX(-100%);
     animation: none;
   }
@@ -96,11 +90,7 @@ globalThis.pathname = pathname;
     left: 0;
     width: 50%;
     height: 100%;
-    background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, 0.3),
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     transform: translateX(-100%);
     animation: none;
   }
@@ -157,11 +147,13 @@ globalThis.pathname = pathname;
       const loadTime = performance.now() - startTime;
 
       const remainingTime = Math.max(0, 400 - loadTime);
-      await new Promise(resolve => {
-        loadingTimeout = Number(setTimeout(() => {
-          loader!.classList.remove("loading");
-          resolve(null);
-        }, remainingTime));
+      await new Promise((resolve) => {
+        loadingTimeout = Number(
+          setTimeout(() => {
+            loader!.classList.remove("loading");
+            resolve(null);
+          }, remainingTime)
+        );
       });
     };
   });
