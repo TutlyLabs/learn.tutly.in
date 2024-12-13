@@ -8,10 +8,10 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
 interface Props {
   title?: string;
-  isSidebarOpen?: boolean;
+  forceClose?: boolean;
 }
 
-const { title = "Tutly", isSidebarOpen = true } = Astro.props;
+const { title = "Tutly", forceClose = false } = Astro.props;
 
 const pathname = Astro.url.pathname;
 const user = Astro.locals.user!;
@@ -50,9 +50,11 @@ globalThis.pathname = pathname;
     </div>
     <Toaster client:load />
     {user && (
-      <div class="flex min-h-screen " transition:persist="sidebar-layout">
-        <AppSidebar client:load user={user} pathname={pathname} isSidebarOpen={isSidebarOpen} />
-        <main class="flex-1 w-full">
+      <div class="flex min-h-screen">
+        <div class="relative">
+          <AppSidebar client:load user={user} pathname={pathname} forceClose={forceClose} />
+        </div>
+        <main class="w-full">
           <AppHeader client:load user={user} pathname={pathname} />
           <div class="p-4">
             <slot />

@@ -72,7 +72,7 @@ const classesWithFolders = await db.class.findMany({
 });
 ---
 
-<RootLayout title="Courses" isSidebarOpen={false}>
+<RootLayout title="Courses" forceClose={true}>
   <div class="flex items-start w-full">
     <ClassSidebar
       client:only
