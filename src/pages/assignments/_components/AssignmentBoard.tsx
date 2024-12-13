@@ -1,22 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MdOutlineSportsScore } from "react-icons/md";
 
 import { useRouter } from "@/hooks/use-router";
 
 export default function StudentWiseAssignments({ courses, assignments, userId }: any) {
   const [currentCourse, setCurrentCourse] = useState<string>(courses[0]?.id);
-  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const [filterOption, setFilterOption] = useState<string>("all");
   const pathname = router.pathname;
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
-  }
 
   return (
     <div className="flex flex-col gap-4">

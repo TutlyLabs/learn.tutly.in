@@ -1,7 +1,7 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
 import ClassSidebar from "./_components/classSidebar";
-import Class from "./_components/video";
+import Class from "./_components/Class";
 import db from "@/lib/db";
 
 const currentUser = Astro.locals.user;
@@ -29,6 +29,26 @@ const classDetails = await db.class.findUnique({
     Folder: true,
   },
 });
+
+const initialNote = await db.notes.findUnique({
+  where: {
+    userId_objectId: {
+      userId: currentUser.id,
+      objectId: classId,
+    },
+  },
+});
+
+const bookmark = await db.bookMarks.findUnique({
+  where: {
+    userId_objectId: {
+      userId: currentUser.id,
+      objectId: classId,
+    },
+  },
+});
+
+const isBookmarked = bookmark ? true : false;
 ---
 
 <RootLayout title="Classes" isSidebarOpen={false}>
@@ -45,9 +65,11 @@ const classDetails = await db.class.findUnique({
       <Class
         classes={classesWithFolders || []}
         classId={classId}
-        id={courseId}
+        courseId={courseId}
         currentUser={currentUser}
         details={classDetails}
+        isBookmarked={isBookmarked}
+        initialNote={initialNote}
         client:only
       />
     </div>

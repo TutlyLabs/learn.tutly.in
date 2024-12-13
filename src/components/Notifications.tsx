@@ -55,6 +55,7 @@ export const NOTIFICATION_HREF_MAP: Record<NotificationEventTypes, (obj: causedO
     LEADERBOARD_UPDATED: (_obj: causedObjects) => `/leaderboard`,
     DOUBT_RESPONDED: (obj: causedObjects) => `/doubts/${obj.doubtId}`,
     ATTENDANCE_MISSED: (_obj: causedObjects) => `/attendance`,
+    CUSTOM_MESSAGE: (_obj: causedObjects) => `/`,
   };
 
 const DEFAULT_NOTIFICATION_CONFIG = {
@@ -138,6 +139,16 @@ const NOTIFICATION_TYPES: Record<
       external: true,
     }),
   },
+  CUSTOM_MESSAGE: {
+    label: "Messages",
+    icon: MessageSquare,
+    color: "text-gray-500",
+    bgColor: "bg-gray-500/10",
+    getLink: (obj) => ({
+      href: NOTIFICATION_HREF_MAP["CUSTOM_MESSAGE"](obj),
+      external: false,
+    }),
+  },
 };
 
 const filterCategories = Object.entries(NOTIFICATION_TYPES).map(([type, config]) => ({
@@ -183,7 +194,7 @@ export default function Notifications({ user }: { user: User }) {
 
   const toggleReadStatus = async (id: string) => {
     try {
-      await actions.notifications_markNotificationAsRead({ id });
+      await actions.notifications_toggleNotificationAsReadStatus({ id });
       await fetchNotifications();
     } catch {
       toast.error("Failed to update notification");

@@ -3,6 +3,7 @@ import RootLayout from "@/layouts/RootLayout.astro";
 import db from "@/lib/db";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import ClassSidebar from "./classes/_components/classSidebar";
+import MarkdownPreview from "@/components/MarkdownPreview";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
@@ -128,11 +129,15 @@ const classesWithFolders = await db.class.findMany({
                     </div>
                   </div>
                   <p class="mb-2 mt-2 text-sm font-semibold text-gray-500/85 dark:text-gray-400">
-                    {truncateText(
-                      attachment?.details
-                        ? attachment?.details.slice(0, 200) + "..."
-                        : "No Description"
-                    )}
+                    <MarkdownPreview
+                      client:only
+                      className="text-xs font-thin"
+                      content={truncateText(
+                        attachment?.details
+                          ? attachment?.details.slice(0, 300) + "..."
+                          : "No Description"
+                      )}
+                    />
                   </p>
                   {attachment?.link && (
                     <div class="flex items-center justify-start space-x-2 text-sm hover:opacity-90">

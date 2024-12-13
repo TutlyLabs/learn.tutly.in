@@ -3,11 +3,7 @@ import RootLayout from "@/layouts/RootLayout.astro";
 import db from "@/lib/db";
 import { InstructorAssignments } from "./_components/InstructorAssignments.tsx";
 
-type Props = {};
-const {} = Astro.props;
-
-const currentUser = Astro.locals.user;
-if (!currentUser) return null;
+const currentUser = Astro.locals.user!;
 
 const students = await db.user.findMany({
   where: {
@@ -73,5 +69,10 @@ if (currentUser.role !== "INSTRUCTOR") {
 ---
 
 <RootLayout title="Assignments">
-  <InstructorAssignments {students} {courses} {currentUser} client:load />
+  <InstructorAssignments
+    students={students}
+    courses={courses}
+    currentUser={currentUser}
+    client:load
+  />
 </RootLayout>

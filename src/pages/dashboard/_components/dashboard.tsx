@@ -39,6 +39,7 @@ const Dashboard = ({ data, name }: Props) => {
         <p className="mt-3 text-base font-medium text-white">
           Here is your report for
           <select
+            title="report"
             className="ml-2 rounded-md bg-white px-2 py-1 text-gray-900"
             onChange={(e) => setSelectedCourse(e.target.value)}
             value={selectedCourse}
@@ -63,9 +64,7 @@ const Dashboard = ({ data, name }: Props) => {
         </h1>
         {renderCourseSelector()}
       </div>
-      <div className="mb-10 flex flex-wrap justify-center gap-4 p-2 text-center">
-        {renderCards()}
-      </div>
+      <div className="p-2 text-center">{renderCards()}</div>
     </div>
   );
 };

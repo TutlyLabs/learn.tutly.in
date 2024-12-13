@@ -60,6 +60,12 @@ async function validateCredentials(email: string, password: string) {
 
   const user = await db.user.findFirst({
     where: isEmail ? { email: email.toLowerCase() } : { username: email.toUpperCase() },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      password: true,
+    },
   });
 
   if (!user) {

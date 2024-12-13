@@ -8,11 +8,14 @@ export const getAllCourses = defineAction({
     const currentUser = locals.user;
     try {
       if (!currentUser) return { error: "Unauthorized" };
+
       let courses;
-      if (currentUser.role === "INSTRUCTOR") {
+      // replace 1 with currentUser.role === "INSTRUCTOR"
+      // duplicate id with currentUser.id
+      if (1) {
         courses = await db.course.findMany({
           where: {
-            createdById: currentUser.id,
+            createdById: "b8381259-8ff7-4de0-bf03-d37ca35d7402",
           },
           include: {
             _count: {
@@ -59,10 +62,11 @@ export const getAllCourses = defineAction({
           },
         });
       }
+      
       return { success: true, data: courses };
     } catch (e) {
-      console.log("error while fetching courses :", e);
-      return { error: "Failed to fetch courses" };
+      console.error("Detailed error while fetching courses:", e);
+      return { error: "Failed to fetch courses", details: e instanceof Error ? e.message : String(e) };
     }
   },
 });

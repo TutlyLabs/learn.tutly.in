@@ -13,6 +13,7 @@ export const auth = defineMiddleware(async ({ cookies, locals, url, redirect }, 
     const session = await getSession(sessionId);
     if (session?.user) {
       user = session.user;
+      // @ts-ignore
       locals.session = session;
       locals.organization = session.user.organization;
       locals.role = session.user.role;
@@ -34,6 +35,10 @@ export const auth = defineMiddleware(async ({ cookies, locals, url, redirect }, 
   }
 
   if (url.pathname.startsWith("/instructor") && user?.role !== "INSTRUCTOR") {
+    return new Response("Not Found", { status: 404 });
+  }
+
+  if (url.pathname.startsWith("/tutor") && user?.role === "STUDENT") {
     return new Response("Not Found", { status: 404 });
   }
 

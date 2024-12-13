@@ -1,28 +1,24 @@
-import { useState, useRef, useEffect } from "react";
-import { Slider } from "@/components/ui/slider";
 import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
   Maximize,
+  Pause,
+  Play,
+  Settings,
   SkipBack,
   SkipForward,
-  Settings,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Slider } from "@/components/ui/slider";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -83,12 +79,12 @@ const VideoPlayer = ({ videoId, videoType }: VideoPlayerProps) => {
           onStateChange: (event: any) => {
             setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
             setIsBuffering(event.data === window.YT.PlayerState.BUFFERING);
-            
+
             if (event.data === window.YT.PlayerState.PLAYING) {
               setDuration(event.target.getDuration());
             }
           },
-        }
+        },
       });
     };
 
@@ -102,7 +98,7 @@ const VideoPlayer = ({ videoId, videoType }: VideoPlayerProps) => {
       driveIframe.style.border = "none";
       driveIframe.allow = "autoplay; encrypted-media; picture-in-picture";
       driveIframe.allowFullscreen = true;
-      
+
       videoRef.current.innerHTML = "";
       videoRef.current.appendChild(driveIframe);
       driveVideoRef.current = driveIframe;
@@ -126,7 +122,7 @@ const VideoPlayer = ({ videoId, videoType }: VideoPlayerProps) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
@@ -156,7 +152,7 @@ const VideoPlayer = ({ videoId, videoType }: VideoPlayerProps) => {
 
   const handleVolumeChange = (value: number[]) => {
     if (value[0] === undefined) return;
-    
+
     const newVolume = value[0];
     if (videoType === "YOUTUBE" && player) {
       player.setVolume(newVolume * 100);
@@ -295,11 +291,7 @@ const VideoPlayer = ({ videoId, videoType }: VideoPlayerProps) => {
                   className="text-white hover:bg-white/20"
                   onClick={toggleMute}
                 >
-                  {isMuted ? (
-                    <VolumeX className="h-5 w-5" />
-                  ) : (
-                    <Volume2 className="h-5 w-5" />
-                  )}
+                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
                 <Slider
                   value={[isMuted ? 0 : volume]}
@@ -313,22 +305,26 @@ const VideoPlayer = ({ videoId, videoType }: VideoPlayerProps) => {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:bg-white/20"
-                  >
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
                     <Settings className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => changePlaybackSpeed(0.25)}>0.25x</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changePlaybackSpeed(0.25)}>
+                    0.25x
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => changePlaybackSpeed(0.5)}>0.5x</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => changePlaybackSpeed(0.75)}>0.75x</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changePlaybackSpeed(0.75)}>
+                    0.75x
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => changePlaybackSpeed(1)}>Normal</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => changePlaybackSpeed(1.25)}>1.25x</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changePlaybackSpeed(1.25)}>
+                    1.25x
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => changePlaybackSpeed(1.5)}>1.5x</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => changePlaybackSpeed(1.75)}>1.75x</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => changePlaybackSpeed(1.75)}>
+                    1.75x
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => changePlaybackSpeed(2)}>2x</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

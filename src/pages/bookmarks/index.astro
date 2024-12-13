@@ -1,0 +1,17 @@
+---
+import RootLayout from "@layouts/RootLayout.astro";
+import db from "@/lib/db";
+import Bookmarks from "./_components/Bookmarks";
+
+const currentUser = Astro.locals.user;
+
+const bookmarks = await db.bookMarks.findMany({
+  where: {
+    userId: currentUser?.id!,
+  },
+});
+---
+
+<RootLayout title="Bookmarks">
+  <Bookmarks bookmarks={bookmarks} client:load />
+</RootLayout>

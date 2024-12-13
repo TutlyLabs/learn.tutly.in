@@ -1,0 +1,103 @@
+---
+import RootLayout from "@/layouts/RootLayout.astro";
+import { actions } from "astro:actions";
+import { Radialchart } from "@/components/charts/radialchart";
+import { FaRankingStar } from "react-icons/fa6";
+import { StudentBarchart } from "@/components/charts/studentBarchart";
+import CalendarHeatmap from "./_components/heatmap";
+
+const courseId = Astro.params.id;
+const { data } = await actions.courses_getAllCourses();
+const { data: studentData } = await actions.statistics_studentBarchartData({ courseId });
+const { data: attendanceData } = await actions.statistics_studentHeatmapData({ courseId });
+
+const attendancePercentage = (
+  (attendanceData?.attendanceDates.length * 100) /
+  attendanceData?.classes.length
+).toFixed(2);
+
+function isDateInCurrentWeek(dateString) {
+  const inputDate = new Date(dateString);
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  return inputDate >= startOfWeek && inputDate <= endOfWeek;
+}
+
+const thisWeekAttended = attendanceData?.attendanceDates.filter((date) =>
+  isDateInCurrentWeek(date)
+).length;
+const thisWeekClasses = attendanceData?.classes.filter((date) => isDateInCurrentWeek(date)).length;
+const thisWeekPercentage = ((thisWeekAttended * 100) / thisWeekClasses).toFixed(2);
+const uptoLastWeek = (
+  ((attendanceData?.attendanceDates.length - thisWeekAttended) * 100) /
+  (attendanceData?.classes.length - thisWeekClasses)
+).toFixed(2);
+---
+
+<RootLayout title="Statistics">
+  <div class="flex gap-2 items-center mx-4 md:mx-8">
+    {
+      data?.data?.map((course) => (
+        <a
+          href={`/statistics/${course.id}`}
+          class={`p-1 px-2 border rounded-lg ${course.id === courseId ? "border-primary" : ""}`}
+        >
+          {course.title}
+        </a>
+      ))
+    }
+  </div>
+  <div class="mx-4 flex flex-col gap-4 md:mx-8 md:gap-6">
+    <div class="flex flex-col gap-4 md:flex-row md:gap-6">
+      <div class="w-full rounded-xl shadow-xl shadow-blue-500/5 md:w-1/3">
+        <Radialchart
+          client:load
+          data={attendancePercentage}
+          thisWeek={uptoLastWeek - thisWeekPercentage}
+        />
+      </div>
+      <div
+        class="flex w-full flex-col gap-4 rounded-xl shadow-xl shadow-blue-500/5 md:w-3/4 md:flex-row md:gap-2"
+      >
+        <div class="flex w-full flex-col justify-between text-gray-500 md:w-1/2 md:px-14 md:py-10">
+          <div class="relative mb-4 rounded-xl border p-4 md:mb-0">
+            <h1 class="absolute -top-3 bg-background px-1 text-sm"># Rank</h1>
+            <div class="flex items-center justify-between">
+              <h1 class="text-3xl font-bold text-primary-500 md:text-4xl">NA</h1>
+              <h1>
+                <FaRankingStar className="text-3xl md:text-4xl" />
+              </h1>
+            </div>
+          </div>
+          <div class="relative rounded-xl border p-4">
+            <h1 class="absolute -top-3 bg-background px-1 text-sm">Score</h1>
+            <h1 class="text-3xl font-bold text-primary-500 md:text-4xl">
+              {studentData.totalPoints}
+            </h1>
+            <h1 class="text-xs text-gray-500 md:text-sm">
+              / {studentData.evaluated} assignments{" "}
+            </h1>
+          </div>
+        </div>
+        <div class="md:w-2/3">
+          <StudentBarchart
+            client:load
+            data={[studentData.evaluated, studentData.unreviewed, studentData.unsubmitted]}
+          />
+          <!-- <pre>{JSON.stringify(studentData, null, 2)}</pre> -->
+        </div>
+      </div>
+    </div>
+    <div class="rounded-xl shadow-xl shadow-blue-500/5">
+      <CalendarHeatmap
+        client:load
+        classes={attendanceData?.classes}
+        data={attendanceData?.attendanceDates}
+      />
+      <!-- <pre>{JSON.stringify(attendanceData, null, 2)}</pre> -->
+    </div>
+  </div>
+</RootLayout>

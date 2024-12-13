@@ -13,7 +13,15 @@ interface Window {
 }
 
 interface DrivePlayerMessage {
-  type: "initialize" | "playPause" | "seek" | "volume" | "mute" | "playerStateChange" | "durationChange" | "timeUpdate";
+  type:
+    | "initialize"
+    | "playPause"
+    | "seek"
+    | "volume"
+    | "mute"
+    | "playerStateChange"
+    | "durationChange"
+    | "timeUpdate";
   state?: string;
   duration?: number;
   currentTime?: number;

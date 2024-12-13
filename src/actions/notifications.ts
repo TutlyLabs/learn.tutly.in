@@ -1,3 +1,4 @@
+import { NotificationEvent, NotificationMedium } from "@prisma/client";
 import { defineAction } from "astro:actions";
 import { z } from "zod";
 
@@ -14,18 +15,22 @@ export const getNotifications = defineAction({
   },
 });
 
-export const markNotificationAsRead = defineAction({
+export const toggleNotificationAsReadStatus = defineAction({
   input: z.object({
     id: z.string(),
   }),
   async handler({ id }) {
-    const notification = await db.notification.update({
+    const notification = await db.notification.findUnique({
+      where: { id },
+    });
+
+    const updatedNotification = await db.notification.update({
       where: { id },
       data: {
-        readAt: new Date(),
+        readAt: notification?.readAt ? null : new Date(),
       },
     });
-    return notification;
+    return updatedNotification;
   },
 });
 
@@ -94,5 +99,24 @@ export const updateNotificationConfig = defineAction({
     });
 
     return subscription;
+  },
+});
+
+export const notifyUser = defineAction({
+  input: z.object({
+    userId: z.string(),
+    message: z.string(),
+  }),
+  async handler({ userId, message }, { locals }) {
+    const notification = await db.notification.create({
+      data: {
+        message,
+        eventType: NotificationEvent.CUSTOM_MESSAGE,
+        causedById: locals.user?.id!,
+        intendedForId: userId,
+        mediumSent: NotificationMedium.NOTIFICATION,
+      },
+    });
+    return notification;
   },
 });

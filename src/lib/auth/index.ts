@@ -263,6 +263,13 @@ export async function getSession(sessionId: string) {
     },
   });
 
+  if (session?.user) {
+    await db.user.update({
+      where: { id: session.user.id },
+      data: { lastSeen: new Date() },
+    });
+  }
+
   if (!session || !session.user) return null;
 
   // Get the OAuth account if it exists

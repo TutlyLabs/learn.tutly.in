@@ -4,7 +4,7 @@ import RootLayout from "@/layouts/RootLayout.astro";
 import db from "@/lib/db";
 import { Role } from "@prisma/client";
 import { DashboardData } from "@/types/dashboard";
-import Dashboard from "./_components/Dashboard";
+import Dashboard from "./_components/dashboard";
 
 const currentUser = Astro.locals.user;
 if (currentUser == null) return Astro.redirect("/sign-in");
@@ -13,34 +13,33 @@ const role: Role = currentUser.role;
 let dashboardData: DashboardData | null = null;
 
 if (role === Role.STUDENT) {
-  try {
-    const enrolledCourses = await db.enrolledUsers.findMany({
-      where: {
-        username: currentUser.username,
-      },
-      select: {
-        course: {
-          select: {
-            id: true,
-            title: true,
-            attachments: {
-              where: {
-                attachmentType: "ASSIGNMENT",
-              },
-              select: {
-                id: true,
-                submissions: {
-                  where: {
-                    enrolledUser: {
-                      username: currentUser.username,
-                    },
+  const enrolledCourses = await db.enrolledUsers.findMany({
+    where: {
+      username: currentUser.username,
+    },
+    select: {
+      course: {
+        select: {
+          id: true,
+          title: true,
+          attachments: {
+            where: {
+              attachmentType: "ASSIGNMENT",
+            },
+            select: {
+              id: true,
+              title: true,
+              submissions: {
+                where: {
+                  enrolledUser: {
+                    username: currentUser.username,
                   },
-                  select: {
-                    id: true,
-                    points: {
-                      select: {
-                        score: true,
-                      },
+                },
+                select: {
+                  id: true,
+                  points: {
+                    select: {
+                      score: true,
                     },
                   },
                 },
@@ -49,62 +48,68 @@ if (role === Role.STUDENT) {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-    dashboardData = {
-      courses: enrolledCourses.map((enrolledCourse) => {
-        const courseAssignments = enrolledCourse.course?.attachments || [];
-        const submissions = courseAssignments.flatMap((a) => a.submissions);
+  dashboardData = {
+    courses: enrolledCourses.map((enrolledCourse) => {
+      const courseAssignments = enrolledCourse.course?.attachments || [];
+      const submissions = courseAssignments.flatMap((a) => a.submissions);
 
-        const totalPoints = submissions.reduce(
-          (acc, curr) => acc + curr.points.reduce((acc, curr) => acc + curr.score, 0),
-          0
-        );
+      const totalPoints = submissions.reduce(
+        (acc, curr) => acc + curr.points.reduce((acc, curr) => acc + curr.score, 0),
+        0
+      );
 
-        return {
-          courseId: enrolledCourse.course?.id,
-          courseTitle: enrolledCourse.course?.title,
-          assignmentsSubmitted: submissions.length,
-          totalPoints,
-          totalAssignments: courseAssignments.length,
-        };
-      }),
-      currentUser,
-    };
-  } catch (error) {
-    console.error("Error fetching student dashboard data:", error);
-  }
+      return {
+        courseId: enrolledCourse.course?.id,
+        courseTitle: enrolledCourse.course?.title,
+        assignments: courseAssignments,
+        assignmentsSubmitted: submissions.length,
+        totalPoints,
+        totalAssignments: courseAssignments.length,
+      };
+    }),
+    currentUser,
+  };
 } else if (role === Role.MENTOR) {
-  try {
-    const mentorCourses = await db.enrolledUsers.findMany({
-      where: {
-        mentorUsername: currentUser.username,
-      },
-      select: {
-        course: {
-          select: {
-            id: true,
-            title: true,
-            enrolledUsers: {
-              where: {
-                mentorUsername: currentUser.username,
-              },
-              select: {
-                user: {
-                  select: {
-                    username: true,
-                  },
+  const mentorCourses = await db.enrolledUsers.findMany({
+    where: {
+      mentorUsername: currentUser.username,
+    },
+    select: {
+      course: {
+        select: {
+          id: true,
+          title: true,
+          attachments: {
+            where: {
+              attachmentType: "ASSIGNMENT",
+            },
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+          enrolledUsers: {
+            where: {
+              mentorUsername: currentUser.username,
+            },
+            select: {
+              user: {
+                select: {
+                  username: true,
                 },
-                submission: {
-                  select: {
-                    id: true,
-                    points: {
-                      select: {
-                        score: true,
-                      },
+              },
+              submission: {
+                select: {
+                  id: true,
+                  points: {
+                    select: {
+                      score: true,
                     },
                   },
                 },
@@ -113,67 +118,62 @@ if (role === Role.STUDENT) {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-    dashboardData = {
-      courses: mentorCourses.map((mentorCourse) => {
-        const courseEnrollments = mentorCourse.course?.enrolledUsers || [];
-        const submissions = courseEnrollments.flatMap((e) => e.submission);
-        const evaluatedSubmissions = submissions.filter((s) => s.points.some((p) => p.score > 0));
+  dashboardData = {
+    courses: mentorCourses.map((mentorCourse) => {
+      const courseEnrollments = mentorCourse.course?.enrolledUsers || [];
+      const submissions = courseEnrollments.flatMap((e) => e.submission);
+      const evaluatedSubmissions = submissions.filter((s) => s.points.some((p) => p.score > 0));
 
-        return {
-          courseId: mentorCourse.course?.id,
-          courseTitle: mentorCourse.course?.title,
-          menteeCount: courseEnrollments.length,
-          evaluatedAssignments: evaluatedSubmissions.length,
-          totalSubmissions: submissions.length,
-        };
-      }),
-    };
-  } catch (error) {
-    console.error("Error fetching mentor dashboard data:", error);
-  }
+      return {
+        courseId: mentorCourse.course?.id,
+        courseTitle: mentorCourse.course?.title,
+        assignments: mentorCourse.course?.attachments || [],
+        menteeCount: courseEnrollments.length,
+        evaluatedAssignments: evaluatedSubmissions.length,
+        totalSubmissions: submissions.length,
+      };
+    }),
+  };
 } else if (role === Role.INSTRUCTOR) {
-  try {
-    const courses = await db.course.findMany({
-      where: {
-        createdById: currentUser.id,
-      },
-      select: {
-        id: true,
-        title: true,
-        _count: {
-          select: {
-            classes: true,
-            enrolledUsers: {
-              where: {
-                user: {
-                  role: "STUDENT",
-                },
+  const courses = await db.course.findMany({
+    where: {
+      createdById: currentUser.id,
+    },
+    select: {
+      id: true,
+      title: true,
+      _count: {
+        select: {
+          classes: true,
+          enrolledUsers: {
+            where: {
+              user: {
+                role: "STUDENT",
               },
             },
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-    const totalClassCount = courses.reduce((acc, course) => acc + course._count.classes, 0);
-    const totalStudentCount = courses.reduce((acc, course) => acc + course._count.enrolledUsers, 0);
+  const totalClassCount = courses.reduce((acc, course) => acc + course._count.classes, 0);
+  const totalStudentCount = courses.reduce((acc, course) => acc + course._count.enrolledUsers, 0);
 
-    dashboardData = {
-      coursesCount: courses.length,
-      totalClasses: totalClassCount,
-      enrolledStudents: totalStudentCount,
-    };
-  } catch (error) {
-    console.error("Error fetching instructor dashboard data:", error);
-  }
+  dashboardData = {
+    coursesCount: courses.length,
+    totalClasses: totalClassCount,
+    enrolledStudents: totalStudentCount,
+  };
 }
 
 const name = currentUser.name;

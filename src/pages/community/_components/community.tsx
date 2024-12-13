@@ -42,7 +42,7 @@ export default function CommunityForum({ allDoubts, currentUser }: any) {
       </div>
       <div>
         {filteredallDoubts[0].doubts.length === 0 && (
-          <div className="flex w-full flex-col gap-4">
+          <div className="flex w-full flex-col gap-4 mt-4">
             <NoDataFound message="No doubts found!" />
           </div>
         )}

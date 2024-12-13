@@ -3,6 +3,7 @@ import type { User } from "@prisma/client";
 interface CourseData {
   courseId: string | undefined;
   courseTitle: string | undefined;
+  assignments: any[];
 }
 
 export interface StudentCourseData extends CourseData {

@@ -1,0 +1,19 @@
+---
+import RootLayout from "@/layouts/RootLayout.astro";
+import db from "@/lib/db";
+import Drive from "./_components/Drive.tsx";
+const user = Astro.locals.user;
+const uploadedFiles = await db.file.findMany({
+  where: {
+    uploadedById: user?.id!,
+    isArchived: false,
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+});
+---
+
+<RootLayout title="Drive">
+  <Drive uploadedFiles={uploadedFiles} client:load />
+</RootLayout>

@@ -1,0 +1,16 @@
+---
+import RootLayout from "@layouts/RootLayout.astro";
+import db from "@/lib/db";
+import NotesComponent from "./_components/Notes";
+
+const currentUser = Astro.locals.user;
+const notes = await db.notes.findMany({
+  where: {
+    userId: currentUser?.id!,
+  },
+});
+---
+
+<RootLayout title="Notes">
+  <NotesComponent notes={notes} client:only />
+</RootLayout>

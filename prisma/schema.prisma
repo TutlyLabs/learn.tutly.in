@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["omitApi"]
 }
 
 datasource db {
@@ -25,6 +26,7 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model User {
   id       String  @id @default(uuid())
   name     String
@@ -38,8 +40,10 @@ model User {
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
 
-  lastLogin     DateTime[]
+  lastSeen      DateTime?
   emailVerified DateTime?
+
+  isProfilePublic Boolean @default(true)
 
   oneTimePassword String @default(uuid())
 
@@ -58,29 +62,16 @@ model User {
   assignedMentees EnrolledUsers[] @relation(name: "mentor")
   adminForCourses Course[]        @relation("CourseAdmins")
 
-  Session      Session[]
-  Events       Events[]
-  
-  notificationsFor Notification[] @relation("notificationIntendedFor")
+  Session Session[]
+  Events  Events[]
+
+  notificationsFor    Notification[] @relation("notificationIntendedFor")
   notificationsCaused Notification[] @relation("notificationCausedBy")
-}
+  bookMarks           BookMarks[]
+  notes               Notes[]
 
-model PushSubscription {
-  id        String   @id @default(uuid())
-
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-
-  // deviceId  String   @unique
-  
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String 
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
+  uploadedFiles       File[] @relation("uploadedFiles")
+  archivedFiles       File[] @relation("archivedFiles")
 }
 
 model Profile {
@@ -88,16 +79,95 @@ model Profile {
   user   User   @relation(fields: [userId], references: [id])
   userId String @unique
 
-  section      String?
-  branch       String?
-  academicYear String?
+  // Personal Details
+  dateOfBirth DateTime?
+  hobbies     String[]
+  aboutMe     String?
+
+  // Basic Details
+  secondaryEmail String?
+  mobile         String?
+  whatsapp       String?
+  gender         String?
+  tshirtSize     String?
+
+  // Social Links: {"facebook": null, "linkedin": null, "twitter": null, "quora": null, "website": null}
+  socialLinks Json? @default("{}")
+
+  // Professional Profiles: {"github": null, "leetcode": null, "codechef": null, "codeforces": null, "hackerrank": null}
+  professionalProfiles Json? @default("{}")
+
+  // Academic Details: {"rollNumber": null, "cgpa": null, "marks": null, "grade": null, "percentage": null, "section": null, "branch": null, "academicYear": null}
+  academicDetails Json? @default("{}")
+
+  // Experience: [{"company": null, "role": null, "workLocation": null, "workCity": null, "startDate": null, "endDate": null}]
+  experiences Json[]
+
+  // Address: {"building": null, "street": null, "city": null, "state": null, "country": null, "pincode": null}
+  address Json? @default("{}")
+
+  // Documents: {"resume": null}
+  documents Json? @default("{}")
+
+  // Additional Metadata for Future Extensions
+  metadata Json? @default("{}")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+enum FileType {
+  AVATAR
+  ATTACHMENT
+  NOTES
+  OTHER
+}
+
+model File {
+  id            String   @id @default(uuid())
+  name          String // fileName
+  internalName  String // uuid + timestamp + file extension
+  associatingId String? // reference model id
+  fileType      FileType @default(OTHER)
+
+  isPublic Boolean @default(false)
+  publicUrl String?
+
+  isUploaded   Boolean @default(false)
+  uploadedById String?
+  uploadedBy   User?   @relation("uploadedFiles", fields: [uploadedById], references: [id])
+
+  isArchived    Boolean   @default(false)
+  archivedById  String?
+  archivedBy    User?     @relation("archivedFiles", fields: [archivedById], references: [id])
+  archiveReason String?   @db.Text
+  archivedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PushSubscription {
+  id String @id @default(uuid())
+
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  // deviceId  String   @unique
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
 enum NotificationMedium {
   PUSH
+  NOTIFICATION
   EMAIL
   WHATSAPP
   SMS
@@ -110,6 +180,7 @@ enum NotificationEvent {
   LEADERBOARD_UPDATED
   DOUBT_RESPONDED
   ATTENDANCE_MISSED
+  CUSTOM_MESSAGE
 }
 
 model Notification {
@@ -124,8 +195,8 @@ model Notification {
   causedById String?
 
   eventType     NotificationEvent
-  message       String?   @db.Text
-  causedObjects Json?     @default("{}")
+  message       String?           @db.Text
+  causedObjects Json?             @default("{}")
   readAt        DateTime?
 
   createdAt DateTime @default(now())
@@ -190,6 +261,54 @@ model Class {
   Folder    Folder?  @relation(fields: [folderId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum BookMarkCategory {
+  ASSIGNMENT
+  CLASS
+  DOUBT
+  NOTIFICATION
+}
+
+model BookMarks {
+  id String @id @default(uuid())
+
+  category      BookMarkCategory
+  objectId      String
+  causedObjects Json?            @default("{}")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, objectId])
+}
+
+enum NoteCategory {
+  CLASS
+  ASSIGNMENT
+  DOUBT
+}
+
+model Notes {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  category      NoteCategory
+  objectId      String
+  causedObjects Json?        @default("{}")
+
+  description String?
+  tags        String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, objectId])
 }
 
 model Folder {

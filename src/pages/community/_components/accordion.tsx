@@ -1,6 +1,3 @@
-"use client";
-
-import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaCrown } from "react-icons/fa";
@@ -10,6 +7,7 @@ import { PiCrownSimpleFill } from "react-icons/pi";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { actions } from "astro:actions";
 
 export default function Accordion({ doubts, currentUser, currentCourseId }: any) {
   const [openAccordion, setOpenAccordion] = useState<number>(-1);
@@ -28,29 +26,36 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
   const QA = dbts;
 
   const handleAddDoubt = async (data: any) => {
-    const res = await axios.post("/api/doubts/postDoubt", {
-      courseId: currentCourseId,
-      title: undefined,
-      description: data.message,
-    });
-    if (res.data.error) {
+
+    const {data:res,error} = await actions.doubts_createDoubt({
+      courseId:currentCourseId,
+      title:undefined,
+      description:data.message
+    })
+    
+    console.log(res)
+    if (error) {
       toast.error("Failed to add doubt");
     } else {
       toast.success("Doubt added successfully");
-      setDoubt("");
-      if (!doubt) setDbts([res.data]);
-      else setDbts([...doubts, res.data]);
+      // setDoubt("");
+      // if (!doubt) setDbts([res.data]);
+      // else 
+      setDbts([...doubts, res.data]);
+      setMessage("");
+      window.location.reload
     }
   };
 
   const handleReply = async (id: string) => {
     if (!reply) return;
 
-    const res = await axios.post("/api/doubts/reply", {
-      doubtId: id,
-      description: reply,
-    });
-    if (res.data.error) {
+    const {data:res,error} = await actions.doubts_createResponse({
+      doubtId:id,
+      description:reply
+    })
+    
+    if (error) {
       toast.error("Failed to add reply");
     } else {
       toast.success("Reply added successfully");
@@ -68,19 +73,29 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
 
   const handleDeleteDoubt = async (id: string) => {
     alert("Are you sure you want to delete this doubt?");
-    const res = await axios.delete(`/api/doubts/deleteDoubt/${id}`);
-    if (res.data.error) {
+
+    const {error} = await actions.doubts_deleteDoubt({
+      doubtId:id
+    })    
+    
+    if (error) {
       toast.error("Failed to delete doubt");
     } else {
       toast.success("Doubt deleted successfully");
       setDbts(doubts.filter((d: any) => d.id !== id));
+      // window.location.href = window.location.href
+      window.location.reload
     }
-  };
+};
 
   const handleDeleteReply = async (replyId: string) => {
     alert("Are you sure you want to delete this reply?");
-    const res = await axios.delete(`/api/doubts/reply/${replyId}`);
-    if (res.data.error) {
+
+    const {error} = await actions.doubts_deleteResponse({
+      responseId:replyId
+    })
+    
+    if (error) {
       toast.error("Failed to delete reply");
     } else {
       toast.success("Reply deleted successfully");
@@ -90,6 +105,8 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
           response: d.response.filter((r: any) => r.id !== replyId),
         }))
       );
+      
+      window.location.reload
     }
   };
 
@@ -99,6 +116,12 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
     }
   };
 
+  const handleCtrlEnterDown = (e: any) => {
+    if (e.key === "Enter" && e.ctrlKey) {
+      handleSubmit(e);
+    }
+  }
+
   const toggleAccordion = (index: number) => {
     setOpenAccordion(openAccordion === index ? -1 : index);
   };
@@ -106,7 +129,7 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
   const handleShow = () => {
     setShow(true);
   };
-
+  
   const handleSubmit = (e: any) => {
     e.preventDefault();
     const data = {
@@ -163,18 +186,18 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
           </Button>
         </div>
         <Dialog open={show} onOpenChange={() => setShow(false)}>
-          <DialogTitle>Enter your doubt here</DialogTitle>
+          <DialogTitle className="text-xl">Enter your doubt here❗</DialogTitle>
           <DialogContent>
-            <form className="mt-2" onSubmit={handleSubmit} onKeyDown={handleEscKeyDown}>
+            <form className="mt-2" onSubmit={handleSubmit } onKeyDown={handleEscKeyDown}>
               <textarea
                 ref={addDoubtRef}
                 id="message"
                 placeholder="Start here..."
                 onChange={(e) => handleChange(e)}
-                onKeyDown={handleEscKeyDown}
+                onKeyDown={handleCtrlEnterDown}
                 rows={4}
                 value={message}
-                className="block w-full rounded-lg border-2 bg-white p-2.5 text-secondary-950 outline-none "
+                className="block w-full rounded-lg border-2 bg-white p-2.5 text-sdecondary-950 outline-none text-gray-900"
               ></textarea>
               <Button
                 onClick={() => setShow(false)}
@@ -306,7 +329,7 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
                       placeholder="Enter your reply"
                       value={reply}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") {
+                        if (e.key === "Enter" && e.ctrlKey) { 
                           handleReply(replyId);
                         }
                         if (e.key === "Escape") {

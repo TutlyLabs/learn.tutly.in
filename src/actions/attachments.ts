@@ -1,4 +1,4 @@
-import { type Attachment, attachmentType, submissionMode } from "@prisma/client";
+import { attachmentType, submissionMode } from "@prisma/client";
 import { defineAction } from "astro:actions";
 import { z } from "zod";
 
@@ -100,32 +100,61 @@ export const deleteAttachment = defineAction({
   },
 });
 
-export const editAttachment = defineAction({
+export const updateAttachment = defineAction({
   input: z.object({
     id: z.string(),
-    data: z.custom<Attachment>(),
+    title: z.string(),
+    details: z.string().optional(),
+    link: z.string().optional(),
+    dueDate: z.date().optional(),
+    attachmentType: z.enum(["ASSIGNMENT", "GITHUB", "ZOOM", "OTHERS"] as const),
+    courseId: z.string(),
+    classId: z.string(),
+    maxSubmissions: z.number().optional(),
+    submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK"]),
   }),
-  async handler({ id, data }) {
-    const attachment = await db.attachment.update({
-      where: {
-        id,
-      },
-      data: {
-        title: data.title,
-        classId: data.classId,
-        courseId: data.courseId,
-        link: data.link,
-        attachmentType: data.attachmentType,
-        submissionMode: data.submissionMode,
-        details: data.details,
-        dueDate: data.dueDate,
-        maxSubmissions: data.maxSubmissions,
-      },
-    });
+  async handler(
+    {
+      id,
+      title,
+      details,
+      link,
+      dueDate,
+      attachmentType,
+      courseId,
+      classId,
+      maxSubmissions,
+      submissionMode,
+    },
+    { locals }
+  ) {
+    try {
+      const currentUser = locals.user;
+      if (!currentUser || currentUser.role !== "INSTRUCTOR") {
+        return { error: "Unauthorized" };
+      }
 
-    return {
-      success: true,
-      data: attachment,
-    };
+      const attachment = await db.attachment.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          classId,
+          link: link || null,
+          details: details || null,
+          attachmentType: attachmentType as attachmentType,
+          submissionMode: submissionMode as submissionMode,
+          dueDate: dueDate || null,
+          courseId,
+          maxSubmissions: maxSubmissions || null,
+        },
+      });
+
+      return { success: true, data: attachment };
+    } catch (error) {
+      console.error("Error updating attachment:", error);
+      return { error: "Failed to update attachment" };
+    }
   },
 });

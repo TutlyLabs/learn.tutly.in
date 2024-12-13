@@ -13,7 +13,7 @@ export function MentorCards({ data, selectedCourse }: Props) {
   const course = data.courses.find((c) => c.courseId === selectedCourse);
 
   return (
-    <>
+    <div className="flex flex-wrap justify-center mb-10 gap-4">
       <div className="w-80 rounded-md bg-white p-2 text-gray-900 shadow-xl">
         <PiStudentBold className="m-auto h-24 w-24 text-blue-400" />
         <p className="pt-2 font-bold text-blue-600">{course?.menteeCount || 0}</p>
@@ -29,6 +29,6 @@ export function MentorCards({ data, selectedCourse }: Props) {
         <p className="pt-2 font-bold text-blue-600">{course?.totalSubmissions || 0}</p>
         <h1 className="p-1 text-sm font-bold">Total submissions</h1>
       </div>
-    </>
+    </div>
   );
 }

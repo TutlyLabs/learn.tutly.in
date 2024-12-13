@@ -1,14 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { attachmentType, submissionMode } from "@prisma/client";
-import MDEditor from "@uiw/react-md-editor";
+import { Attachment, attachmentType, submissionMode } from "@prisma/client";
 import { actions } from "astro:actions";
-import katex from "katex";
-import "katex/dist/katex.css";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getCodeString } from "rehype-rewrite";
 import * as z from "zod";
 
+import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,14 +26,9 @@ import {
 import { useRouter } from "@/hooks/use-router";
 
 const formSchema = z.object({
-  title: z
-    .string()
-    .min(1, {
-      message: "Title is required",
-    })
-    .refine((value) => !/\s/.test(value), {
-      message: "Title cannot contain spaces",
-    }),
+  title: z.string().min(1, {
+    message: "Title is required",
+  }),
   link: z.string().optional(),
   attachmentType: z.string().min(1, {
     message: "Type is required",
@@ -50,35 +42,40 @@ const formSchema = z.object({
   courseId: z.string().optional(),
   details: z.string().optional(),
   dueDate: z.string().optional(),
-  maxSubmissions: z
-    .string()
-    .transform((v) => Number(v) || 0)
-    .optional(),
+  maxSubmissions: z.string().optional(),
 });
+
+interface NewAttachmentPageProps {
+  classes: any;
+  courseId: string;
+  classId: string;
+  isEditing?: boolean;
+  attachment?: Attachment;
+  onComplete?: () => void;
+}
 
 const NewAttachmentPage = ({
   classes,
   courseId,
   classId,
-}: {
-  classes: any;
-  courseId: string;
-  classId: string;
-}) => {
+  isEditing = false,
+  attachment,
+  onComplete,
+}: NewAttachmentPageProps) => {
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      link: "",
-      attachmentType: "ASSIGNMENT",
-      submissionMode: "",
-      class: classId || "",
-      courseId: "",
-      details: "",
-      dueDate: "",
-      maxSubmissions: 1,
+      title: attachment?.title || "",
+      link: attachment?.link || "",
+      attachmentType: attachment?.attachmentType || "ASSIGNMENT",
+      submissionMode: attachment?.submissionMode || "",
+      class: classId || attachment?.classId || "",
+      courseId: courseId || "",
+      details: attachment?.details || "",
+      dueDate: attachment?.dueDate ? new Date(attachment.dueDate).toISOString().split("T")[0] : "",
+      maxSubmissions: attachment?.maxSubmissions?.toString() || "1",
     },
   });
 
@@ -90,24 +87,48 @@ const NewAttachmentPage = ({
 
     values.title = values.title.trim();
 
-    const res = await actions.attachments_createAttachment({
-      title: values.title,
-      classId: values.class,
-      link: values.link,
-      attachmentType: values.attachmentType as attachmentType,
-      submissionMode: values.submissionMode as submissionMode,
-      details: values.details,
-      dueDate: dueDate || undefined,
-      maxSubmissions: values?.maxSubmissions,
-      courseId: courseId!,
-    });
+    try {
+      if (isEditing && attachment) {
+        const res = await actions.attachments_updateAttachment({
+          id: attachment.id,
+          title: values.title,
+          classId: values.class,
+          link: values.link,
+          attachmentType: values.attachmentType as attachmentType,
+          submissionMode: values.submissionMode as submissionMode,
+          details: values.details,
+          dueDate: dueDate || undefined,
+          maxSubmissions: values?.maxSubmissions ? parseInt(values.maxSubmissions) : 1,
+          courseId: courseId!,
+        });
 
-    if (!res) {
-      toast.error("An error occurred");
-      return;
+        if (!res) throw new Error();
+        toast.success("Assignment updated");
+      } else {
+        const res = await actions.attachments_createAttachment({
+          title: values.title,
+          classId: values.class,
+          link: values.link,
+          attachmentType: values.attachmentType as attachmentType,
+          submissionMode: values.submissionMode as submissionMode,
+          details: values.details,
+          dueDate: dueDate || undefined,
+          maxSubmissions: values?.maxSubmissions ? parseInt(values.maxSubmissions) : 1,
+          courseId: courseId!,
+        });
+
+        if (!res) throw new Error();
+        toast.success("Assignment created");
+      }
+
+      if (onComplete) {
+        onComplete();
+      } else {
+        router.push(`/courses/${courseId}/classes/${classId}`);
+      }
+    } catch (error) {
+      toast.error(isEditing ? "Failed to update assignment" : "Failed to create assignment");
     }
-    toast.success("attachment created");
-    router.push(`/courses/${courseId}/classes/${classId}`);
   };
   return (
     <Form {...form}>
@@ -294,53 +315,10 @@ const NewAttachmentPage = ({
             <FormItem>
               <FormLabel className="text-base">Details</FormLabel>
               <FormControl>
-                <div data-color-mode="light" className="border rounded-md overflow-hidden">
-                  <MDEditor
-                    value={field.value || ""}
-                    onChange={(newValue) => field.onChange(newValue || "")}
-                    height={400}
-                    preview="live"
-                    previewOptions={{
-                      components: {
-                        code: ({ children = [], className, ...props }) => {
-                          if (typeof children === "string" && /^\$\$(.*)\$\$/.test(children)) {
-                            const html = katex.renderToString(
-                              children.replace(/^\$\$(.*)\$\$/, "$1"),
-                              { throwOnError: false }
-                            );
-                            return (
-                              <code
-                                dangerouslySetInnerHTML={{ __html: html }}
-                                style={{ background: "transparent" }}
-                              />
-                            );
-                          }
-                          const code =
-                            props.node && props.node.children
-                              ? getCodeString(props.node.children)
-                              : children;
-
-                          if (
-                            typeof code === "string" &&
-                            typeof className === "string" &&
-                            /^language-katex/.test(className.toLowerCase())
-                          ) {
-                            const html = katex.renderToString(code, {
-                              throwOnError: false,
-                            });
-                            return (
-                              <code
-                                style={{ fontSize: "150%" }}
-                                dangerouslySetInnerHTML={{ __html: html }}
-                              />
-                            );
-                          }
-                          return <code className={String(className)}>{children}</code>;
-                        },
-                      },
-                    }}
-                  />
-                </div>
+                <MarkdownEditor
+                  value={field.value || ""}
+                  onChange={(newValue) => field.onChange(newValue || "")}
+                />
               </FormControl>
               <FormMessage className="font-bold text-red-700" />
             </FormItem>
@@ -357,7 +335,7 @@ const NewAttachmentPage = ({
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting} className="bg-gray-600 hover:bg-gray-700">
-            Continue
+            {isEditing ? "Update" : "Create"}
           </Button>
         </div>
       </form>

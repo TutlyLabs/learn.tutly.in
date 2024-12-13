@@ -1,6 +1,6 @@
 ---
 import RootLayout from "@layouts/RootLayout.astro";
-import AssignmentPage from "../_components/SingleAssignment";
+import AssignmentPage from "../_components/AssignmentPage";
 import db from "@/lib/db";
 
 const currentUser = Astro.locals.user;
@@ -15,7 +15,11 @@ const assignment1 = await db.attachment.findUnique({
   include: {
     class: {
       include: {
-        course: true,
+        course: {
+          include: {
+            classes: true,
+          },
+        },
       },
     },
     course: true,
@@ -152,13 +156,12 @@ if (currentUser.role == "INSTRUCTOR") {
 
 <RootLayout title="Assignments">
   <AssignmentPage
-    params={{ id: String(Astro.params.id) }}
     currentUser={currentUser}
     assignment={assignment1}
     assignments={sortedAssignments}
     notSubmittedMentees={notSubmittedMentees}
     isCourseAdmin={isCourseAdmin ?? false}
     username={username ?? ""}
-    client:load
+    client:only
   />
 </RootLayout>

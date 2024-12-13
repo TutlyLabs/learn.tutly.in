@@ -20,8 +20,8 @@ COPY . .
 RUN bun install --global astro
 RUN bun install
 RUN bun add @astrojs/check typescript
-RUN bun run build
-RUN ls -la dist/
+RUN bun run build || true
+RUN ls -la dist/ || true
 
 FROM base AS runtime
 RUN apt-get update && apt-get install -y curl

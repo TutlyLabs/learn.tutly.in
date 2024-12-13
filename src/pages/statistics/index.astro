@@ -1,0 +1,14 @@
+---
+import NoDataFound from "@/components/NoDataFound";
+import RootLayout from "@/layouts/RootLayout.astro";
+import { actions } from "astro:actions";
+
+const { data } = await actions.courses_getAllCourses();
+if(data?.data) {
+    return Astro.redirect(`/statistics/${data.data[0].id}`);
+}
+---
+
+<RootLayout title="Statistics">
+    <NoDataFound message="Oops! No enrolled courses found" />
+</RootLayout>

@@ -1,45 +1,61 @@
-/** @type {import("eslint").Linter.Config} */
-module.exports = {
-  root: true,
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:astro/recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-  ],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    tsconfigRootDir: __dirname,
-    sourceType: "module",
-    ecmaVersion: "latest",
-    ecmaFeatures: {
-      jsx: true,
+const eslint = require("@eslint/js");
+const tseslint = require("@typescript-eslint/eslint-plugin");
+const tseslintParser = require("@typescript-eslint/parser");
+const reactPlugin = require("eslint-plugin-react");
+const reactHooksPlugin = require("eslint-plugin-react-hooks");
+const astroPlugin = require("eslint-plugin-astro");
+
+module.exports = [
+  eslint.configs.recommended,
+  {
+    files: ["**/*.{js,cjs,mjs,jsx,ts,tsx}"],
+    ignores: ["src/**/*"],
+    plugins: {
+      "@typescript-eslint": tseslint,
+      react: reactPlugin,
+      "react-hooks": reactHooksPlugin,
     },
-  },
-  plugins: ["@typescript-eslint", "react", "react-hooks"],
-  settings: {
-    react: {
-      version: "detect",
-    },
-  },
-  overrides: [
-    {
-      files: ["*.astro"],
-      parser: "astro-eslint-parser",
+    languageOptions: {
+      parser: tseslintParser,
       parserOptions: {
-        parser: "@typescript-eslint/parser",
+        tsconfigRootDir: __dirname,
+        sourceType: "module",
+        ecmaVersion: "latest",
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      ...reactPlugin.configs.recommended.rules,
+      ...reactHooksPlugin.configs.recommended.rules,
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+    env: {
+      browser: true,
+      node: true,
+      es2022: true,
+    },
+  },
+  {
+    files: ["**/*.astro"],
+    plugins: {
+      astro: astroPlugin,
+    },
+    languageOptions: {
+      parser: require("astro-eslint-parser"),
+      parserOptions: {
+        parser: tseslintParser,
         extraFileExtensions: [".astro"],
       },
     },
-    {
-      files: ["*.tsx", "*.ts"],
+    rules: {
+      ...astroPlugin.configs.recommended.rules,
     },
-  ],
-  env: {
-    browser: true,
-    node: true,
-    es2022: true,
   },
-  ignorePatterns: ["src/**/*"],
-};
+];

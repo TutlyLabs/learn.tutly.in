@@ -1,14 +1,18 @@
 import { Role } from "@prisma/client";
 import {
   BarChart,
+  Bookmark,
   ClipboardList,
+  File,
   FileBarChart,
+  FileText,
   GraduationCap,
   Home,
   Terminal,
   Trophy,
   UserCheck,
   Users,
+  Users2,
 } from "lucide-react";
 
 import type { SidebarItem } from "@/components/sidebar/SidebarComponent";
@@ -23,6 +27,16 @@ const InstructorItems = [
     title: "Courses",
     url: "/courses",
     icon: GraduationCap,
+  },
+  {
+    title: "Notes",
+    url: "/notes",
+    icon: FileText,
+  },
+  {
+    title: "Bookmarks",
+    url: "/bookmarks",
+    icon: Bookmark,
   },
   {
     title: "Assignments",
@@ -46,13 +60,23 @@ const InstructorItems = [
   },
   {
     title: "Statistics",
-    url: "/instructor/statistics",
+    url: "/tutor/statistics",
     icon: BarChart,
   },
   {
     title: "Report",
     url: "/instructor/report",
     icon: FileBarChart,
+  },
+  {
+    title: "Users",
+    url: "/instructor/users",
+    icon: Users2,
+  },
+  {
+    title: "Drive",
+    url: "/instructor/drive",
+    icon: File,
   },
 ];
 
@@ -66,6 +90,16 @@ const MentorItems = [
     title: "Courses",
     url: "/courses",
     icon: GraduationCap,
+  },
+  {
+    title: "Notes",
+    url: "/notes",
+    icon: FileText,
+  },
+  {
+    title: "Bookmarks",
+    url: "/bookmarks",
+    icon: Bookmark,
   },
   {
     title: "Assignments",
@@ -89,7 +123,7 @@ const MentorItems = [
   },
   {
     title: "Statistics",
-    url: "/mentor/statistics",
+    url: "/tutor/statistics",
     icon: BarChart,
   },
   {
@@ -98,6 +132,7 @@ const MentorItems = [
     icon: FileBarChart,
   },
 ];
+
 
 const StudentItems = [
   {
@@ -109,6 +144,16 @@ const StudentItems = [
     title: "Courses",
     url: "/courses",
     icon: GraduationCap,
+  },
+  {
+    title: "Notes",
+    url: "/notes",
+    icon: FileText,
+  },
+  {
+    title: "Bookmarks",
+    url: "/bookmarks",
+    icon: Bookmark,
   },
   {
     title: "Assignments",

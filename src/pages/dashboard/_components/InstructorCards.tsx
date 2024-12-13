@@ -10,7 +10,7 @@ interface Props {
 
 export function InstructorCards({ data }: Props) {
   return (
-    <>
+    <div className=" flex flex-wrap justify-center mb-10 gap-4">
       <div className="w-80 rounded-md bg-white p-2 text-gray-900 shadow-xl">
         <MdOutlineNoteAlt className="m-auto h-24 w-24 text-blue-400" />
         <p className="pt-2 font-bold text-blue-600">{data.coursesCount}</p>
@@ -26,6 +26,6 @@ export function InstructorCards({ data }: Props) {
         <p className="pt-2 font-bold text-blue-600">{data.enrolledStudents}</p>
         <h1 className="p-1 text-sm font-bold">Total no of students enrolled</h1>
       </div>
-    </>
+    </div>
   );
 }

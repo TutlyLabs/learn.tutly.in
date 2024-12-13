@@ -24,7 +24,7 @@ jobs:
         run: "npm install --legacy-peer-deps"
 
       - name: "Check formatting"
-        run: 'npx prettier --check "src/**/*.{js,jsx,ts,tsx,astro,json,css,md,yml,yaml}"'
+        run: "npm run format:check"
 
       - name: "Check ESLint"
-        run: "npx eslint . --ext .js,.jsx,.ts,.tsx,.astro --no-ignore"
+        run: "npm run lint"

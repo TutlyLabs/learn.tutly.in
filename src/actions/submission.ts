@@ -167,13 +167,13 @@ export const getAssignmentSubmissions = defineAction({
     let filteredSubmissions: SubmissionWithDetails[] = [];
 
     if (user.role === "INSTRUCTOR") {
-      filteredSubmissions = submissions;
+      filteredSubmissions = submissions as SubmissionWithDetails[];
     }
 
     if (user.role === "MENTOR") {
       filteredSubmissions = submissions.filter(
         (submission) => submission.enrolledUser.mentorUsername === user.username
-      );
+      ) as SubmissionWithDetails[];
     }
 
     if (assignment?.maxSubmissions && assignment.maxSubmissions > 1) {
@@ -239,13 +239,13 @@ export const getAllAssignmentSubmissions = defineAction({
     let filteredSubmissions: SubmissionWithDetails[] = [];
 
     if (user.role === "INSTRUCTOR") {
-      filteredSubmissions = submissions;
+      filteredSubmissions = submissions as SubmissionWithDetails[];
     }
 
     if (user.role === "MENTOR") {
       filteredSubmissions = submissions.filter(
         (submission) => submission.enrolledUser.mentorUsername === user.username
-      );
+      ) as SubmissionWithDetails[];
     }
 
     const submissionsByAssignment = filteredSubmissions.reduce(
@@ -328,5 +328,79 @@ export const getSubmissionById = defineAction({
     }
 
     return { success: true, data: submission };
+  },
+});
+
+export const deleteSubmission = defineAction({
+  input: z.object({
+    submissionId: z.string(),
+  }),
+  async handler({ submissionId }, { locals }) {
+    const user = locals.user;
+    // todo: add proper auth check
+    const haveAccess = user?.role === "INSTRUCTOR" || user?.role === "MENTOR";
+    if (!user || !haveAccess) {
+      return { error: "Unauthorized" };
+    }
+
+    await db.submission.delete({
+      where: {
+        id: submissionId,
+      },
+    });
+
+    return { success: true };
+  },
+});
+
+export const submitExternalLink = defineAction({
+  input: z.object({
+    assignmentId: z.string(),
+    maxSubmissions: z.number(),
+    externalLink: z.string(),
+    courseId: z.string(),
+  }),
+  async handler({ assignmentId, maxSubmissions, externalLink, courseId }, { locals }) {
+    const user = locals.user;
+    if (!user) {
+      return { error: "Unauthorized" };
+    }
+
+    const submissions = await db.submission.findMany({
+      where: {
+        attachmentId: assignmentId,
+        enrolledUser: {
+          username: user.username,
+        },
+      },
+    });
+
+    if (submissions.length >= maxSubmissions) {
+      return { error: "Maximum submission limit reached" };
+    }
+
+    const enrolledUser = await db.enrolledUsers.findUnique({
+      where: {
+        username_courseId_mentorUsername: {
+          username: user.username,
+          courseId: courseId,
+          mentorUsername: user.username,
+        },
+      },
+    });
+
+    if (!enrolledUser) {
+      return { error: "User not enrolled in the course" };
+    }
+
+    await db.submission.create({
+      data: {
+        enrolledUserId: enrolledUser.id,
+        attachmentId: assignmentId,
+        submissionLink: externalLink,
+      },
+    });
+
+    return { success: true };
   },
 });

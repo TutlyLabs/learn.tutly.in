@@ -5,7 +5,6 @@ import StudentWiseAssignments from "@/components/StudentWiseAssignments";
 
 type Props = {};
 
-const {} = Astro.props;
 const { id } = Astro.params;
 
 const { data } = await actions.assignments_getAllAssignedAssignmentsByUserId(id);

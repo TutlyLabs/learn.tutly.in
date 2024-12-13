@@ -1,0 +1,25 @@
+---
+import RootLayout from "@/layouts/RootLayout.astro";
+
+const handles = {
+  codechef: "",
+  leetcode: "",
+  codeforces: "",
+  hackerrank: "",
+  interviewbit: "",
+};
+
+import { getPlatformScores, validatePlatformHandles } from "@/coding-platforms";
+
+const validationResult = await validatePlatformHandles(handles);
+const scores = await getPlatformScores(handles);
+---
+
+<RootLayout title="Coding Platforms">
+  <div class="flex flex-col items-center justify-center h-screen">
+    <h1 class="text-2xl font-bold">Validation Result</h1>
+    <pre>{JSON.stringify(validationResult, null, 2)}</pre>
+    <h1 class="text-2xl font-bold">Scores</h1>
+    <pre>{JSON.stringify(scores, null, 2)}</pre>
+  </div>
+</RootLayout>
