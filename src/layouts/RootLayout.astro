@@ -4,7 +4,7 @@ import { ViewTransitions } from "astro:transitions";
 import { AppSidebar } from "@/components/sidebar/AppSidebar";
 import { AppHeader } from "@/components/sidebar/AppHeader";
 import { Toaster } from "react-hot-toast";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 
 interface Props {
   title?: string;
@@ -49,19 +49,21 @@ globalThis.pathname = pathname;
       <div class="loader-shimmer"></div>
     </div>
     <Toaster client:load />
-    {user && (
-      <div class="flex min-h-screen">
-        <div class="relative">
-          <AppSidebar client:load user={user} pathname={pathname} forceClose={forceClose} />
-        </div>
-        <main class="w-full">
-          <AppHeader client:load user={user} pathname={pathname} />
-          <div class="p-4">
-            <slot />
+    {
+      user && (
+        <div class="flex min-h-screen">
+          <div class="relative">
+            <AppSidebar client:load user={user} pathname={pathname} forceClose={forceClose} />
           </div>
-        </main>
-      </div>
-    )}
+          <main class="w-full">
+            <AppHeader client:load user={user} pathname={pathname} />
+            <div class="p-4">
+              <slot />
+            </div>
+          </main>
+        </div>
+      )
+    }
     <SonnerToaster client:load />
   </body>
 </html>

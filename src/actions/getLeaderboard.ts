@@ -140,14 +140,14 @@ export const getInstructorLeaderboardData = defineAction({
       }
 
       const submissions = await db.submission.findMany({
-        where:{
-          enrolledUser:{
-            course:{
-              id:{
-                in: enrolledCourses?.data?.map((course: Course) => course.id) ?? []
-              }
-            }
-          }
+        where: {
+          enrolledUser: {
+            course: {
+              id: {
+                in: enrolledCourses?.data?.map((course: Course) => course.id) ?? [],
+              },
+            },
+          },
         },
         select: {
           id: true,

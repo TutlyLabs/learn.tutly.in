@@ -1,18 +1,13 @@
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+} from "@/components/ui/chart";
+
 const chartData = [
   { assignment: "Assignment-1", submissions: 186 },
   { assignment: "Assignment-2", submissions: 505 },
@@ -26,21 +21,16 @@ const chartData = [
   { assignment: "Assignment-10", submissions: 73 },
   { assignment: "Assignment-11", submissions: 409 },
   { assignment: "Assignment-12", submissions: 214 },
-  
-]
+];
 
 const chartConfig = {
   submissions: {
     label: "Submissions",
     color: "hsl(var(--chart-1))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-export function Barchart({
-  data
-}:{
-  data: any
-}) {
+export function Barchart({ data }: { data: any }) {
   return (
     <Card className="h-full w-full">
       <CardHeader>
@@ -52,7 +42,7 @@ export function Barchart({
           <BarChart
             accessibilityLayer
             // data={data}    // realtime data
-            data={chartData}  // fake data
+            data={chartData} // fake data
             margin={{
               top: 20,
             }}
@@ -65,17 +55,9 @@ export function Barchart({
               axisLine={false}
               // tickFormatter={(value) => value.slice(0,3)}
             />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
             <Bar dataKey="submissions" fill="var(--color-submissions)" radius={[8, 8, 0, 0]}>
-              <LabelList
-                position="top"
-                offset={12}
-                className="fill-foreground"
-                fontSize={12}
-              />
+              <LabelList position="top" offset={12} className="fill-foreground" fontSize={12} />
             </Bar>
           </BarChart>
         </ChartContainer>
@@ -83,5 +65,5 @@ export function Barchart({
       {/* <CardFooter className="flex-col items-start gap-2 text-sm">
       </CardFooter> */}
     </Card>
-  )
+  );
 }

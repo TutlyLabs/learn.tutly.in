@@ -1,8 +1,7 @@
-import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react";
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -10,15 +9,20 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-export function SelectMentor({ mentors, mentorName, setMentorName }: { mentors: any, mentorName: any, setMentorName: any }) {
-  const [open, setOpen] = React.useState(false)
+export function SelectMentor({
+  mentors,
+  mentorName,
+  setMentorName,
+}: {
+  mentors: any;
+  mentorName: any;
+  setMentorName: any;
+}) {
+  const [open, setOpen] = React.useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -46,8 +50,8 @@ export function SelectMentor({ mentors, mentorName, setMentorName }: { mentors: 
                   key={mentor.username}
                   value={mentor.username}
                   onSelect={(currentValue) => {
-                    setMentorName(currentValue === mentorName ? "" : currentValue)
-                    setOpen(false)
+                    setMentorName(currentValue === mentorName ? "" : currentValue);
+                    setOpen(false);
                   }}
                 >
                   {mentor.username}
@@ -64,5 +68,5 @@ export function SelectMentor({ mentors, mentorName, setMentorName }: { mentors: 
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

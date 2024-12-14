@@ -1,18 +1,13 @@
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
+} from "@/components/ui/chart";
+
 const chartData = [
   { class: "class-1", attendees: 186, absentees: 80 },
   { class: "class-2", attendees: 305, absentees: 200 },
@@ -20,7 +15,7 @@ const chartData = [
   { class: "class-4", attendees: 73, absentees: 190 },
   { class: "class-5", attendees: 209, absentees: 130 },
   { class: "class-6", attendees: 214, absentees: 140 },
-]
+];
 
 const chartConfig = {
   attendees: {
@@ -31,9 +26,9 @@ const chartConfig = {
     label: "Absent",
     color: "hsl(var(--chart-5))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-export function Linechart({data}:{data:any}) {
+export function Linechart({ data }: { data: any }) {
   return (
     <Card>
       <CardHeader>
@@ -45,7 +40,7 @@ export function Linechart({data}:{data:any}) {
           <AreaChart
             accessibilityLayer
             // data={data}         // realtime data
-            data={chartData}   // fake data
+            data={chartData} // fake data
             margin={{
               left: 12,
               right: 12,
@@ -57,33 +52,17 @@ export function Linechart({data}:{data:any}) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-            //   tickFormatter={(value) => value.slice(0, 3)}
+              //   tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <defs>
               <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-attendees)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-attendees)"
-                  stopOpacity={0.1}
-                />
+                <stop offset="5%" stopColor="var(--color-attendees)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-attendees)" stopOpacity={0.1} />
               </linearGradient>
               <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-absentees)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-absentees)"
-                  stopOpacity={0.1}
-                />
+                <stop offset="5%" stopColor="var(--color-absentees)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-absentees)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
             {/* absent chart */}
@@ -109,5 +88,5 @@ export function Linechart({data}:{data:any}) {
       </CardContent>
       {/* <CardFooter></CardFooter> */}
     </Card>
-  )
+  );
 }

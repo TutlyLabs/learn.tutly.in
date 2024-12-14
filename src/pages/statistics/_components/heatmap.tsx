@@ -106,9 +106,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ classes, data }) => {
 
           {days.map((dateInfo, index) => {
             if (!dateInfo) {
-              return (
-                <div key={`empty-${index}`} className="h-3.5 w-3.5" />
-              );
+              return <div key={`empty-${index}`} className="h-3.5 w-3.5" />;
             }
 
             const { date, isPresent, isInClass } = dateInfo;

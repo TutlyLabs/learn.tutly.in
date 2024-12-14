@@ -1,10 +1,9 @@
 import { User } from "@prisma/client";
-
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { getDefaultSidebarItems } from "@/config/sidebar";
 import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Sidebar,
   SidebarContent,
@@ -17,9 +16,9 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { getDefaultSidebarItems } from "@/config/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 export interface SidebarItem {
   title: string;
@@ -76,7 +75,7 @@ export function AppSidebar({ user, forceClose = false, className, pathname }: Ap
               <div
                 className={cn(
                   "flex  w-full items-center gap-2 justify-between",
-                  isOpen ? "flex-row" : "flex-col",
+                  isOpen ? "flex-row" : "flex-col"
                 )}
               >
                 <SidebarMenuButton size="lg" className="mx-auto">

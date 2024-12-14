@@ -1,14 +1,13 @@
 ---
 import NoDataFound from "@/components/NoDataFound";
-import RootLayout from "@/layouts/RootLayout.astro"
-import { actions } from "astro:actions"
+import RootLayout from "@/layouts/RootLayout.astro";
+import { actions } from "astro:actions";
 
-const {data} = await actions.courses_getAllCourses();
+const { data } = await actions.courses_getAllCourses();
 
-if(data?.data) {
+if (data?.data) {
   return Astro.redirect(`/tutor/statistics/${data.data[0].id}`);
 }
-
 ---
 
 <RootLayout title="Statistics">

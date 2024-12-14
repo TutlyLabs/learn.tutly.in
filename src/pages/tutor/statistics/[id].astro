@@ -8,10 +8,10 @@ import Header from "./_components/header";
 
 const courseId = Astro.params.id;
 const mentorUsername = Astro.url.searchParams.get("mentor");
-const piechart = await actions.statistics_getPiechartData({ courseId,mentorUsername });
-const barchart = await actions.statistics_getBarchartData({ courseId,mentorUsername });
+const piechart = await actions.statistics_getPiechartData({ courseId, mentorUsername });
+const barchart = await actions.statistics_getBarchartData({ courseId, mentorUsername });
 
-const mentees = await actions.statistics_getAllMentees({ courseId,mentorUsername });
+const mentees = await actions.statistics_getAllMentees({ courseId, mentorUsername });
 const linechart = await actions.statistics_getLinechartData({
   courseId,
   menteesCount: mentees.data?.length,
@@ -29,7 +29,14 @@ const { data } = await actions.courses_getAllCourses();
 ---
 
 <RootLayout title="Statistics">
-  <Header client:load mentors={mentors.data} mentees={mentees.data} currentUser={currentUser} data={data} courseId={courseId} />
+  <Header
+    client:load
+    mentors={mentors.data}
+    mentees={mentees.data}
+    currentUser={currentUser}
+    data={data}
+    courseId={courseId}
+  />
   <div class="m-4 mt-0 flex flex-col gap-4 md:mx-8 md:gap-6">
     <div class="flex flex-col gap-4 md:gap-6 lg:flex-row">
       <div class="w-full rounded-xl shadow-xl shadow-blue-500/5 lg:w-1/4">

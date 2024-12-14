@@ -15,7 +15,7 @@ export const getPiechartData = defineAction({
     }
     try {
       let assignments, noOfTotalMentees;
-      if (currentUser.role === "MENTOR" || mentorUsername!==null) {
+      if (currentUser.role === "MENTOR" || mentorUsername !== null) {
         assignments = await db.submission.findMany({
           where: {
             enrolledUser: {
@@ -33,7 +33,7 @@ export const getPiechartData = defineAction({
             courseId,
           },
         });
-      } else if(currentUser.role === "INSTRUCTOR") {
+      } else if (currentUser.role === "INSTRUCTOR") {
         assignments = await db.submission.findMany({
           where: {
             assignment: {
@@ -49,11 +49,12 @@ export const getPiechartData = defineAction({
             courseId,
             user: {
               role: "STUDENT",
-            }
+            },
           },
         });
       }
-      let assignmentsWithPoints = 0, assignmentsWithoutPoints = 0;
+      let assignmentsWithPoints = 0,
+        assignmentsWithoutPoints = 0;
       assignments?.forEach((assignment) => {
         if (assignment.points.length > 0) {
           assignmentsWithPoints += 1;
@@ -68,7 +69,9 @@ export const getPiechartData = defineAction({
         },
       });
       const notSubmitted =
-        noOfTotalAssignments * (noOfTotalMentees||0) - assignmentsWithPoints - assignmentsWithoutPoints;
+        noOfTotalAssignments * (noOfTotalMentees || 0) -
+        assignmentsWithPoints -
+        assignmentsWithoutPoints;
 
       return [assignmentsWithPoints, assignmentsWithoutPoints, notSubmitted];
     } catch (e) {
@@ -89,8 +92,8 @@ export const getLinechartData = defineAction({
       return null;
     }
     try {
-      let attendance=<any>[];
-      if (currentUser.role === "MENTOR" || mentorUsername!==null) {
+      let attendance = [] as any;
+      if (currentUser.role === "MENTOR" || mentorUsername !== null) {
         attendance = await db.attendance.findMany({
           where: {
             user: {
@@ -108,7 +111,7 @@ export const getLinechartData = defineAction({
             },
           },
         });
-      } else if(currentUser.role === "INSTRUCTOR") {
+      } else if (currentUser.role === "INSTRUCTOR") {
         attendance = await db.attendance.findMany({
           where: {
             attended: true,
@@ -134,7 +137,9 @@ export const getLinechartData = defineAction({
       const attendanceInEachClass = [] as any;
       getAllClasses.forEach((classData) => {
         classes.push(classData.createdAt.toISOString().split("T")[0]);
-        const tem = attendance.filter((attendanceData:any) => attendanceData.classId === classData.id);
+        const tem = attendance.filter(
+          (attendanceData: any) => attendanceData.classId === classData.id
+        );
         attendanceInEachClass.push(tem?.length);
       });
       const linechartData = [];
@@ -145,7 +150,7 @@ export const getLinechartData = defineAction({
           absentees: menteesCount - attendanceInEachClass[i],
         });
       }
-      return linechartData||[];
+      return linechartData || [];
     } catch (e) {
       return { error: "Failed to fetch linechart data", details: String(e) };
     }
@@ -164,7 +169,7 @@ export const getBarchartData = defineAction({
     }
     try {
       let submissionCount;
-      if (currentUser.role === "MENTOR" || mentorUsername!==null) {
+      if (currentUser.role === "MENTOR" || mentorUsername !== null) {
         submissionCount = await db.attachment.findMany({
           where: {
             attachmentType: "ASSIGNMENT",
@@ -183,7 +188,7 @@ export const getBarchartData = defineAction({
             createdAt: "asc",
           },
         });
-      } else if(currentUser.role === "INSTRUCTOR") {
+      } else if (currentUser.role === "INSTRUCTOR") {
         submissionCount = await db.attachment.findMany({
           where: {
             attachmentType: "ASSIGNMENT",
@@ -210,7 +215,7 @@ export const getBarchartData = defineAction({
           submissions: countForEachAssignment[i],
         });
       }
-      return barchartData||[];
+      return barchartData || [];
     } catch (e) {
       return { error: "Failed to fetch barchart data", details: String(e) };
     }
@@ -229,7 +234,7 @@ export const getAllMentees = defineAction({
     }
     try {
       let students;
-      if(currentUser.role === "MENTOR" || mentorUsername!==null) {
+      if (currentUser.role === "MENTOR" || mentorUsername !== null) {
         students = await db.user.findMany({
           where: {
             enrolledUsers: {
@@ -247,7 +252,7 @@ export const getAllMentees = defineAction({
             enrolledUsers: true,
           },
         });
-      } else if(currentUser.role === "INSTRUCTOR") {
+      } else if (currentUser.role === "INSTRUCTOR") {
         students = await db.user.findMany({
           where: {
             enrolledUsers: {
@@ -266,7 +271,7 @@ export const getAllMentees = defineAction({
         });
       }
 
-      return students||[];
+      return students || [];
     } catch (e) {
       return { error: "Failed to fetch barchart data", details: String(e) };
     }
@@ -332,9 +337,7 @@ export const studentBarchartData = defineAction({
       });
       let totalPoints = 0;
       const tem = assignments;
-      assignments = assignments.filter(
-        (assignment) => assignment.points.length > 0,
-      );
+      assignments = assignments.filter((assignment) => assignment.points.length > 0);
       const underReview = tem.length - assignments.length;
       assignments.forEach((assignment) => {
         assignment.points.forEach((point) => {
@@ -394,11 +397,9 @@ export const studentHeatmapData = defineAction({
       });
       const attendanceDates = [] as any;
       attendance.forEach((attendanceData) => {
-        attendanceDates.push(
-          attendanceData.class.createdAt.toISOString().split("T")[0],
-        );
+        attendanceDates.push(attendanceData.class.createdAt.toISOString().split("T")[0]);
       });
-    
+
       const getAllClasses = await db.class.findMany({
         where: {
           courseId,

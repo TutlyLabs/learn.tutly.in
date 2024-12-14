@@ -1,7 +1,7 @@
 import { User } from "@prisma/client";
+import { Bell, LogOut } from "lucide-react";
 import { useState } from "react";
 import { FaCaretDown } from "react-icons/fa";
-import { Bell, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -30,9 +30,9 @@ export function UserMenu({ user }: UserMenuProps) {
             <AvatarFallback className="rounded-full">
               {user.name
                 ? user.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
                 : user.username}
             </AvatarFallback>
           </Avatar>

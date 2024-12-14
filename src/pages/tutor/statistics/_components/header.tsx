@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+
 import { SelectMentor } from "./selectMentor";
 import { SelectStudent } from "./selectStudent";
 
@@ -13,7 +14,6 @@ function Header({ mentors, mentees, currentUser, data, courseId }: any) {
     setMentorName(mentorFromParams);
     setMenteeName(menteeFromParams);
   }, []);
-  
 
   // Sync state with URL search parameters
   useEffect(() => {
@@ -43,17 +43,9 @@ function Header({ mentors, mentees, currentUser, data, courseId }: any) {
       </div>
       <div className="flex gap-2 items-center">
         {currentUser?.role === "INSTRUCTOR" && (
-          <SelectMentor
-            mentors={mentors}
-            mentorName={mentorName}
-            setMentorName={setMentorName}
-          />
+          <SelectMentor mentors={mentors} mentorName={mentorName} setMentorName={setMentorName} />
         )}
-        <SelectStudent
-          mentees={mentees}
-          menteeName={menteeName}
-          setMenteeName={setMenteeName}
-        />
+        <SelectStudent mentees={mentees} menteeName={menteeName} setMenteeName={setMenteeName} />
       </div>
     </div>
   );

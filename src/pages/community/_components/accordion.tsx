@@ -1,3 +1,4 @@
+import { actions } from "astro:actions";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaCrown } from "react-icons/fa";
@@ -7,7 +8,6 @@ import { PiCrownSimpleFill } from "react-icons/pi";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { actions } from "astro:actions";
 
 export default function Accordion({ doubts, currentUser, currentCourseId }: any) {
   const [openAccordion, setOpenAccordion] = useState<number>(-1);
@@ -26,35 +26,34 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
   const QA = dbts;
 
   const handleAddDoubt = async (data: any) => {
+    const { data: res, error } = await actions.doubts_createDoubt({
+      courseId: currentCourseId,
+      title: undefined,
+      description: data.message,
+    });
 
-    const {data:res,error} = await actions.doubts_createDoubt({
-      courseId:currentCourseId,
-      title:undefined,
-      description:data.message
-    })
-    
-    console.log(res)
+    console.log(res);
     if (error) {
       toast.error("Failed to add doubt");
     } else {
       toast.success("Doubt added successfully");
       // setDoubt("");
       // if (!doubt) setDbts([res.data]);
-      // else 
+      // else
       setDbts([...doubts, res.data]);
       setMessage("");
-      window.location.reload
+      window.location.reload;
     }
   };
 
   const handleReply = async (id: string) => {
     if (!reply) return;
 
-    const {data:res,error} = await actions.doubts_createResponse({
-      doubtId:id,
-      description:reply
-    })
-    
+    const { data: res, error } = await actions.doubts_createResponse({
+      doubtId: id,
+      description: reply,
+    });
+
     if (error) {
       toast.error("Failed to add reply");
     } else {
@@ -74,27 +73,27 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
   const handleDeleteDoubt = async (id: string) => {
     alert("Are you sure you want to delete this doubt?");
 
-    const {error} = await actions.doubts_deleteDoubt({
-      doubtId:id
-    })    
-    
+    const { error } = await actions.doubts_deleteDoubt({
+      doubtId: id,
+    });
+
     if (error) {
       toast.error("Failed to delete doubt");
     } else {
       toast.success("Doubt deleted successfully");
       setDbts(doubts.filter((d: any) => d.id !== id));
       // window.location.href = window.location.href
-      window.location.reload
+      window.location.reload;
     }
-};
+  };
 
   const handleDeleteReply = async (replyId: string) => {
     alert("Are you sure you want to delete this reply?");
 
-    const {error} = await actions.doubts_deleteResponse({
-      responseId:replyId
-    })
-    
+    const { error } = await actions.doubts_deleteResponse({
+      responseId: replyId,
+    });
+
     if (error) {
       toast.error("Failed to delete reply");
     } else {
@@ -105,8 +104,8 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
           response: d.response.filter((r: any) => r.id !== replyId),
         }))
       );
-      
-      window.location.reload
+
+      window.location.reload;
     }
   };
 
@@ -120,7 +119,7 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
     if (e.key === "Enter" && e.ctrlKey) {
       handleSubmit(e);
     }
-  }
+  };
 
   const toggleAccordion = (index: number) => {
     setOpenAccordion(openAccordion === index ? -1 : index);
@@ -129,7 +128,7 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
   const handleShow = () => {
     setShow(true);
   };
-  
+
   const handleSubmit = (e: any) => {
     e.preventDefault();
     const data = {
@@ -188,7 +187,7 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
         <Dialog open={show} onOpenChange={() => setShow(false)}>
           <DialogTitle className="text-xl">Enter your doubt here❗</DialogTitle>
           <DialogContent>
-            <form className="mt-2" onSubmit={handleSubmit } onKeyDown={handleEscKeyDown}>
+            <form className="mt-2" onSubmit={handleSubmit} onKeyDown={handleEscKeyDown}>
               <textarea
                 ref={addDoubtRef}
                 id="message"
@@ -329,7 +328,7 @@ export default function Accordion({ doubts, currentUser, currentCourseId }: any)
                       placeholder="Enter your reply"
                       value={reply}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && e.ctrlKey) { 
+                        if (e.key === "Enter" && e.ctrlKey) {
                           handleReply(replyId);
                         }
                         if (e.key === "Escape") {

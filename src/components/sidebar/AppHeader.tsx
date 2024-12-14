@@ -1,11 +1,12 @@
 import { User } from "@prisma/client";
 
+import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 import { ModeToggle } from "../ModeToggle";
 import Notifications from "../Notifications";
-import { UserMenu } from "./UserMenu";
 import { DynamicBreadcrumbs } from "./DynamicBreadcrumbs";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Separator } from "@/components/ui/separator";
+import { UserMenu } from "./UserMenu";
 
 interface AppHeaderProps {
   user: User;
