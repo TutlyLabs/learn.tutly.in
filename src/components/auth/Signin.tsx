@@ -57,7 +57,7 @@ export function SignIn() {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center px-4">
+    <div className="flex h-screen w-full items-center justify-center px-4 bg-blue-950">
       <Card className="mx-auto w-[300px] sm:w-[400px]">
         <CardHeader>
           <CardTitle className="text-2xl">Sign in</CardTitle>
@@ -91,7 +91,7 @@ export function SignIn() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full bg-blue-900 hover:bg-blue-950">
                 Sign in
               </Button>
             </form>
