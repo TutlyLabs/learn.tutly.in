@@ -267,7 +267,7 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
                   <div className="flex items-center space-x-2">
                     <img
                       loading="lazy"
-                      src={user.image || "/images/placeholder.jpg"}
+                      src={user.image || "/placeholder.jpg"}
                       alt="user"
                       width={32}
                       height={32}

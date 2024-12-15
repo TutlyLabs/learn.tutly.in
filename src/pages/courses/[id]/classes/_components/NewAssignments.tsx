@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Attachment, attachmentType, submissionMode } from "@prisma/client";
+import { Attachment, FileType, attachmentType, submissionMode } from "@prisma/client";
 import { actions } from "astro:actions";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
 
-import { MarkdownEditor } from "@/components/MarkdownEditor";
+import RichTextEditor from "@/components/editor/RichTextEditor";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -315,9 +315,21 @@ const NewAttachmentPage = ({
             <FormItem>
               <FormLabel className="text-base">Details</FormLabel>
               <FormControl>
-                <MarkdownEditor
-                  value={field.value || ""}
-                  onChange={(newValue) => field.onChange(newValue || "")}
+                <RichTextEditor
+                  initialValue={field.value || ""}
+                  onChange={(value) => field.onChange(value || "")}
+                  allowUpload={true}
+                  fileUploadOptions={{
+                    fileType: FileType.ATTACHMENT,
+                    associatingId: attachment?.id || "",
+                    allowedExtensions: ["jpeg", "jpg", "png", "gif", "svg", "webp"],
+                    onUpload: async (file) => {
+                      await actions.fileupload_updateAssociatingId({
+                        fileId: file.id,
+                        associatingId: attachment?.id || "",
+                      });
+                    },
+                  }}
                 />
               </FormControl>
               <FormMessage className="font-bold text-red-700" />

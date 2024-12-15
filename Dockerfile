@@ -1,30 +1,27 @@
-FROM oven/bun:latest AS base
-
+FROM node:20-slim AS base
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y openssl
+RUN apt-get update && apt-get install -y openssl curl && apt-get clean
 
-COPY package.json bun.lockb ./
+RUN npm install -g astro
+
+COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
 FROM base AS prod-deps
 
 ENV HUSKY=0
-RUN bun install --global astro
-RUN bun install
-RUN bun add @astrojs/check typescript
-RUN bunx prisma generate
+
+RUN npm ci
+RUN npm install @astrojs/check typescript
+RUN npx prisma generate
 
 FROM base AS build
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY . .
-RUN bun install --global astro
-RUN bun install
-RUN bun add @astrojs/check typescript
-RUN bun run build || true
-RUN ls -la dist/ || true
+RUN npm run build
 
 FROM base AS runtime
-RUN apt-get update && apt-get install -y curl
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/dist ./dist
@@ -34,11 +31,7 @@ COPY --from=build /app/prisma ./prisma
 ENV HOST=0.0.0.0
 ENV PORT=4321
 ENV NODE_ENV=production
-ENV HOSTNAME=0.0.0.0
 
 EXPOSE 4321
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:4321/health || exit 1
-
-CMD ["sh", "-c", "bunx prisma generate && bunx prisma migrate deploy && HOST=0.0.0.0 bun ./dist/server/entry.mjs"]
+CMD ["sh", "-c", "node ./dist/server/entry.mjs"]

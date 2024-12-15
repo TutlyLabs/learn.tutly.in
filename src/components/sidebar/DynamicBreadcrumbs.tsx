@@ -11,9 +11,9 @@ import {
 
 export interface DynamicBreadcrumbsProps {
   pathname: string;
+  crumbReplacement?: { [key: string]: string };
 }
-
-export function DynamicBreadcrumbs({ pathname }: DynamicBreadcrumbsProps) {
+export function DynamicBreadcrumbs({ pathname, crumbReplacement }: DynamicBreadcrumbsProps) {
   const pathSegments = pathname.split("/").filter((segment) => segment !== "");
 
   return (
@@ -23,17 +23,16 @@ export function DynamicBreadcrumbs({ pathname }: DynamicBreadcrumbsProps) {
           const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
 
+          const displayText =
+            crumbReplacement?.[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+
           return (
             <Fragment key={segment}>
               <BreadcrumbItem>
                 {!isLast ? (
-                  <BreadcrumbLink href={href}>
-                    {segment.charAt(0).toUpperCase() + segment.slice(1)}
-                  </BreadcrumbLink>
+                  <BreadcrumbLink href={href}>{displayText}</BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage>
-                    {segment.charAt(0).toUpperCase() + segment.slice(1)}
-                  </BreadcrumbPage>
+                  <BreadcrumbPage>{displayText}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator />}

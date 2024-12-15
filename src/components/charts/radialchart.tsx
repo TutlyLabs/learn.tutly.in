@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TrendingUp } from "lucide-react";
 import { Label, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
@@ -16,8 +17,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const chartData = [{ present: 78, absent: 22 }];
-
 const chartConfig = {
   present: {
     label: "Present",
@@ -29,7 +28,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function Radialchart() {
+export function Radialchart({ data, thisWeek }: any) {
+  const chartData = [{ present: data, absent: (100 - data).toFixed(2) }];
   return (
     <Card className="flex flex-col">
       <CardHeader className="text-center pb-10">
@@ -80,7 +80,7 @@ export function Radialchart() {
         </ChartContainer>
         <CardFooter className="text-sm m-auto absolute bottom-0">
           This week &nbsp; <TrendingUp className="mr-2 h-4 w-4" />{" "}
-          <span className="text-green-500">+2.5%</span>
+          <span className={`${thisWeek < 0 ? "text-red-500" : "text-green-500"}`}>{thisWeek}%</span>
         </CardFooter>
       </CardContent>
     </Card>

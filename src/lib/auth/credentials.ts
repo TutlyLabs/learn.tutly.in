@@ -1,11 +1,10 @@
 import type { OAuth2Tokens } from "arctic";
 import { ActionError } from "astro:actions";
+import bcrypt from "bcrypt";
 
 import db from "@/lib/db";
 
 import type { OAuthUser } from ".";
-
-// import bcrypt from "bcrypt";
 
 class CredentialsTokens implements OAuth2Tokens {
   private expiresAt: Date;
@@ -72,13 +71,7 @@ async function validateCredentials(email: string, password: string) {
     throw new Error("User not found");
   }
 
-  // todo:change it to bcrypt
-
-  // if (!user.password || !bcrypt.compareSync(password, user.password)) {
-  //   throw new Error("Invalid credentials");
-  // }
-
-  if (user.password !== password) {
+  if (!user.password || !bcrypt.compareSync(password, user.password)) {
     throw new Error("Invalid credentials");
   }
 
@@ -123,7 +116,6 @@ export async function signInWithCredentials(
   }
 }
 
-// Provider interface implementation
 export function createAuthorizationURL(url?: URL) {
   return {
     state: "credentials",

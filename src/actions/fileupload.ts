@@ -9,6 +9,7 @@ import { defineAction } from "astro:actions";
 import { v4 as uuid } from "uuid";
 import { z } from "zod";
 
+import { getExtension } from "@/components/useFileUpload";
 import db from "@/lib/db";
 
 export const allowedMimeTypes = [
@@ -202,7 +203,17 @@ export const deleteFile = defineAction({
   },
 });
 
-function getExtension(filename: string): string {
-  const parts = filename.split(".");
-  return parts.length > 1 ? `.${parts[parts.length - 1]}` : "";
-}
+export const updateAssociatingId = defineAction({
+  input: z.object({
+    fileId: z.string(),
+    associatingId: z.string(),
+  }),
+  async handler({ fileId, associatingId }) {
+    const file = await db.file.update({
+      where: { id: fileId },
+      data: { associatingId },
+    });
+
+    return file;
+  },
+});

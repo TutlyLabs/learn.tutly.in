@@ -1,51 +1,94 @@
-import MDEditor from "@uiw/react-md-editor";
-import katex from "katex";
-import "katex/dist/katex.css";
-import { getCodeString } from "rehype-rewrite";
+import { marked } from "marked";
+import { useEffect, useState } from "react";
 
-const MarkdownPreview = ({ content, className }: { content: string; className?: string }) => {
+import { cn } from "@/lib/utils";
+
+marked.use({
+  breaks: true,
+  extensions: [
+    {
+      name: "image",
+      level: "inline",
+      tokenizer(src) {
+        const match = /^!\[(.*?)\]\((.*?)(?:\s+\{(\d+)x(\d+)\})?\)/.exec(src);
+        if (match) {
+          return {
+            type: "image",
+            raw: match[0],
+            text: match[1],
+            href: match[2],
+            width: match[3],
+            height: match[4],
+          };
+        }
+        return undefined;
+      },
+      renderer(token) {
+        const { href, text, width, height } = token;
+        return `<img src="${href}" alt="${text}" ${width ? `width="${width}"` : ""} ${height ? `height="${height}"` : ""} style="max-width: 100%; height: auto;" />`;
+      },
+    },
+  ],
+});
+
+marked.use({
+  renderer: {
+    heading(token) {
+      const { text, depth } = token;
+      const styles = {
+        1: "text-4xl font-bold mb-3",
+        2: "text-3xl font-semibold mb-2",
+      };
+      return `<h${depth} class="${styles[depth as keyof typeof styles] || ""}">${text}</h${depth}>`;
+    },
+    list(token) {
+      const { items, ordered } = token;
+      const type = ordered ? "ol" : "ul";
+      const style = ordered ? "list-decimal list-inside mb-4" : "list-disc list-inside mb-4";
+      return `<${type} class="${style}">${items.map((item) => `<li class="ml-1">${item.text}</li>`).join("")}</${type}>`;
+    },
+    listitem(token) {
+      return `<li class="ml-1">${token.text}</li>`;
+    },
+    blockquote(token) {
+      return `<blockquote class="border-l-4 border-gray-300 pl-4 py-2 my-4 italic">${token.text}</blockquote>`;
+    },
+    strong(token) {
+      return `<strong class="font-bold">${token.text}</strong>`;
+    },
+    em(token) {
+      return `<em class="italic">${token.text}</em>`;
+    },
+    del(token) {
+      return `<del class="line-through">${token.text}</del>`;
+    },
+    text(token) {
+      return token.text;
+    },
+  },
+});
+
+interface MarkdownPreviewProps {
+  content: string;
+  className?: string;
+}
+
+const MarkdownPreview = ({ content, className }: MarkdownPreviewProps) => {
+  const [html, setHtml] = useState("");
+
+  useEffect(() => {
+    const renderMarkdown = async () => {
+      const renderedHtml = await marked(content || "", { async: true });
+      setHtml(renderedHtml);
+    };
+
+    renderMarkdown();
+  }, [content]);
+
   return (
-    <MDEditor.Markdown
-      source={content}
-      style={{ backgroundColor: "transparent", color: "white" }}
-      className={className ?? ""}
-      components={{
-        code: ({ children = [], className, ...props }) => {
-          if (typeof children === "string" && /^\$\$(.*)\$\$/.test(children)) {
-            const html = katex.renderToString(children.replace(/^\$\$(.*)\$\$/, "$1"), {
-              throwOnError: false,
-            });
-            return (
-              <code
-                dangerouslySetInnerHTML={{ __html: html }}
-                style={{ background: "transparent" }}
-              />
-            );
-          }
-          const code =
-            props.node && props.node.children ? getCodeString(props.node.children) : children;
-          if (
-            typeof code === "string" &&
-            typeof className === "string" &&
-            /^language-katex/.test(className.toLocaleLowerCase())
-          ) {
-            const html = katex.renderToString(code, {
-              throwOnError: false,
-            });
-            return (
-              <code
-                style={{ fontSize: "150%", background: "transparent" }}
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
-            );
-          }
-          return (
-            <code className={String(className)} style={{ background: "transparent" }}>
-              {children}
-            </code>
-          );
-        },
-      }}
+    <div
+      className={cn("w-full prose dark:prose-invert max-w-none", className)}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 };

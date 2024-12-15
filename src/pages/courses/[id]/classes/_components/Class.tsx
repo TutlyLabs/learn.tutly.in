@@ -1,4 +1,4 @@
-import type { Attachment, Class, Notes, Video } from "@prisma/client";
+import { type Attachment, type Class, FileType, type Notes, type Video } from "@prisma/client";
 import { actions } from "astro:actions";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
@@ -385,7 +385,16 @@ export default function Class({
           </div>
         </div>
 
-        <RichTextEditor initialValue={notes || ""} onChange={(value) => setNotes(value || "")} />
+        <RichTextEditor
+          initialValue={notes || ""}
+          onChange={(value) => setNotes(value || "")}
+          allowUpload={true}
+          fileUploadOptions={{
+            fileType: FileType.NOTES,
+            associatingId: classId,
+            allowedExtensions: ["jpeg", "jpg", "png", "gif", "svg", "webp"],
+          }}
+        />
       </div>
 
       {/* Edit Dialog */}

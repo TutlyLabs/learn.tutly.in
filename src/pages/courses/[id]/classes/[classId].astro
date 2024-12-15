@@ -51,7 +51,7 @@ const bookmark = await db.bookMarks.findUnique({
 const isBookmarked = bookmark ? true : false;
 ---
 
-<RootLayout title="Classes" isSidebarOpen={false}>
+<RootLayout title="Classes" forceClose={true}>
   <div class="flex items-start w-full">
     <ClassSidebar
       client:only

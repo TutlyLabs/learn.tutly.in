@@ -1,8 +1,7 @@
-import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react";
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -10,15 +9,20 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-export function SelectStudent({ mentees, menteeName, setMenteeName }: { mentees: any, menteeName: any, setMenteeName: any }) {
-  const [open, setOpen] = React.useState(false)
+export function SelectStudent({
+  mentees,
+  menteeName,
+  setMenteeName,
+}: {
+  mentees: any;
+  menteeName: any;
+  setMenteeName: any;
+}) {
+  const [open, setOpen] = React.useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -30,7 +34,7 @@ export function SelectStudent({ mentees, menteeName, setMenteeName }: { mentees:
           className="p-1 px-2 border border-primary rounded-lg"
         >
           {menteeName
-            ? mentees.find((mentee) => mentee.username === menteeName)?.username
+            ? mentees.find((mentee: any) => mentee.username === menteeName)?.username
             : "All Students"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
@@ -41,13 +45,13 @@ export function SelectStudent({ mentees, menteeName, setMenteeName }: { mentees:
           <CommandList>
             <CommandEmpty>No mentee found.</CommandEmpty>
             <CommandGroup>
-              {mentees.map((mentee) => (
+              {mentees.map((mentee: any) => (
                 <CommandItem
                   key={mentee.username}
                   value={mentee.username}
                   onSelect={(currentValue) => {
-                    setMenteeName(currentValue === menteeName ? "" : currentValue)
-                    setOpen(false)
+                    setMenteeName(currentValue === menteeName ? "" : currentValue);
+                    setOpen(false);
                   }}
                 >
                   {mentee.username}
@@ -64,5 +68,5 @@ export function SelectStudent({ mentees, menteeName, setMenteeName }: { mentees:
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

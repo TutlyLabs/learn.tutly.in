@@ -28,6 +28,7 @@ import {
   CheckSquareIcon,
   Heading1Icon,
   Heading2Icon,
+  ImageIcon,
   ItalicIcon,
   ListIcon,
   ListOrderedIcon,
@@ -37,11 +38,17 @@ import {
   TextIcon,
   UnderlineIcon,
   UndoIcon,
+  UploadIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useFileUpload } from "@/components/useFileUpload";
+
+import { INSERT_IMAGE_COMMAND } from "./ImagePlugin";
 
 const LowPriority = 1;
 
@@ -91,9 +98,15 @@ function getSelectedNode(selection) {
   }
 }
 
-export default function ToolbarPlugin() {
+export function FillURL() {
+  const srcfile = prompt("Enter the URL of the image:", "");
+  return srcfile;
+}
+
+export default function ToolbarPlugin({ fileUploadOptions, allowUpload }) {
   const [editor] = useLexicalComposerContext();
   const toolbarRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [blockType, setBlockType] = useState("paragraph");
@@ -103,6 +116,52 @@ export default function ToolbarPlugin() {
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const { fileType, onUpload, associatingId, allowedExtensions } = fileUploadOptions || {};
+
+  const { uploadFile } = useFileUpload({
+    fileType: fileType,
+    allowedExtensions: allowedExtensions,
+    onUpload: async (file) => {
+      if (!file || !file.publicUrl) return;
+      try {
+        if (onUpload) {
+          await onUpload(file);
+        }
+        editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+          src: file.publicUrl,
+          altText: file.name,
+        });
+        toast.success("File uploaded successfully");
+      } catch (error) {
+        toast.error("Failed to upload file");
+      }
+    },
+  });
+
+  const handleUpload = async (e) => {
+    if (!e.target.files?.length) return;
+    setIsUploading(true);
+
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+      await uploadFile(file, associatingId);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast.error("Failed to upload file");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const insertImage = (payload) => {
+    editor.dispatchCommand(INSERT_IMAGE_COMMAND, payload);
+  };
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -230,7 +289,10 @@ export default function ToolbarPlugin() {
     <div className="flex items-center p-1 gap-1 border rounded-lg bg-background" ref={toolbarRef}>
       <Button
         disabled={!canUndo}
-        onClick={() => editor.dispatchCommand(UNDO_COMMAND)}
+        onClick={(e) => {
+          e.preventDefault();
+          editor.dispatchCommand(UNDO_COMMAND);
+        }}
         variant="ghost"
         size="icon"
       >
@@ -239,7 +301,10 @@ export default function ToolbarPlugin() {
 
       <Button
         disabled={!canRedo}
-        onClick={() => editor.dispatchCommand(REDO_COMMAND)}
+        onClick={(e) => {
+          e.preventDefault();
+          editor.dispatchCommand(REDO_COMMAND);
+        }}
         variant="ghost"
         size="icon"
       >
@@ -249,7 +314,10 @@ export default function ToolbarPlugin() {
       <Divider />
 
       <Button
-        onClick={formatLargeHeading}
+        onClick={(e) => {
+          e.preventDefault();
+          formatLargeHeading();
+        }}
         variant={blockType === "h1" ? "secondary" : "ghost"}
         size="icon"
       >
@@ -257,7 +325,10 @@ export default function ToolbarPlugin() {
       </Button>
 
       <Button
-        onClick={formatSmallHeading}
+        onClick={(e) => {
+          e.preventDefault();
+          formatSmallHeading();
+        }}
         variant={blockType === "h2" ? "secondary" : "ghost"}
         size="icon"
       >
@@ -265,7 +336,10 @@ export default function ToolbarPlugin() {
       </Button>
 
       <Button
-        onClick={formatBulletList}
+        onClick={(e) => {
+          e.preventDefault();
+          formatBulletList();
+        }}
         variant={blockType === "ul" ? "secondary" : "ghost"}
         size="icon"
       >
@@ -273,7 +347,10 @@ export default function ToolbarPlugin() {
       </Button>
 
       <Button
-        onClick={formatNumberedList}
+        onClick={(e) => {
+          e.preventDefault();
+          formatNumberedList();
+        }}
         variant={blockType === "ol" ? "secondary" : "ghost"}
         size="icon"
       >
@@ -289,7 +366,10 @@ export default function ToolbarPlugin() {
       </Button> */}
 
       <Button
-        onClick={formatQuote}
+        onClick={(e) => {
+          e.preventDefault();
+          formatQuote();
+        }}
         variant={blockType === "quote" ? "secondary" : "ghost"}
         size="icon"
       >
@@ -299,7 +379,10 @@ export default function ToolbarPlugin() {
       <Divider />
 
       <Button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+        onClick={(e) => {
+          e.preventDefault();
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+        }}
         variant={isBold ? "secondary" : "ghost"}
         size="icon"
       >
@@ -307,7 +390,10 @@ export default function ToolbarPlugin() {
       </Button>
 
       <Button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
+        onClick={(e) => {
+          e.preventDefault();
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+        }}
         variant={isItalic ? "secondary" : "ghost"}
         size="icon"
       >
@@ -315,7 +401,10 @@ export default function ToolbarPlugin() {
       </Button>
 
       <Button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")}
+        onClick={(e) => {
+          e.preventDefault();
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+        }}
         variant={isUnderline ? "secondary" : "ghost"}
         size="icon"
       >
@@ -323,12 +412,55 @@ export default function ToolbarPlugin() {
       </Button>
 
       <Button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}
+        onClick={(e) => {
+          e.preventDefault();
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
+        }}
         variant={isStrikethrough ? "secondary" : "ghost"}
         size="icon"
       >
         <StrikethroughIcon className="h-4 w-4" />
       </Button>
+
+      {allowUpload && (
+        <>
+          <Divider />
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }}
+            variant="ghost"
+            size="icon"
+            disabled={isUploading}
+          >
+            <UploadIcon className="h-4 w-4" />
+          </Button>
+          <Input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleUpload}
+            accept="image/*"
+          />
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              const url = FillURL();
+              if (url) {
+                insertImage({
+                  src: url,
+                  altText: "URL image",
+                });
+              }
+            }}
+            variant="ghost"
+            size="icon"
+          >
+            <ImageIcon className="h-4 w-4" />
+          </Button>
+        </>
+      )}
     </div>
   );
 }

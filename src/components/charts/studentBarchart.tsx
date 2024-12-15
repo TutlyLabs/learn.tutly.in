@@ -1,6 +1,6 @@
-
-import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, XAxis, YAxis } from "recharts"
+// @ts-nocheck
+import { TrendingUp } from "lucide-react";
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
 import {
   Card,
@@ -9,18 +9,19 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-const chartData = [
+} from "@/components/ui/chart";
+
+let chartData = [
   { browser: "evaluated", submissions: 275, fill: "var(--color-evaluated)" },
   { browser: "unreviewed", submissions: 200, fill: "var(--color-unreviewed)" },
   { browser: "unsubmitted", submissions: 187, fill: "var(--color-unsubmitted)" },
-]
+];
 
 const chartConfig = {
   submissions: {
@@ -46,9 +47,10 @@ const chartConfig = {
     label: "Other",
     color: "hsl(var(--chart-5))",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-export function StudentBarchart() {
+export function StudentBarchart({ data }: any) {
+  chartData.forEach((d, ind) => (d.submissions = data[ind]));
   return (
     <Card>
       <CardHeader>
@@ -71,20 +73,15 @@ export function StudentBarchart() {
               tickLine={false}
               tickMargin={5}
               axisLine={false}
-              tickFormatter={(value) =>
-                chartConfig[value as keyof typeof chartConfig]?.label
-              }
+              tickFormatter={(value) => chartConfig[value as keyof typeof chartConfig]?.label}
             />
             <XAxis dataKey="submissions" type="number" hide />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
             <Bar dataKey="submissions" layout="vertical" radius={5} />
           </BarChart>
         </ChartContainer>
       </CardContent>
       {/* <CardFooter className="flex-col items-start gap-2 text-sm"></CardFooter> */}
     </Card>
-  )
+  );
 }

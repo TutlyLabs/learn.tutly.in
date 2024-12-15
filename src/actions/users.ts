@@ -1,4 +1,6 @@
-import { defineAction } from "astro:actions";
+import { Role } from "@prisma/client";
+import { ActionError, defineAction } from "astro:actions";
+import bcrypt from "bcrypt";
 import { z } from "zod";
 
 import db from "@/lib/db";
@@ -171,5 +173,253 @@ export const updateUserAvatar = defineAction({
     });
 
     return updatedProfile;
+  },
+});
+
+export const createUser = defineAction({
+  input: z.object({
+    name: z.string(),
+    username: z.string(),
+    email: z.string(),
+    password: z.string(),
+    role: z.string(),
+  }),
+  async handler({ name, username, email, password, role }, { locals }) {
+    try {
+      if (!locals.organization) {
+        throw new ActionError({
+          message: "Organization not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const user = await db.user.create({
+        data: {
+          name,
+          username,
+          email,
+          password: hashedPassword,
+          role: role as Role,
+          organization: { connect: { id: locals.organization.id } },
+        },
+      });
+
+      return user;
+    } catch (error) {
+      throw new ActionError({
+        message: "Failed to create user",
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    }
+  },
+});
+
+export const updateUser = defineAction({
+  input: z.object({
+    id: z.string(),
+    name: z.string(),
+    username: z.string(),
+    email: z.string(),
+    role: z.string(),
+  }),
+  async handler({ id, name, username, email, role }, { locals }) {
+    try {
+      if (!locals.organization) {
+        throw new ActionError({
+          message: "Organization not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const user = await db.user.update({
+        where: { id },
+        data: {
+          name,
+          username,
+          email,
+          role: role as Role,
+        },
+      });
+      return user;
+    } catch (error) {
+      throw new ActionError({
+        message: "Failed to update user",
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    }
+  },
+});
+
+export const deleteUser = defineAction({
+  input: z.object({
+    id: z.string(),
+  }),
+  async handler({ id }) {
+    try {
+      await db.user.delete({ where: { id } });
+    } catch (error) {
+      throw new ActionError({
+        message: "Failed to delete user",
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    }
+  },
+});
+
+export const getUser = defineAction({
+  input: z.object({
+    id: z.string(),
+  }),
+  async handler({ id }) {
+    try {
+      const user = await db.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          email: true,
+          role: true,
+        },
+      });
+
+      if (!user) {
+        throw new ActionError({
+          message: "User not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      return user;
+    } catch (error) {
+      throw new ActionError({
+        message: "Failed to get user",
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    }
+  },
+});
+
+export const bulkUpsert = defineAction({
+  input: z.array(
+    z.object({
+      name: z.string(),
+      username: z.string(),
+      email: z.string(),
+      password: z.string().optional(),
+      role: z.string(),
+    })
+  ),
+  async handler(users, { locals }) {
+    try {
+      if (!locals.organization) {
+        throw new ActionError({
+          message: "Organization not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const results = await Promise.all(
+        users.map(async (user) => {
+          const existingUser = await db.user.findFirst({
+            where: {
+              email: user.email,
+              organizationId: locals.organization!.id,
+            },
+          });
+
+          const hashedPassword = user.password ? await bcrypt.hash(user.password, 10) : null;
+
+          if (existingUser) {
+            return db.user.update({
+              where: { id: existingUser.id },
+              data: {
+                name: user.name,
+                username: user.username,
+                password: hashedPassword,
+                role: user.role as Role,
+              },
+            });
+          }
+
+          return db.user.create({
+            data: {
+              ...user,
+              password: hashedPassword,
+              organization: {
+                connect: { id: locals.organization!.id },
+              },
+              role: user.role as Role,
+            },
+          });
+        })
+      );
+
+      return results;
+    } catch (error) {
+      throw new ActionError({
+        message: "Failed to bulk upsert users",
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    }
+  },
+});
+
+export const changePassword = defineAction({
+  input: z.object({
+    id: z.string(),
+    old_password: z.string().optional(),
+    new_password: z.string(),
+  }),
+  async handler({ id, old_password, new_password }) {
+    try {
+      const user = await db.user.findUnique({
+        where: { id },
+        select: {
+          password: true,
+        },
+      });
+
+      if (!user) {
+        throw new ActionError({
+          message: "User not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      if (user.password && !old_password) {
+        throw new ActionError({
+          message: "Old password is required",
+          code: "UNAUTHORIZED",
+        });
+      }
+
+      if (user.password && old_password) {
+        const passwordMatch = await bcrypt.compare(old_password, user.password);
+
+        if (!passwordMatch) {
+          throw new ActionError({
+            message: "Old password is incorrect",
+            code: "UNAUTHORIZED",
+          });
+        }
+      }
+
+      const hashedNewPassword = await bcrypt.hash(new_password, 10);
+
+      await db.user.update({
+        where: { id },
+        data: {
+          password: hashedNewPassword,
+        },
+      });
+    } catch (error) {
+      throw new ActionError({
+        message: "Failed to change password",
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    }
   },
 });

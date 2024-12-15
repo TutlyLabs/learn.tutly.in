@@ -62,11 +62,14 @@ export const getAllCourses = defineAction({
           },
         });
       }
-      
+
       return { success: true, data: courses };
     } catch (e) {
       console.error("Detailed error while fetching courses:", e);
-      return { error: "Failed to fetch courses", details: e instanceof Error ? e.message : String(e) };
+      return {
+        error: "Failed to fetch courses",
+        details: e instanceof Error ? e.message : String(e),
+      };
     }
   },
 });

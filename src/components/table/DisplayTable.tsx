@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { AdvancedCrudDialog } from "./AdvancedCrudDialog";
 import BulkImport from "./BulkImport";
+import { Pagination } from "./Pagination";
 
 export interface IAction {
   label: string;
@@ -122,6 +123,9 @@ type DisplayTableProps = {
   title?: string;
   defaultView?: "table" | "grid";
   filterable?: boolean;
+  clientSideProcessing?: boolean;
+  totalItems?: number;
+  defaultPageSize?: number;
 };
 
 export default function DisplayTable({
@@ -138,6 +142,9 @@ export default function DisplayTable({
   title = "Data Table",
   defaultView = "table",
   filterable = true,
+  clientSideProcessing = true,
+  totalItems = 0,
+  defaultPageSize = 10,
 }: DisplayTableProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -145,11 +152,6 @@ export default function DisplayTable({
 
   const searchTerm = searchParams.get("search") || "";
   const viewMode = (searchParams.get("view") as "table" | "grid") || defaultView;
-  const dialogMode =
-    (searchParams.get("dialog") as "create" | "edit" | "view" | "delete") || "create";
-  const selectedId = searchParams.get("id");
-  const selectedRow = data.find((row) => row.id === selectedId);
-  const isDialogOpen = Boolean(searchParams.get("dialog"));
   const { toast } = useToast();
 
   const activeFilters: FilterCondition[] = searchParams
@@ -173,6 +175,8 @@ export default function DisplayTable({
     : null;
 
   useEffect(() => {
+    if (!clientSideProcessing) return;
+
     let sortedData = [...initialData];
 
     if (sortConfig) {
@@ -194,7 +198,7 @@ export default function DisplayTable({
     }
 
     setData(sortedData);
-  }, [initialData, sortConfig]);
+  }, [initialData, sortConfig, clientSideProcessing]);
 
   const handleSort = (key: string) => {
     const column = columns.find((col) => col.key === key);
@@ -229,14 +233,17 @@ export default function DisplayTable({
     });
   };
 
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+
   const handleView = (row: any) => {
     try {
       if (onView) {
-        setSearchParams((prev: URLSearchParams) => {
-          prev.set("dialog", "view");
-          prev.set("id", row.id);
-          return prev;
-        });
+        setSelectedRow(row);
+        setIsViewModalOpen(true);
       }
     } catch (error) {
       console.error("View error:", error);
@@ -244,15 +251,15 @@ export default function DisplayTable({
   };
 
   const handleDialogClose = () => {
-    setSearchParams((prev: URLSearchParams) => {
-      prev.delete("dialog");
-      prev.delete("id");
-      return prev;
-    });
+    setIsViewModalOpen(false);
+    setIsEditModalOpen(false);
+    setIsDeleteModalOpen(false);
+    setIsCreateModalOpen(false);
+    setSelectedRow(null);
   };
 
   const DeleteConfirmation = () => (
-    <Dialog open={isDialogOpen && dialogMode === "delete"} onOpenChange={handleDialogClose}>
+    <Dialog open={isDeleteModalOpen} onOpenChange={handleDialogClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Record</DialogTitle>
@@ -304,7 +311,7 @@ export default function DisplayTable({
         {data.map((row, index) => (
           <div
             key={index}
-            className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow p-4 relative"
+            className="bg-background rounded-lg border shadow-sm hover:shadow-md transition-shadow p-4 relative"
           >
             <div className="absolute top-2 right-2">
               {(actions.length > 0 || onEdit || onDelete || onView) && (
@@ -319,7 +326,7 @@ export default function DisplayTable({
                       <DropdownMenuItem
                         key={action.label}
                         onClick={() => action.onClick(row)}
-                        className={action.variant === "destructive" ? "text-red-500" : ""}
+                        className={action.variant === "destructive" ? "text-destructive" : ""}
                       >
                         <div className="flex items-center">
                           {action.icon}
@@ -341,11 +348,8 @@ export default function DisplayTable({
                     {onEdit && (
                       <DropdownMenuItem
                         onClick={() => {
-                          setSearchParams((prev: URLSearchParams) => {
-                            prev.set("dialog", "edit");
-                            prev.set("id", row.id);
-                            return prev;
-                          });
+                          setSelectedRow(row);
+                          setIsEditModalOpen(true);
                         }}
                       >
                         <div className="flex items-center">
@@ -357,15 +361,12 @@ export default function DisplayTable({
                     {onDelete && (
                       <DropdownMenuItem
                         onClick={() => {
-                          setSearchParams((prev: URLSearchParams) => {
-                            prev.set("dialog", "delete");
-                            prev.set("id", row.id);
-                            return prev;
-                          });
+                          setSelectedRow(row);
+                          setIsDeleteModalOpen(true);
                         }}
                       >
                         <div className="flex items-center">
-                          <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                          <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                           Delete
                         </div>
                       </DropdownMenuItem>
@@ -380,7 +381,7 @@ export default function DisplayTable({
                 .filter((column) => !column.hidden)
                 .map((column) => (
                   <div key={column.key} className="flex justify-between items-center">
-                    <div className="text-sm font-medium text-gray-500">
+                    <div className="text-sm font-medium text-muted-foreground">
                       {column.label || column.name}:
                     </div>
                     <div className="text-sm">
@@ -603,44 +604,46 @@ export default function DisplayTable({
     [setSearchParams]
   );
 
-  const filteredData = data.filter((row) => {
-    if (localSearchTerm) {
-      const searchFields = columns
-        .filter((col) => !col.hidden)
-        .map((col) => row[col.key])
-        .join(" ")
-        .toLowerCase();
+  const filteredData = clientSideProcessing
+    ? data.filter((row) => {
+        if (localSearchTerm) {
+          const searchFields = columns
+            .filter((col) => !col.hidden)
+            .map((col) => row[col.key])
+            .join(" ")
+            .toLowerCase();
 
-      if (!searchFields.includes(localSearchTerm.toLowerCase())) {
-        return false;
-      }
-    }
+          if (!searchFields.includes(localSearchTerm.toLowerCase())) {
+            return false;
+          }
+        }
 
-    return activeFilters.every((filter) => {
-      const value = row[filter.column];
-      if (value === undefined || value === null) return false;
+        return activeFilters.every((filter) => {
+          const value = row[filter.column];
+          if (value === undefined || value === null) return false;
 
-      const stringValue = String(value).toLowerCase();
-      const filterValue = filter.value.toLowerCase();
+          const stringValue = String(value).toLowerCase();
+          const filterValue = filter.value.toLowerCase();
 
-      switch (filter.operator) {
-        case "contains":
-          return stringValue.includes(filterValue);
-        case "equals":
-          return stringValue === filterValue;
-        case "startsWith":
-          return stringValue.startsWith(filterValue);
-        case "endsWith":
-          return stringValue.endsWith(filterValue);
-        case "greaterThan":
-          return Number(value) > Number(filterValue);
-        case "lessThan":
-          return Number(value) < Number(filterValue);
-        default:
-          return true;
-      }
-    });
-  });
+          switch (filter.operator) {
+            case "contains":
+              return stringValue.includes(filterValue);
+            case "equals":
+              return stringValue === filterValue;
+            case "startsWith":
+              return stringValue.startsWith(filterValue);
+            case "endsWith":
+              return stringValue.endsWith(filterValue);
+            case "greaterThan":
+              return Number(value) > Number(filterValue);
+            case "lessThan":
+              return Number(value) < Number(filterValue);
+            default:
+              return true;
+          }
+        });
+      })
+    : data;
 
   useEffect(() => {
     return () => {
@@ -649,6 +652,25 @@ export default function DisplayTable({
       }
     };
   }, []);
+
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const pageSize = parseInt(searchParams.get("limit") || defaultPageSize.toString());
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  const handlePageChange = (page: number) => {
+    setSearchParams((prev: URLSearchParams) => {
+      prev.set("page", page.toString());
+      return prev;
+    });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setSearchParams((prev: URLSearchParams) => {
+      prev.set("limit", size.toString());
+      prev.set("page", "1");
+      return prev;
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -690,12 +712,7 @@ export default function DisplayTable({
           {onCreate && (
             <Button
               variant="outline"
-              onClick={() => {
-                setSearchParams((prev: URLSearchParams) => {
-                  prev.set("dialog", "create");
-                  return prev;
-                });
-              }}
+              onClick={() => setIsCreateModalOpen(true)}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -842,11 +859,8 @@ export default function DisplayTable({
                             {onEdit && (
                               <DropdownMenuItem
                                 onClick={() => {
-                                  setSearchParams((prev: URLSearchParams) => {
-                                    prev.set("dialog", "edit");
-                                    prev.set("id", row.id);
-                                    return prev;
-                                  });
+                                  setSelectedRow(row);
+                                  setIsEditModalOpen(true);
                                 }}
                               >
                                 <div className="flex items-center">
@@ -858,11 +872,8 @@ export default function DisplayTable({
                             {onDelete && (
                               <DropdownMenuItem
                                 onClick={() => {
-                                  setSearchParams((prev: URLSearchParams) => {
-                                    prev.set("dialog", "delete");
-                                    prev.set("id", row.id);
-                                    return prev;
-                                  });
+                                  setSelectedRow(row);
+                                  setIsDeleteModalOpen(true);
                                 }}
                               >
                                 <div className="flex items-center">
@@ -885,102 +896,95 @@ export default function DisplayTable({
         renderGridView()
       )}
 
-      {isDialogOpen && (
-        <>
-          {dialogMode === "delete" && <DeleteConfirmation />}
-          {dialogMode === "view" && (
-            <Dialog open={true} onOpenChange={handleDialogClose}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>View Record</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {columns
-                    .filter((col) => !col.hidden)
-                    .map((col) => (
-                      <div key={col.key} className="space-y-2">
-                        <Label>{col.label || col.name}</Label>
-                        <div className="p-2 border rounded-md bg-muted">
-                          {selectedRow?.[col.key]}
-                        </div>
-                      </div>
-                    ))}
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={() =>
-                        setSearchParams((prev: URLSearchParams) => {
-                          prev.delete("dialog");
-                          prev.delete("id");
-                          return prev;
-                        })
-                      }
-                    >
-                      Close
-                    </Button>
+      {isDeleteModalOpen && (
+        <Dialog open={isDeleteModalOpen} onOpenChange={handleDialogClose}>
+          <DeleteConfirmation />
+        </Dialog>
+      )}
+
+      {isViewModalOpen && (
+        <Dialog open={isViewModalOpen} onOpenChange={handleDialogClose}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>View Record</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {columns
+                .filter((col) => !col.hidden)
+                .map((col) => (
+                  <div key={col.key} className="space-y-2">
+                    <Label>{col.label || col.name}</Label>
+                    <div className="p-2 border rounded-md bg-muted">{selectedRow?.[col.key]}</div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-          {(dialogMode === "create" || dialogMode === "edit") && (
-            <AdvancedCrudDialog
-              isOpen={true}
-              onClose={handleDialogClose}
-              onSubmit={async (formData) => {
-                try {
-                  if (dialogMode === "create") {
-                    const success = await handleCreate(formData);
-                    if (success) {
-                      setSearchParams((prev: URLSearchParams) => {
-                        prev.delete("dialog");
-                        return prev;
-                      });
-                    }
-                  } else if (dialogMode === "edit") {
-                    const success = await handleEdit({
-                      id: selectedRow?.id,
-                      ...formData,
-                    });
-                    if (success) {
-                      setSearchParams((prev: URLSearchParams) => {
-                        prev.delete("dialog");
-                        return prev;
-                      });
-                    }
-                  }
-                } catch (error) {
-                  toast({
-                    title: "Error",
-                    description: `Failed to ${dialogMode} record`,
-                    variant: "destructive",
-                  });
-                }
-              }}
-              onDelete={async () => {
-                if (selectedRow) {
-                  const success = await handleDelete(selectedRow);
-                  if (success) {
+                ))}
+              <div className="flex justify-end">
+                <Button
+                  onClick={() =>
                     setSearchParams((prev: URLSearchParams) => {
                       prev.delete("dialog");
+                      prev.delete("id");
                       return prev;
-                    });
+                    })
                   }
-                }
-              }}
-              title={
-                dialogMode === "create"
-                  ? "Create New Record"
-                  : dialogMode === "edit"
-                    ? "Edit Record"
-                    : "Delete Record"
-              }
-              columns={columns}
-              initialData={dialogMode === "create" ? {} : selectedRow}
-              mode={dialogMode}
-            />
-          )}
-        </>
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
+
+      {(isCreateModalOpen || isEditModalOpen) && (
+        <AdvancedCrudDialog
+          isOpen={true}
+          onClose={handleDialogClose}
+          onSubmit={async (formData) => {
+            try {
+              if (isCreateModalOpen) {
+                const success = await handleCreate(formData);
+                if (success) {
+                  handleDialogClose();
+                }
+              } else if (isEditModalOpen) {
+                const success = await handleEdit({
+                  id: selectedRow?.id,
+                  ...formData,
+                });
+                if (success) {
+                  handleDialogClose();
+                }
+              }
+            } catch (error) {
+              toast({
+                title: "Error",
+                description: `Failed to ${isCreateModalOpen ? "create" : "edit"} record`,
+                variant: "destructive",
+              });
+            }
+          }}
+          onDelete={async () => {
+            if (selectedRow) {
+              const success = await handleDelete(selectedRow);
+              if (success) {
+                handleDialogClose();
+              }
+            }
+          }}
+          title={isCreateModalOpen ? "Create New Record" : "Edit Record"}
+          columns={columns}
+          initialData={isCreateModalOpen ? {} : selectedRow}
+          mode={isCreateModalOpen ? "create" : "edit"}
+        />
+      )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
   TRANSFORMERS,
+  Transformer,
 } from "@lexical/markdown";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -17,10 +18,14 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import { FileType } from "@prisma/client";
+import { $createTextNode, LexicalNode, TextNode } from "lexical";
 
 import { cn } from "@/lib/utils";
 
+import { $createImageNode, ImageNode } from "./nodes/ImageNode";
 import { CheckListPlugin } from "./plugins/CheckListPlugin";
+import ImagesPlugin from "./plugins/ImagePlugin";
 import ListMaxIndentLevelPlugin from "./plugins/ListMaxIndentLevelPlugin";
 import ToolbarPlugin from "./plugins/ToolbarPlugin";
 
@@ -28,15 +33,90 @@ const Placeholder = () => {
   return <div className="absolute top-3 left-3 text-muted-foreground">Enter some text...</div>;
 };
 
+export interface FileUploadOptions {
+  fileType?: FileType;
+  onUpload?: (file: any) => Promise<void>;
+  associatingId?: string;
+  allowedExtensions?: string[];
+}
+
+interface RichTextEditorProps {
+  onChange: (value: string) => void;
+  initialValue?: string;
+  height?: string;
+  allowUpload?: boolean;
+  fileUploadOptions?: FileUploadOptions;
+}
+
+const IMAGE_MARKDOWN_REGEXP = /!\[([^\]]*)\]\(([^)\s]+)(?:\s*\{(\d+)x(\d+)\})?\)/;
+
+const customTransformers: Transformer[] = [
+  {
+    dependencies: [ImageNode],
+    export: (node: LexicalNode) => {
+      if (node instanceof ImageNode) {
+        return node.exportMarkdown();
+      }
+      return null;
+    },
+    importRegExp: IMAGE_MARKDOWN_REGEXP,
+    regExp: IMAGE_MARKDOWN_REGEXP,
+    replace: (textNode: TextNode, match: RegExpMatchArray | null) => {
+      if (!match) return false;
+
+      try {
+        const [fullMatch = "", altText = "", src = "", width, height] = match;
+
+        if (!src) return false;
+
+        const cleanSrc = src.trim();
+
+        const parsedWidth = width ? parseInt(width, 10) : "inherit";
+        const parsedHeight = height ? parseInt(height, 10) : "inherit";
+
+        const imageNode = $createImageNode({
+          altText: altText || "",
+          src: cleanSrc,
+          maxWidth: 500,
+          width: parsedWidth,
+          height: parsedHeight,
+        });
+
+        const textContent = textNode.getTextContent();
+        const imageMarkdownIndex = textContent.indexOf(fullMatch);
+
+        if (imageMarkdownIndex === 0) {
+          textNode.replace(imageNode);
+        } else {
+          const textBeforeImage = textContent.slice(0, imageMarkdownIndex);
+          textNode.setTextContent(textBeforeImage);
+          textNode.insertAfter(imageNode);
+        }
+
+        const textAfterImage = textContent.slice(imageMarkdownIndex + fullMatch.length);
+        if (textAfterImage) {
+          const newTextNode = $createTextNode(textAfterImage);
+          imageNode.insertAfter(newTextNode);
+        }
+
+        return true;
+      } catch (error) {
+        console.error("Error creating image node:", error, match);
+        return false;
+      }
+    },
+    type: "text-match",
+  },
+  ...TRANSFORMERS,
+];
+
 export default function RichTextEditor({
   onChange,
   initialValue,
   height = "300px",
-}: {
-  onChange: (value: string) => void;
-  initialValue?: string;
-  height?: string;
-}) {
+  allowUpload = false,
+  fileUploadOptions,
+}: RichTextEditorProps) {
   const editorConfig = {
     namespace: "editor",
     theme: {
@@ -86,16 +166,25 @@ export default function RichTextEditor({
       TableRowNode,
       AutoLinkNode,
       LinkNode,
+      ImageNode,
     ],
     onError(error: Error) {
       throw error;
     },
-    editorState: () => $convertFromMarkdownString(initialValue || "", TRANSFORMERS),
+    editorState: () => {
+      try {
+        const state = $convertFromMarkdownString(initialValue || "", customTransformers);
+        return state;
+      } catch (error) {
+        console.error("Error converting markdown:", error);
+        return $convertFromMarkdownString("", customTransformers);
+      }
+    },
   };
   return (
     <LexicalComposer initialConfig={editorConfig}>
       <div className="flex flex-col w-full">
-        <ToolbarPlugin />
+        <ToolbarPlugin fileUploadOptions={fileUploadOptions} allowUpload={allowUpload} />
         <div className="relative">
           <RichTextPlugin
             contentEditable={
@@ -121,11 +210,12 @@ export default function RichTextEditor({
           <OnChangePlugin
             onChange={(editorState) => {
               editorState.read(() => {
-                const markdown = $convertToMarkdownString(TRANSFORMERS);
+                const markdown = $convertToMarkdownString(customTransformers);
                 onChange(markdown);
               });
             }}
           />
+          <ImagesPlugin captionsEnabled={false} />
         </div>
       </div>
     </LexicalComposer>

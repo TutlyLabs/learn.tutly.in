@@ -181,7 +181,7 @@ export default function Leaderboard({
                   <td className="flex items-center md:gap-4">
                     <img
                       loading="lazy"
-                      src={data.image || "/images/placeholder.jpg"}
+                      src={data.image || "/placeholder.jpg"}
                       alt={`User ${index + 1}`}
                       width={35}
                       height={35}

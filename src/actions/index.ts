@@ -15,9 +15,9 @@ import * as notes from "./notes";
 import * as notifications from "./notifications";
 import * as points from "./points";
 import * as report from "./report";
+import * as statistics from "./statistics";
 import * as submissions from "./submission";
 import * as users from "./users";
-import * as statistics from "./statistics";
 
 export const server = {
   ...groupActions("courses", courses, "_"),
