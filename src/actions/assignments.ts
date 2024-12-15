@@ -1,4 +1,5 @@
 import { ActionError, defineAction } from "astro:actions";
+import { title } from "process";
 import { z } from "zod";
 
 import db from "@/lib/db";
@@ -426,7 +427,7 @@ export const getAssignmentDetailsByUserId = defineAction({
             where: {
               enrolledUser: {
                 user: {
-                  id: currentUser.username,
+                  id: currentUser.id,
                 },
               },
             },
@@ -1002,6 +1003,106 @@ export const getAssignmentDetails = defineAction({
           },
         },
       });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  },
+});
+
+export const serverActionOfGetAssignmentDetailsByUserId = async (id: string, userId: string) => {
+  const assignment = await db.attachment.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      class: {
+        include: {
+          course: true,
+        },
+      },
+      submissions: {
+        where: {
+          enrolledUser: {
+            user: {
+              id: userId,
+            },
+          },
+        },
+        include: {
+          enrolledUser: {
+            include: {
+              submission: true,
+            },
+          },
+          points: true,
+        },
+      },
+    },
+  });
+
+  return assignment;
+};
+
+export const submitAssignment = defineAction({
+  input: z.object({
+    id: z.string(),
+  }),
+  handler: async ({ id }, { locals }) => {
+    try {
+      const currentUser = locals.user!;
+      if (!currentUser) {
+        throw new Error("Unauthorized");
+      }
+      const assignment = await serverActionOfGetAssignmentDetailsByUserId(id, currentUser.id);
+
+      if (!assignment) {
+        throw new Error("Assignment not Found");
+      }
+
+      if (!assignment.class?.courseId) throw new Error("Course not found");
+
+      const mentorDetails = await db.enrolledUsers.findFirst({
+        where: {
+          username: currentUser.username,
+          courseId: assignment.class.courseId,
+        },
+        select: {
+          mentor: {
+            select: {
+              username: true,
+            },
+          },
+        },
+      });
+
+      const res = {
+        assignment: {
+          id: assignment.id,
+          title: assignment.title,
+          link: assignment.link,
+          class: {
+            id: assignment.class.id,
+            title: assignment.class.title,
+            courseId: assignment.class.courseId,
+            course: {
+              id: assignment.class.course?.id,
+              title: assignment.class.course?.title,
+            },
+          },
+          submissions: assignment.submissions.map((submission) => {
+            return { id: submission.id };
+          }),
+          maxSubmissions: assignment.maxSubmissions,
+        },
+        currentUser: {
+          username: currentUser.username,
+          name: currentUser.name,
+          email: currentUser.email,
+        },
+        mentorDetails,
+      };
+
+      return res;
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
     }

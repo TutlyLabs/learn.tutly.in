@@ -6,8 +6,8 @@ import Playground from "../_components/Playground";
 
 const currentUser = Astro.locals.user!;
 
-const assignmentId = Astro.params.assignmentId;
-const submissionId = Astro.params.submissionId;
+const assignmentId = Astro.url.searchParams.get("assignmentId");
+const submissionId = Astro.url.searchParams.get("submissionId");
 
 const submission = submissionId
   ? await db.submission.findUnique({
@@ -38,6 +38,6 @@ if (!studentAccess && !mentorAccess && !instrctorAccess && submissionId) {
     assignmentId={assignmentId || ""}
     initialFiles={initialFiles}
     template="static"
-    client:load
+    client:only
   />
 </RootLayout>

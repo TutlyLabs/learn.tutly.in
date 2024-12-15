@@ -2,6 +2,7 @@ import { Role } from "@prisma/client";
 import {
   BarChart,
   Bookmark,
+  Calendar,
   ClipboardList,
   GraduationCap,
   HardDrive,
@@ -18,6 +19,11 @@ const InstructorItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Schedule",
+    url: "/schedule",
+    icon: Calendar,
   },
   {
     title: "Learning",
@@ -112,6 +118,11 @@ const MentorItems = [
     icon: Home,
   },
   {
+    title: "Schedule",
+    url: "/schedule",
+    icon: Calendar,
+  },
+  {
     title: "Learning",
     url: "#",
     icon: GraduationCap,
@@ -187,6 +198,11 @@ const StudentItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Schedule",
+    url: "/schedule",
+    icon: Calendar,
   },
   {
     title: "Learning",

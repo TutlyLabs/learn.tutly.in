@@ -1,4 +1,4 @@
-import axios from "axios";
+import { actions } from "astro:actions";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -20,10 +20,14 @@ const SubmitAssignment = ({
     async function fetch() {
       setIsLoading(true);
       async function fetchData() {
-        const { data } = await axios.get(`/api/attachments/${assignmentId}`);
-        setAssignmentDetails(data.assignment);
-        setMentorDetails(data.mentorDetails);
-        return data;
+        const { data: res, error } = await actions.assignments_submitAssignment({
+          id: assignmentId,
+        });
+
+        setAssignmentDetails(res?.assignment);
+        setMentorDetails(res?.mentorDetails);
+
+        return res;
       }
       const data: any = await fetchData();
       if (!data.assignment || !currentUser) {

@@ -15,6 +15,7 @@ import * as notes from "./notes";
 import * as notifications from "./notifications";
 import * as points from "./points";
 import * as report from "./report";
+import * as schedule from "./schedule";
 import * as statistics from "./statistics";
 import * as submissions from "./submission";
 import * as users from "./users";
@@ -37,4 +38,5 @@ export const server = {
   ...groupActions("notes", notes, "_"),
   ...groupActions("statistics", statistics, "_"),
   ...groupActions("fileupload", fileupload, "_"),
+  ...groupActions("schedule", schedule, "_"),
 };

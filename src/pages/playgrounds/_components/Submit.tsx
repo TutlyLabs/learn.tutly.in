@@ -1,5 +1,3 @@
-"use client";
-
 import { useSandpack } from "@codesandbox/sandpack-react";
 import { actions } from "astro:actions";
 import { useState } from "react";
