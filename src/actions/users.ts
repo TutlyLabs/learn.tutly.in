@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import db from "@/lib/db";
 import { Role } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 export const getCurrentUser = defineAction({
   async handler(_, { locals }) {
@@ -180,7 +181,7 @@ export const createUser = defineAction({
   input: z.object({
     name: z.string(),
     username: z.string(),
-    email: z.string(),
+    email: z.string(), 
     password: z.string(),
     role: z.string(),
   }),
@@ -193,12 +194,14 @@ export const createUser = defineAction({
         });
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       const user = await db.user.create({
         data: {
           name,
           username,
           email,
-          password,
+          password: hashedPassword,
           role: role as Role,
           organization: { connect: { id: locals.organization.id } },
         },
@@ -208,7 +211,7 @@ export const createUser = defineAction({
     } catch (error) {
       throw new ActionError({
         message: "Failed to create user",
-        code: "INTERNAL_SERVER_ERROR",
+        code: "INTERNAL_SERVER_ERROR", 
       });
     }
   },
@@ -232,13 +235,15 @@ export const updateUser = defineAction({
         });
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       const user = await db.user.update({
         where: { id },
         data: {
           name,
           username,
           email,
-          password,
+          password: hashedPassword,
           role: role as Role,
         },
       });
@@ -330,13 +335,15 @@ export const bulkUpsert = defineAction({
             },
           });
 
+          const hashedPassword = await bcrypt.hash(user.password, 10);
+
           if (existingUser) {
             return db.user.update({
               where: { id: existingUser.id },
               data: {
                 name: user.name,
                 username: user.username,
-                password: user.password,
+                password: hashedPassword,
                 role: user.role as Role,
               },
             });
@@ -345,6 +352,7 @@ export const bulkUpsert = defineAction({
           return db.user.create({
             data: {
               ...user,
+              password: hashedPassword,
               organization: {
                 connect: { id: locals.organization!.id },
               },
@@ -367,7 +375,7 @@ export const bulkUpsert = defineAction({
 export const changePassword = defineAction({
   input: z.object({
     id: z.string(),
-    old_password: z.string(),
+    old_password: z.string().optional(),
     new_password: z.string(),
   }),
   async handler({ id, old_password, new_password }) {
@@ -386,19 +394,33 @@ export const changePassword = defineAction({
         });
       }
 
-      if (user.password !== old_password) {
+      if (user.password && !old_password) {
         throw new ActionError({
-          message: "Old password is incorrect",
+          message: "Old password is required",
           code: "UNAUTHORIZED",
         });
       }
 
+      if (user.password && old_password) {
+        const passwordMatch = await bcrypt.compare(old_password, user.password);
+
+        if (!passwordMatch) {
+          throw new ActionError({
+            message: "Old password is incorrect",
+            code: "UNAUTHORIZED",
+          });
+        }
+      }
+
+      const hashedNewPassword = await bcrypt.hash(new_password, 10);
+
       await db.user.update({
         where: { id },
         data: {
-          password: new_password,
+          password: hashedNewPassword,
         },
       });
+
     } catch (error) {
       throw new ActionError({
         message: "Failed to change password",
