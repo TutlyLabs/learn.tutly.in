@@ -10,7 +10,7 @@ const { data: attendanceData } = await actions.statistics_studentHeatmapData({ c
 ---
 
 <RootLayout title="Statistics">
-  <div class="flex gap-2 items-center mx-4 md:mx-8">
+  <div class="flex gap-2 items-center mx-4 md:mx-8 mb-2">
     {
       data?.data?.map((course) => (
         <a

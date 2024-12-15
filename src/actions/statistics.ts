@@ -326,7 +326,7 @@ export const studentBarchartData = defineAction({
       let assignments = await db.submission.findMany({
         where: {
           enrolledUser: {
-            username: studentUsername || "23071A0522",
+            username: studentUsername || currentUser.username,
           },
           assignment: {
             courseId,
@@ -380,7 +380,7 @@ export const studentHeatmapData = defineAction({
     try {
       const attendance = await db.attendance.findMany({
         where: {
-          username: studentUsername || "23071A0572",
+          username: studentUsername || currentUser.username,
           AND: {
             class: {
               course: {
