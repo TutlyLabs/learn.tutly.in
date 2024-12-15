@@ -1,10 +1,11 @@
 import { useState } from "react";
 
-import NoDataFound from "@/pages/courses/_components/NoDataFound";
+import { Tabs } from "@/components/ui/tabs";
 
-import Accordion from "./accordion";
+// import Accordion from "./accordion";
+import Messages from "./messages";
 
-export default function CommunityForum({ allDoubts, currentUser }: any) {
+export default function Community({ allDoubts, currentUser }: any) {
   const [currentCourse, setCurrentCourse] = useState<string>(allDoubts[0]?.id);
   const filteredallDoubts = allDoubts.filter((x: any) => x.id === currentCourse);
 
@@ -12,28 +13,27 @@ export default function CommunityForum({ allDoubts, currentUser }: any) {
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <h1 className="rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 py-5 text-center text-2xl font-bold text-white sm:py-8 sm:text-4xl">
-        Community Forum
-      </h1>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         {allDoubts?.map(
           (course: any) =>
-            course.isPublished === true && (
-              <button
+            course.isPublished && (
+              <Tabs
                 onClick={() => setCurrentCourse(course.id)}
-                className={`w-20 rounded p-2 sm:w-auto ${
-                  currentCourse === course?.id && "rounded border"
+                className={`rounded-lg px-4 py-2 text-sm font-medium cursor-pointer transition-colors duration-200 ${
+                  currentCourse === course.id
+                    ? "bg-blue-600 text-white border border-blue-700 shadow-lg"
+                    : "bg-white text-gray-800 border border-gray-300 hover:bg-blue-50 hover:shadow-md"
                 }`}
                 key={course?.id}
               >
-                <h1 className="max-w-xs truncate text-sm font-medium">{course.title}</h1>
-              </button>
+                <h1 className="max-w-xs truncate text-sm font-semibold">{course.title}</h1>
+              </Tabs>
             )
         )}
       </div>
       <div className="flex flex-col gap-2">
         {filteredallDoubts && (
-          <Accordion
+          <Messages
             currentCourseId={currentCourse}
             currentUser={currentUser}
             doubts={filteredallDoubts[0]?.doubts}
@@ -42,8 +42,8 @@ export default function CommunityForum({ allDoubts, currentUser }: any) {
       </div>
       <div>
         {filteredallDoubts[0].doubts.length === 0 && (
-          <div className="flex w-full flex-col gap-4">
-            <NoDataFound message="No doubts found!" />
+          <div className="text-center text-lg font-semibold mt-4">
+            <h1>"Be the first to start a discussion and get the prestige!"</h1>
           </div>
         )}
       </div>

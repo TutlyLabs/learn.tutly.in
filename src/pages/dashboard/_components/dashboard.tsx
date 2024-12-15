@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DashboardData } from "@/types/dashboard";
 import { getGreeting } from "@/utils/getGreeting";
 
@@ -36,33 +43,36 @@ const Dashboard = ({ data, name }: Props) => {
   const renderCourseSelector = () => {
     if ("courses" in data) {
       return (
-        <p className="mt-3 text-base font-medium text-white">
-          Here is your report for
-          <select
-            title="report"
-            className="ml-2 rounded-md bg-white px-2 py-1 text-gray-900"
-            onChange={(e) => setSelectedCourse(e.target.value)}
+        <div className="text-base font-medium text-white">
+          <Select
             value={selectedCourse}
+            onValueChange={(value) => setSelectedCourse(value)}
+            defaultValue={data.courses[0]?.courseId || ""}
           >
-            {data.courses.map((course) => (
-              <option key={course.courseId} value={course.courseId}>
-                {course.courseTitle}
-              </option>
-            ))}
-          </select>
-        </p>
+            <SelectTrigger className="ml-2 rounded-md bg-white px-2 py-1 text-gray-900">
+              <SelectValue placeholder="Select a course" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              {data.courses.map((course) => (
+                <SelectItem key={course.courseId} value={course.courseId || ""}>
+                  {course.courseTitle}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       );
     }
     return null;
   };
 
   return (
-    <div className="m-2 h-60 rounded-lg bg-gradient-to-l from-blue-400 to-blue-600">
-      <div className="p-10">
+    <div className="m-2 h-40 rounded-lg bg-gradient-to-l from-blue-400 to-blue-600">
+      <div className="flex md:flex-row flex-col justify-between items-center p-8">
         <h1 className="text-2xl font-bold text-white">
           {getGreeting()} {name} 👋
         </h1>
-        {renderCourseSelector()}
+        <div className="md:mt-0 mt-6">{renderCourseSelector()}</div>
       </div>
       <div className="p-2 text-center">{renderCards()}</div>
     </div>

@@ -388,9 +388,9 @@ const AdminAssignmentTable = ({
     } catch {
       toast.error("Failed to save scores");
     } finally {
+      toast.dismiss();
       setEditingIndex(-1);
       setFeedback("");
-      toast.dismiss();
     }
   };
 

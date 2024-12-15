@@ -1,6 +1,6 @@
 ---
 import ReactLayout from "@/layouts/RootLayout.astro";
-import CommunityForum from "./_components/community";
+import Community from "./_components/mainpage";
 import db from "@/lib/db";
 
 const currentuser = Astro.locals.user;
@@ -30,6 +30,6 @@ const allDoubts = await db.course.findMany({
 
 <ReactLayout title="Community Forum">
   <main class="m-2 mx-5 flex flex-col items-center justify-center">
-    <CommunityForum allDoubts={allDoubts} currentUser={currentuser} client:load />
+    <Community allDoubts={allDoubts} currentUser={currentuser} client:load />
   </main>
 </ReactLayout>

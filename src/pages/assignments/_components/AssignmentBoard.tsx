@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { MdOutlineSportsScore } from "react-icons/md";
 
+import { Card } from "@/components/ui/card";
+import { Tabs } from "@/components/ui/tabs";
 import { useRouter } from "@/hooks/use-router";
 
 export default function StudentWiseAssignments({ courses, assignments, userId }: any) {
@@ -10,52 +12,58 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
   const pathname = router.pathname;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+    <div className="flex flex-col">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="flex flex-wrap gap-2">
           {courses?.map((course: any) => (
-            <button
+            <Tabs
               onClick={() => setCurrentCourse(course.id)}
-              className={`rounded p-2 sm:w-auto ${currentCourse === course.id && "rounded border"}`}
+              className={`rounded-md px-4 py-2 text-sm font-medium cursor-pointer transition-colors 
+                ${
+                  currentCourse === course.id
+                    ? "bg-blue-500 text-white border border-blue-600"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }
+              `}
               key={course.id}
             >
-              <h1 className="max-w-xs truncate text-sm font-medium">{course.title}</h1>
-            </button>
+              <h1 className="truncate">{course.title}</h1>
+            </Tabs>
           ))}
         </div>
-        <div className="m-auto space-x-4 text-sm font-medium sm:m-0">
-          <button
-            className={`cursor-pointer focus:outline-none ${
-              filterOption === "all" && "border-b-2"
-            } `}
+        <div className="flex space-x-2 text-sm font-medium">
+          <Tabs
+            className={`cursor-pointer px-4 py-2 transition-all rounded-md 
+              ${filterOption === "all" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}
+            `}
             onClick={() => setFilterOption("all")}
           >
-            <label>All</label>
-          </button>
-          <button
-            className={`cursor-pointer focus:outline-none ${
-              filterOption === "reviewed" && "border-b-2"
-            } `}
+            All
+          </Tabs>
+          <Tabs
+            className={`cursor-pointer px-4 py-2 transition-all rounded-md 
+              ${filterOption === "reviewed" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}
+            `}
             onClick={() => setFilterOption("reviewed")}
           >
-            <label>Reviewed</label>
-          </button>
-          <button
-            className={`cursor-pointer focus:outline-none ${
-              filterOption === "unreviewed" && "border-b-2"
-            } `}
+            Reviewed
+          </Tabs>
+          <Tabs
+            className={`cursor-pointer px-4 py-2 transition-all rounded-md 
+              ${filterOption === "unreviewed" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}
+            `}
             onClick={() => setFilterOption("unreviewed")}
           >
-            <label>Unreviewed</label>
-          </button>
-          <button
-            className={`cursor-pointer focus:outline-none ${
-              filterOption === "not-submitted" && "border-b-2"
-            } `}
+            Unreviewed
+          </Tabs>
+          <Tabs
+            className={`cursor-pointer px-4 py-2 transition-all rounded-md 
+              ${filterOption === "not-submitted" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}
+            `}
             onClick={() => setFilterOption("not-submitted")}
           >
-            <label>Not Submitted</label>
-          </button>
+            Not Submitted
+          </Tabs>
         </div>
       </div>
       {assignments.map((course: any) => {
@@ -63,15 +71,15 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
         return course.classes.map((cls: any) =>
           cls.attachments
             .filter((x: any) => {
-              if (filterOption == "all") {
+              if (filterOption === "all") {
                 return true;
-              } else if (filterOption == "not-submitted") {
+              } else if (filterOption === "not-submitted") {
                 return x.submissions.length === 0;
-              } else if (filterOption == "unreviewed") {
+              } else if (filterOption === "unreviewed") {
                 return (
                   x.submissions.length > 0 && x.submissions.some((x: any) => x.points.length === 0)
                 );
-              } else if (filterOption == "reviewed") {
+              } else if (filterOption === "reviewed") {
                 return (
                   x.submissions.length > 0 && x.submissions.some((x: any) => x.points.length > 0)
                 );
@@ -79,7 +87,7 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
               return true;
             })
             .map((assignment: any) => (
-              <div key={assignment.id} className="rounded-lg border p-1 md:p-3">
+              <Card key={assignment.id} className="rounded-lg border p-1 md:p-4 mt-1">
                 <div className="flex flex-wrap items-center justify-around p-2 md:justify-between md:p-0 md:px-4">
                   <div className="flex w-full flex-wrap items-center justify-between md:flex-row">
                     <div className="text-sm">
@@ -87,8 +95,8 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-white md:gap-6">
                       {assignment.submissions.length === 0 ? (
-                        <div className="itens-center flex gap-6">
-                          <div className="rounded-full bg-secondary-600 p-2.5">Not submitted</div>
+                        <div className="flex gap-6 items-center">
+                          <div className="rounded-full bg-red-600 px-4 py-2">Not submitted</div>
                         </div>
                       ) : (
                         <div className="flex flex-wrap gap-2">
@@ -105,7 +113,7 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
                                     className="flex items-center gap-6"
                                     key={index}
                                   >
-                                    <div className="rounded-full bg-yellow-600 p-2.5">
+                                    <div className="rounded-full bg-yellow-600 px-4 py-2">
                                       Under review
                                     </div>
                                   </div>
@@ -113,10 +121,7 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
                               } else {
                                 return (
                                   <div className="flex items-center gap-6" key={index}>
-                                    {/* <div className="rounded-full p-2.5 bg-yellow-600">
-                                        Under review
-                                      </div> */}
-                                    <div className="flex cursor-pointer items-center rounded-full bg-green-600 p-2.5">
+                                    <div className="flex cursor-pointer items-center rounded-full bg-green-600 px-4 py-2">
                                       <h1>Submitted</h1>
                                     </div>
                                   </div>
@@ -138,7 +143,7 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
                                     onClick={() => router.push(eachSubmission.submissionLink)}
                                     key={index}
                                   >
-                                    <div className="flex cursor-pointer items-center rounded-full bg-green-600 p-2.5">
+                                    <div className="flex cursor-pointer items-center rounded-full bg-green-600 px-4 py-2">
                                       <h1>Score: {total}</h1>
                                       <MdOutlineSportsScore className="inline sm:h-5 sm:w-5" />
                                     </div>
@@ -147,11 +152,7 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
                               } else {
                                 return (
                                   <div className="flex items-center gap-6" key={index}>
-                                    {/* <div className="rounded-full p-2.5 bg-green-600 flex items-center">
-                                        <h1>Score: {total}</h1>
-                                        <MdOutlineSportsScore className="inline sm:h-5 sm:w-5" />
-                                      </div> */}
-                                    <div className="flex cursor-pointer items-center rounded-full bg-green-600 p-2.5">
+                                    <div className="flex cursor-pointer items-center rounded-full bg-green-600 px-4 py-2">
                                       <h1>Submitted</h1>
                                     </div>
                                   </div>
@@ -170,14 +171,14 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
                             router.push(`/assignments/${assignment.id}`);
                           }
                         }}
-                        className="rounded bg-blue-500 p-2.5"
+                        className="rounded bg-blue-500 px-4 py-2"
                       >
                         View Details
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))
         );
       })}
