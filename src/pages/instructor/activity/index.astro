@@ -6,12 +6,59 @@ import UserCards from "./_components/UserCards";
 const user = Astro.locals.user;
 
 if (user?.role !== "INSTRUCTOR") {
-  return Astro.redirect(`/404`);
+  return Astro.redirect("/404");
 }
 
-const allUsers = await db.user.findMany({});
+const searchParams = Astro.url.searchParams;
+const page = parseInt(searchParams.get("page") || "1");
+const limit = parseInt(searchParams.get("limit") || "10");
+const search = searchParams.get("search") || "";
+
+const skip = (page - 1) * limit;
+
+const [users, totalCount] = await Promise.all([
+  db.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      email: true,
+      mobile: true,
+      image: true,
+      role: true,
+      lastSeen: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    where: {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { username: { contains: search, mode: "insensitive" } },
+      ],
+      role: { in: ["MENTOR", "STUDENT"] },
+    },
+    skip,
+    take: limit,
+    orderBy: { createdAt: "desc" },
+  }),
+  db.user.count({
+    where: {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { username: { contains: search, mode: "insensitive" } },
+      ],
+    },
+  }),
+]);
 ---
 
 <RootLayout title="Users">
-  <UserCards users={allUsers as any} client:load />
+  <UserCards 
+    users={users} 
+    totalItems={totalCount} 
+    defaultPageSize={limit}
+    client:load 
+  />
 </RootLayout>
