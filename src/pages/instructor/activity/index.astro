@@ -55,10 +55,5 @@ const [users, totalCount] = await Promise.all([
 ---
 
 <RootLayout title="Users">
-  <UserCards 
-    users={users} 
-    totalItems={totalCount} 
-    defaultPageSize={limit}
-    client:load 
-  />
+  <UserCards users={users} totalItems={totalCount} defaultPageSize={limit} client:load />
 </RootLayout>

@@ -1,9 +1,9 @@
+import { Role } from "@prisma/client";
 import { ActionError, defineAction } from "astro:actions";
+import bcrypt from "bcrypt";
 import { z } from "zod";
 
 import db from "@/lib/db";
-import { Role } from "@prisma/client";
-import bcrypt from "bcrypt";
 
 export const getCurrentUser = defineAction({
   async handler(_, { locals }) {
@@ -176,12 +176,11 @@ export const updateUserAvatar = defineAction({
   },
 });
 
-
 export const createUser = defineAction({
   input: z.object({
     name: z.string(),
     username: z.string(),
-    email: z.string(), 
+    email: z.string(),
     password: z.string(),
     role: z.string(),
   }),
@@ -211,7 +210,7 @@ export const createUser = defineAction({
     } catch (error) {
       throw new ActionError({
         message: "Failed to create user",
-        code: "INTERNAL_SERVER_ERROR", 
+        code: "INTERNAL_SERVER_ERROR",
       });
     }
   },
@@ -416,7 +415,6 @@ export const changePassword = defineAction({
           password: hashedNewPassword,
         },
       });
-
     } catch (error) {
       throw new ActionError({
         message: "Failed to change password",

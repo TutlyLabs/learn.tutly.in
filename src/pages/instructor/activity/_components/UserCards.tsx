@@ -1,8 +1,9 @@
 import type { Role } from "@prisma/client";
 import { actions } from "astro:actions";
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { Pagination } from "@/components/table/Pagination";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,12 +16,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import day from "@/lib/dayjs";
 import { useSearchParams } from "@/hooks/use-search-params";
-import { Pagination } from "@/components/table/Pagination";
-import { Input } from "@/components/ui/input";
+import day from "@/lib/dayjs";
 
 type UserData = {
   id: string;
@@ -89,7 +89,7 @@ const UserCards = ({ users, totalItems, defaultPageSize }: UserCardsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const handleSearch = useCallback(

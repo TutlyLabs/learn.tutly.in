@@ -29,7 +29,9 @@ function isDateInCurrentWeek(dateString: string) {
 const thisWeekAttended = attendanceData?.attendanceDates.filter((date: any) =>
   isDateInCurrentWeek(date)
 ).length;
-const thisWeekClasses = attendanceData?.classes.filter((date: any) => isDateInCurrentWeek(date)).length;
+const thisWeekClasses = attendanceData?.classes.filter((date: any) =>
+  isDateInCurrentWeek(date)
+).length;
 const thisWeekPercentage = ((thisWeekAttended * 100) / thisWeekClasses).toFixed(2);
 const uptoLastWeek = (
   ((attendanceData?.attendanceDates.length - thisWeekAttended) * 100) /

@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import {
   eachDayOfInterval,
   endOfYear,

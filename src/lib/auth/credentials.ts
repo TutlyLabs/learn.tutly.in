@@ -1,11 +1,10 @@
 import type { OAuth2Tokens } from "arctic";
 import { ActionError } from "astro:actions";
+import bcrypt from "bcrypt";
 
 import db from "@/lib/db";
 
 import type { OAuthUser } from ".";
-
-import bcrypt from "bcrypt";
 
 class CredentialsTokens implements OAuth2Tokens {
   private expiresAt: Date;

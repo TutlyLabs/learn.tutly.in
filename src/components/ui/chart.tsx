@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 import { NameType, Payload, ValueType } from "recharts/types/component/DefaultTooltipContent";

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { type Column } from "@/components/table/DisplayTable";
 
@@ -6,8 +7,6 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import {toast} from "sonner"
-
 
 interface AdvancedCrudDialogProps {
   isOpen: boolean;
@@ -89,19 +88,19 @@ export function AdvancedCrudDialog({
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {    
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === "delete") {
       try {
         await onDelete();
         onClose();
       } catch (error) {
-        toast.error("Failed to delete record")
+        toast.error("Failed to delete record");
       }
       return;
     }
     if (!validateForm()) {
-      toast.error("Please fill in all required fields")
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -109,9 +108,8 @@ export function AdvancedCrudDialog({
       await onSubmit(formData);
       onClose();
     } catch (error) {
-      toast.error(`Failed to ${mode} record`)
+      toast.error(`Failed to ${mode} record`);
     }
-
   };
 
   const renderField = (column: Column) => {

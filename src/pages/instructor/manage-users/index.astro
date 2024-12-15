@@ -16,28 +16,30 @@ const filters = Astro.url.searchParams.getAll("filter");
 const page = parseInt(Astro.url.searchParams.get("page") || "1");
 const limit = parseInt(Astro.url.searchParams.get("limit") || "10");
 
-const activeFilters = filters.map((f) => {
-  const [column, operator, value] = f.split(":");
-  return { column, operator, value };
-}).filter(f => f.column && f.operator && f.value);
+const activeFilters = filters
+  .map((f) => {
+    const [column, operator, value] = f.split(":");
+    return { column, operator, value };
+  })
+  .filter((f) => f.column && f.operator && f.value);
 
 let where: Record<string, any> = {
   role: {
-    in: ["STUDENT", "MENTOR"]
-  }
+    in: ["STUDENT", "MENTOR"],
+  },
 };
 
 if (searchTerm) {
   where.OR = [
     { name: { contains: searchTerm, mode: "insensitive" } },
     { username: { contains: searchTerm, mode: "insensitive" } },
-    { email: { contains: searchTerm, mode: "insensitive" } }
+    { email: { contains: searchTerm, mode: "insensitive" } },
   ];
 }
 
-activeFilters.forEach(filter => {
+activeFilters.forEach((filter) => {
   const { column, operator, value } = filter;
-  
+
   if (typeof column === "string") {
     switch (operator) {
       case "contains":
@@ -67,17 +69,17 @@ const totalItems = await db.user.count({ where });
 const allUsers = await db.user.findMany({
   where,
   orderBy: {
-    [sortField]: sortDirection
+    [sortField]: sortDirection,
   },
   select: {
     id: true,
     name: true,
-    username: true, 
+    username: true,
     email: true,
     role: true,
   },
   skip: (page - 1) * limit,
-  take: limit
+  take: limit,
 });
 ---
 
