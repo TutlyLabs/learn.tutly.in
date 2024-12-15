@@ -10,7 +10,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useState } from "react";
-
+import {Button} from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 interface CalendarHeatmapProps {
@@ -74,16 +74,16 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ classes, data }) => {
         <div className="font-semibold">Attendance Heatmap</div>
         <div className="flex items-center gap-2">
           <div className="text-lg font-semibold">{currentYear}</div>
-          <button onClick={handlePreviousYear} className="rounded border p-1 hover:bg-gray-900">
+          <Button onClick={handlePreviousYear} className="rounded border p-1 hover:bg-gray-900">
             <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleNextYear}
             className="rounded border p-1 hover:bg-gray-900"
             disabled={currentYear === startOfToday().getFullYear()}
           >
             <ChevronRight className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
       </div>
 

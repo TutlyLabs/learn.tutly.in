@@ -3,10 +3,18 @@ import NoDataFound from "@/components/NoDataFound";
 import RootLayout from "@/layouts/RootLayout.astro";
 import { actions } from "astro:actions";
 
-const { data } = await actions.courses_getAllCourses();
-if (data?.data) {
+const currentUser = Astro.locals.user!;
+const call = Astro.callAction;
+if (!currentUser) return null;
+
+const { data } = await call(actions.courses_getAllCourses,{});
+
+if (!data) return null;
+
+if (data.data && data.data.length > 0) {
   return Astro.redirect(`/statistics/${data.data[0].id}`);
 }
+
 ---
 
 <RootLayout title="Statistics">
