@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { AdvancedCrudDialog } from "./AdvancedCrudDialog";
 import BulkImport from "./BulkImport";
+import { Pagination } from "./Pagination";
 
 export interface IAction {
   label: string;
@@ -66,24 +67,24 @@ export type Column = {
   name: string;
   label?: string;
   type?:
-    | "text"
-    | "number"
-    | "date"
-    | "datetime-local"
-    | "time"
-    | "email"
-    | "tel"
-    | "url"
-    | "password"
-    | "select"
-    | "textarea"
-    | "checkbox"
-    | "radio"
-    | "color"
-    | "file"
-    | "range"
-    | "month"
-    | "week";
+  | "text"
+  | "number"
+  | "date"
+  | "datetime-local"
+  | "time"
+  | "email"
+  | "tel"
+  | "url"
+  | "password"
+  | "select"
+  | "textarea"
+  | "checkbox"
+  | "radio"
+  | "color"
+  | "file"
+  | "range"
+  | "month"
+  | "week";
   options?: { label: string; value: any }[];
   sortable?: boolean;
   filterable?: boolean;
@@ -122,6 +123,9 @@ type DisplayTableProps = {
   title?: string;
   defaultView?: "table" | "grid";
   filterable?: boolean;
+  clientSideProcessing?: boolean;
+  totalItems?: number;
+  defaultPageSize?: number;
 };
 
 export default function DisplayTable({
@@ -138,6 +142,9 @@ export default function DisplayTable({
   title = "Data Table",
   defaultView = "table",
   filterable = true,
+  clientSideProcessing = true,
+  totalItems = 0,
+  defaultPageSize = 10,
 }: DisplayTableProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -162,12 +169,14 @@ export default function DisplayTable({
 
   const sortConfig = searchParams.get("sort")
     ? {
-        key: searchParams.get("sort") || "",
-        direction: (searchParams.get("direction") as "asc" | "desc") || "asc",
-      }
+      key: searchParams.get("sort") || "",
+      direction: (searchParams.get("direction") as "asc" | "desc") || "asc",
+    }
     : null;
 
   useEffect(() => {
+    if (!clientSideProcessing) return;
+
     let sortedData = [...initialData];
 
     if (sortConfig) {
@@ -189,7 +198,7 @@ export default function DisplayTable({
     }
 
     setData(sortedData);
-  }, [initialData, sortConfig]);
+  }, [initialData, sortConfig, clientSideProcessing]);
 
   const handleSort = (key: string) => {
     const column = columns.find((col) => col.key === key);
@@ -595,7 +604,7 @@ export default function DisplayTable({
     [setSearchParams]
   );
 
-  const filteredData = data.filter((row) => {
+  const filteredData = clientSideProcessing ? data.filter((row) => {
     if (localSearchTerm) {
       const searchFields = columns
         .filter((col) => !col.hidden)
@@ -632,7 +641,7 @@ export default function DisplayTable({
           return true;
       }
     });
-  });
+  }) : data;
 
   useEffect(() => {
     return () => {
@@ -641,6 +650,25 @@ export default function DisplayTable({
       }
     };
   }, []);
+
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const pageSize = parseInt(searchParams.get("limit") || defaultPageSize.toString());
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  const handlePageChange = (page: number) => {
+    setSearchParams((prev: URLSearchParams) => {
+      prev.set("page", page.toString());
+      return prev;
+    });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setSearchParams((prev: URLSearchParams) => {
+      prev.set("limit", size.toString());
+      prev.set("page", "1");
+      return prev;
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -949,6 +977,14 @@ export default function DisplayTable({
           mode={isCreateModalOpen ? "create" : "edit"}
         />
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   );
 }

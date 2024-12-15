@@ -4,6 +4,7 @@ import DisplayTable, { type Column } from "@/components/table/DisplayTable";
 
 interface UserPageProps {
   data: Record<string, any>[];
+  totalItems: number;
 }
 
 const columns: Column[] = [
@@ -75,13 +76,16 @@ const columns: Column[] = [
   },
 ];
 
-export default function UserPage({ data }: UserPageProps) {
+export default function UserPage({ data, totalItems }: UserPageProps) {
   return (
     <DisplayTable
       data={data}
       columns={columns}
       defaultView="table"
       filterable={true}
+      clientSideProcessing={false}
+      totalItems={totalItems}
+      defaultPageSize={10}
       onView={async (data: any) => {
         return (await actions.users_getUser(data)) as any;
       }}
@@ -97,7 +101,7 @@ export default function UserPage({ data }: UserPageProps) {
       onBulkImport={async (data: any[]) => {
         return (await actions.users_bulkUpsert(data)) as any;
       }}
-      title={`Users Management`}
+      title="Users Management"
       actions={[]}
     />
   );

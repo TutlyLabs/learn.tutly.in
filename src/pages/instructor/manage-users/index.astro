@@ -9,22 +9,78 @@ if (user?.role !== "INSTRUCTOR") {
   return Astro.redirect(`/404`);
 }
 
+const searchTerm = Astro.url.searchParams.get("search") || "";
+const sortField = Astro.url.searchParams.get("sort") || "name";
+const sortDirection = Astro.url.searchParams.get("direction") || "asc";
+const filters = Astro.url.searchParams.getAll("filter");
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+const limit = parseInt(Astro.url.searchParams.get("limit") || "10");
+
+const activeFilters = filters.map((f) => {
+  const [column, operator, value] = f.split(":");
+  return { column, operator, value };
+}).filter(f => f.column && f.operator && f.value);
+
+let where: Record<string, any> = {
+  role: {
+    in: ["STUDENT", "MENTOR"]
+  }
+};
+
+if (searchTerm) {
+  where.OR = [
+    { name: { contains: searchTerm, mode: "insensitive" } },
+    { username: { contains: searchTerm, mode: "insensitive" } },
+    { email: { contains: searchTerm, mode: "insensitive" } }
+  ];
+}
+
+activeFilters.forEach(filter => {
+  const { column, operator, value } = filter;
+  
+  if (typeof column === "string") {
+    switch (operator) {
+      case "contains":
+        where[column] = { contains: value, mode: "insensitive" };
+        break;
+      case "equals":
+        where[column] = value;
+        break;
+      case "startsWith":
+        where[column] = { startsWith: value, mode: "insensitive" };
+        break;
+      case "endsWith":
+        where[column] = { endsWith: value, mode: "insensitive" };
+        break;
+      case "greaterThan":
+        where[column] = { gt: Number(value) };
+        break;
+      case "lessThan":
+        where[column] = { lt: Number(value) };
+        break;
+    }
+  }
+});
+
+const totalItems = await db.user.count({ where });
+
 const allUsers = await db.user.findMany({
-  where: {
-    role: {
-      in: ["STUDENT", "MENTOR"],
-    },
+  where,
+  orderBy: {
+    [sortField]: sortDirection
   },
   select: {
     id: true,
     name: true,
-    username: true,
+    username: true, 
     email: true,
     role: true,
   },
+  skip: (page - 1) * limit,
+  take: limit
 });
 ---
 
 <RootLayout title="Users">
-  <UserPage data={allUsers} client:load />
+  <UserPage data={allUsers} totalItems={totalItems} client:load />
 </RootLayout>
