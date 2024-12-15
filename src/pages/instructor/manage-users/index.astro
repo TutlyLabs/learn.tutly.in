@@ -1,0 +1,30 @@
+---
+import db from "@/lib/db";
+import RootLayout from "@/layouts/RootLayout.astro";
+import UserPage from "./_components/UserPage";
+
+const user = Astro.locals.user;
+
+if (user?.role !== "INSTRUCTOR") {
+  return Astro.redirect(`/404`);
+}
+
+const allUsers = await db.user.findMany({
+  where: {
+    role: {
+      in: ["STUDENT", "MENTOR"],
+    },
+  },
+  select: {
+    id: true,
+    name: true,
+    username: true,
+    email: true,
+    role: true,
+  },
+});
+---
+
+<RootLayout title="Users">
+  <UserPage data={allUsers} client:load />
+</RootLayout>

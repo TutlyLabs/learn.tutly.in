@@ -304,7 +304,7 @@ export default function DisplayTable({
         {data.map((row, index) => (
           <div
             key={index}
-            className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow p-4 relative"
+            className="bg-background rounded-lg border shadow-sm hover:shadow-md transition-shadow p-4 relative"
           >
             <div className="absolute top-2 right-2">
               {(actions.length > 0 || onEdit || onDelete || onView) && (
@@ -319,7 +319,7 @@ export default function DisplayTable({
                       <DropdownMenuItem
                         key={action.label}
                         onClick={() => action.onClick(row)}
-                        className={action.variant === "destructive" ? "text-red-500" : ""}
+                        className={action.variant === "destructive" ? "text-destructive" : ""}
                       >
                         <div className="flex items-center">
                           {action.icon}
@@ -365,7 +365,7 @@ export default function DisplayTable({
                         }}
                       >
                         <div className="flex items-center">
-                          <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                          <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                           Delete
                         </div>
                       </DropdownMenuItem>
@@ -380,7 +380,7 @@ export default function DisplayTable({
                 .filter((column) => !column.hidden)
                 .map((column) => (
                   <div key={column.key} className="flex justify-between items-center">
-                    <div className="text-sm font-medium text-gray-500">
+                    <div className="text-sm font-medium text-muted-foreground">
                       {column.label || column.name}:
                     </div>
                     <div className="text-sm">

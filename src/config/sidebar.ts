@@ -79,8 +79,12 @@ const InstructorItems = [
     icon: Users2,
     items: [
       {
-        title: "Users",
-        url: "/instructor/users",
+        title: "Activity",
+        url: "/instructor/activity",
+      },
+      {
+        title: "Manage",
+        url: "/instructor/manage-users",
       },
     ],
   },

@@ -41,6 +41,10 @@ globalThis.pathname = pathname;
 
       const theme = getTheme();
       document.documentElement.classList[theme === "dark" ? "add" : "remove"]("dark");
+
+      document.addEventListener("astro:after-swap", () => {
+        document.documentElement.classList[getTheme() === "dark" ? "add" : "remove"]("dark");
+      });
     </script>
   </head>
   <body>
