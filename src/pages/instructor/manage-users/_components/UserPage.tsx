@@ -69,12 +69,20 @@ const columns: Column[] = [
     hideInTable: true,
     hidden: true,
     validation: {
-      required: true,
+      required: false,
       regex: /^.{6,}$/,
       message: "Password must be at least 6 characters",
     },
   },
 ];
+
+const actionWrapper = (action: any) => {
+  return async (data: any) => {
+    const result = (await action(data)) as any;
+    window.location.reload();
+    return result;
+  };
+};
 
 export default function UserPage({ data, totalItems }: UserPageProps) {
   return (
@@ -89,18 +97,10 @@ export default function UserPage({ data, totalItems }: UserPageProps) {
       onView={async (data: any) => {
         return (await actions.users_getUser(data)) as any;
       }}
-      onCreate={async (data: any) => {
-        return (await actions.users_createUser(data)) as any;
-      }}
-      onEdit={async (data: any) => {
-        return (await actions.users_updateUser(data)) as any;
-      }}
-      onDelete={async (data: any) => {
-        return (await actions.users_deleteUser(data)) as any;
-      }}
-      onBulkImport={async (data: any[]) => {
-        return (await actions.users_bulkUpsert(data)) as any;
-      }}
+      onCreate={actionWrapper(actions.users_createUser)}
+      onEdit={actionWrapper(actions.users_updateUser)}
+      onDelete={actionWrapper(actions.users_deleteUser)}
+      onBulkImport={actionWrapper(actions.users_bulkUpsert)}
       title="Users Management"
       actions={[]}
     />

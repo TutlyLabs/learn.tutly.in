@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 
 import { type Column } from "@/components/table/DisplayTable";
-import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import {toast} from "sonner"
+
 
 interface AdvancedCrudDialogProps {
   isOpen: boolean;
@@ -31,7 +32,6 @@ export function AdvancedCrudDialog({
 }: AdvancedCrudDialogProps) {
   const [formData, setFormData] = useState<Record<string, any>>(initialData || {});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { toast } = useToast();
 
   useEffect(() => {
     setFormData(initialData || {});
@@ -75,6 +75,9 @@ export function AdvancedCrudDialog({
     let isValid = true;
 
     columns.forEach((column) => {
+      if (mode === "edit" && column.hidden) {
+        return;
+      }
       const error = validateField(column, formData[column.key]);
       if (error) {
         newErrors[column.key] = error;
@@ -86,24 +89,19 @@ export function AdvancedCrudDialog({
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {    
     e.preventDefault();
-
     if (mode === "delete") {
       try {
         await onDelete();
         onClose();
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to delete record",
-          variant: "destructive",
-        });
+        toast.error("Failed to delete record")
       }
       return;
     }
-
     if (!validateForm()) {
+      toast.error("Please fill in all required fields")
       return;
     }
 
@@ -111,12 +109,9 @@ export function AdvancedCrudDialog({
       await onSubmit(formData);
       onClose();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to ${mode} record`,
-        variant: "destructive",
-      });
+      toast.error(`Failed to ${mode} record`)
     }
+
   };
 
   const renderField = (column: Column) => {
@@ -174,7 +169,7 @@ export function AdvancedCrudDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           {(mode === "edit" || mode === "create") &&
             columns
-              .filter((column) => !column.hidden)
+              .filter((column) => mode === "create" || !column.hidden)
               .map((column) => (
                 <div key={column.key} className="space-y-2">
                   <Label htmlFor={column.key}>

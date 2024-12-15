@@ -223,10 +223,9 @@ export const updateUser = defineAction({
     name: z.string(),
     username: z.string(),
     email: z.string(),
-    password: z.string(),
     role: z.string(),
   }),
-  async handler({ id, name, username, email, password, role }, { locals }) {
+  async handler({ id, name, username, email, role }, { locals }) {
     try {
       if (!locals.organization) {
         throw new ActionError({
@@ -235,15 +234,12 @@ export const updateUser = defineAction({
         });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       const user = await db.user.update({
         where: { id },
         data: {
           name,
           username,
           email,
-          password: hashedPassword,
           role: role as Role,
         },
       });
@@ -313,7 +309,7 @@ export const bulkUpsert = defineAction({
       name: z.string(),
       username: z.string(),
       email: z.string(),
-      password: z.string(),
+      password: z.string().optional(),
       role: z.string(),
     })
   ),
@@ -335,7 +331,7 @@ export const bulkUpsert = defineAction({
             },
           });
 
-          const hashedPassword = await bcrypt.hash(user.password, 10);
+          const hashedPassword = user.password ? await bcrypt.hash(user.password, 10) : null;
 
           if (existingUser) {
             return db.user.update({
