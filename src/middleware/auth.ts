@@ -1,41 +1,43 @@
-import { AUTH_SESSION_COOKIE, getSession } from "@lib/auth";
 import { defineMiddleware } from "astro:middleware";
 
+import { deleteSessionCookie, validateSessionToken } from "@/lib/auth/session";
+
 export const auth = defineMiddleware(async ({ cookies, locals, url, redirect }, next) => {
-  const sessionId = cookies.get(AUTH_SESSION_COOKIE)?.value;
+  locals.session = null;
+  locals.user = null;
+  locals.organization = null;
+  locals.role = null;
+
+  const token = cookies.get("session")?.value;
   const pathname = url.pathname;
   const publicRoutes = [
-    "/sign-in", 
-    "/sign-up", 
-    "/forgot-password", 
+    "/sign-in",
+    "/sign-up",
+    "/forgot-password",
     "/api/auth/callback/google",
-    "/api/auth/signin/google"
+    "/api/auth/signin/google",
+    "/api/auth/callback/github",
+    "/api/auth/signin/github",
   ];
 
-  if (pathname.startsWith("/api/auth")) return next();
+  if (pathname.startsWith("/api/auth")) {
+    return next();
+  }
 
-  let user;
-  if (sessionId) {
-    const session = await getSession(sessionId);
-    if (session?.user) {
-      user = session.user;
-      // @ts-ignore
+  if (token) {
+    const { session, user } = await validateSessionToken(token);
+
+    if (session && user) {
       locals.session = session;
-      locals.organization = session.user.organization;
-      locals.role = session.user.role;
-      // @ts-ignore
       locals.user = user;
+      locals.organization = user.organization;
+      locals.role = user.role;
 
       if (publicRoutes.includes(pathname)) {
         return redirect("/dashboard");
       }
     } else {
-      cookies.delete(AUTH_SESSION_COOKIE, {
-        httpOnly: true,
-        secure: import.meta.env.PROD,
-        path: "/",
-      });
-      
+      deleteSessionCookie({ cookies } as any);
       if (!publicRoutes.includes(pathname)) {
         return redirect("/sign-in");
       }
@@ -44,16 +46,13 @@ export const auth = defineMiddleware(async ({ cookies, locals, url, redirect }, 
     return redirect("/sign-in");
   }
 
-  if (url.pathname.startsWith("/instructor") && user?.role !== "INSTRUCTOR") {
+  if (pathname.startsWith("/instructor") && locals.user?.role !== "INSTRUCTOR") {
     return new Response("Not Found", { status: 404 });
   }
 
-  if (url.pathname.startsWith("/tutor") && user?.role === "STUDENT") {
+  if (pathname.startsWith("/tutor") && locals.user?.role === "STUDENT") {
     return new Response("Not Found", { status: 404 });
   }
 
-  if (url.pathname.startsWith("/_action")) return next();
-
-  const res = await next();
-  return res;
+  return next();
 });

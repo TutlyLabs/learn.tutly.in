@@ -1,64 +1,99 @@
-import { GitHub, OAuth2Tokens, generateState } from "arctic";
+// @ts-nocheck
+import { GitHub, OAuth2Tokens, generateCodeVerifier, generateState } from "arctic";
 
+import type { OAuthUser } from ".";
 import { envOrThrow } from "../utils";
 
-const ghClientId = envOrThrow("GITHUB_CLIENT_ID");
-const ghClientSecret = envOrThrow("GITHUB_CLIENT_SECRET");
+const githubClientId = envOrThrow("GITHUB_CLIENT_ID");
+const githubClientSecret = envOrThrow("GITHUB_CLIENT_SECRET");
+
+let lastState: { state: string; codeVerifier: string } | null = null;
 
 function github(url?: URL) {
-  return new GitHub(
-    ghClientId,
-    ghClientSecret,
-    url ? new URL("/auth/callback/github", url).toString() : null
-  );
-}
+  url ??= new URL("http://localhost:4321");
+  const callbackUrl = new URL("/api/auth/callback/github", url);
 
-github.default = github();
+  if (import.meta.env.PROD) {
+    callbackUrl.protocol = "https:";
+  }
+
+  return new GitHub(githubClientId, githubClientSecret, callbackUrl.toString());
+}
 
 export function createAuthorizationURL(url?: URL) {
   const state = generateState();
+  const codeVerifier = generateCodeVerifier();
   const scopes = ["user:email", "read:user"];
-  const redirectUrl = github(url).createAuthorizationURL(state, scopes);
+
+  const g = github(url);
+  const redirectUrl = g.createAuthorizationURL(state, codeVerifier, scopes);
+
+  lastState = { state, codeVerifier };
 
   return {
     state,
+    codeVerifier,
     redirectUrl,
   };
 }
 
-export function validateAuthorizationCode(code: string) {
-  return github.default.validateAuthorizationCode(code);
+export function getLastCodeVerifier() {
+  return lastState?.codeVerifier;
+}
+
+export function validateAuthorizationCode(code: string, codeVerifier: string, url?: URL) {
+  const g = github(url);
+  return g.validateAuthorizationCode(code, codeVerifier);
 }
 
 export function refreshAccessToken(refreshToken: string) {
-  return github.default.refreshAccessToken(refreshToken);
+  const g = github();
+  return g.refreshAccessToken(refreshToken);
 }
 
-export function revokeAccessToken(_: string) {}
+export function revokeAccessToken(accessToken: string) {
+  const g = github();
+  return g.revokeToken(accessToken);
+}
 
-const githubUserEndpoint = "https://api.github.com/user";
-export type GitHubUser = {
+type GithubUser = {
+  id: number;
   login: string;
   name: string;
   email: string;
   avatar_url: string;
-  twitter_username: string;
 };
 
-export async function fetchUser(tokens: OAuth2Tokens) {
-  const res = await fetch(githubUserEndpoint, {
+export async function fetchUser(tokens: OAuth2Tokens): Promise<OAuthUser | null> {
+  const res = await fetch("https://api.github.com/user", {
     headers: {
-      Authorization: `token ${tokens.accessToken()}`,
+      Authorization: `Bearer ${tokens.accessToken()}`,
     },
   })
-    .then((res) => res.json())
+    .then((res) => res.json() as Promise<GithubUser>)
     .catch((err) => {
-      console.error(err);
+      console.error("Error fetching Github user:", err);
       return null;
     });
 
   if (!res) return null;
-  console.log(res);
 
-  return res as GitHubUser;
+  const emailRes = await fetch("https://api.github.com/user/emails", {
+    headers: {
+      Authorization: `Bearer ${tokens.accessToken()}`,
+    },
+  })
+    .then(
+      (res) => res.json() as Promise<Array<{ email: string; primary: boolean; verified: boolean }>>
+    )
+    .catch(() => []);
+
+  const primaryEmail = emailRes.find((e) => e.primary)?.email || res.email;
+
+  return {
+    name: res.name || res.login,
+    email: primaryEmail,
+    avatar_url: res.avatar_url,
+    providerAccountId: res.id.toString(),
+  };
 }

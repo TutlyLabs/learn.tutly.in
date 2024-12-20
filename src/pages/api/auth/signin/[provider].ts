@@ -12,25 +12,42 @@ export const GET: APIRoute = async ({ params, url, cookies, redirect }) => {
     return new Response("Invalid provider", { status: 400 });
   }
 
+  cookies.delete(AUTH_STATE_COOKIE, {
+    path: "/",
+    secure: import.meta.env.PROD,
+    sameSite: "lax",
+  });
+
   const provider = providers[providerName];
   const { state, codeVerifier, redirectUrl } = provider.createAuthorizationURL(url);
   const fromUrl = url.searchParams.get("from");
 
-  cookies.set(
-    AUTH_STATE_COOKIE,
-    JSON.stringify({
-      state,
-      codeVerifier,
-      from: fromUrl,
-    }),
-    {
+  const stateData = {
+    state,
+    codeVerifier,
+    from: fromUrl,
+    provider: providerName,
+    timestamp: Date.now(),
+  };
+
+  cookies.set(AUTH_STATE_COOKIE, JSON.stringify(stateData), {
+    secure: import.meta.env.PROD,
+    httpOnly: true,
+    path: "/",
+    maxAge: 60 * 10, // 10 minutes
+    sameSite: "lax",
+    domain: url.hostname === "localhost" ? "localhost" : url.hostname,
+  });
+
+  console.log("[OAuth] Setting state cookie:", {
+    state,
+    provider: providerName,
+    redirectUrl: redirectUrl.toString(),
+    cookieOptions: {
       secure: import.meta.env.PROD,
-      httpOnly: true,
-      maxAge: 60 * 10, // 10 minutes
-      path: "/",
-      sameSite: "lax",
-    }
-  );
+      domain: url.hostname === "localhost" ? "localhost" : url.hostname,
+    },
+  });
 
   return redirect(redirectUrl.toString());
 };

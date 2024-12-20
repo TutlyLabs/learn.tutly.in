@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "astro/zod";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useRouter } from "@/hooks/use-router";
 
-import { ModeToggle } from "../ModeToggle";
-import { useState } from "react";
-
 const signInSchema = z.object({
   email: z.string().min(1, "Username or email is required"),
   password: z.string().min(1, "Password is required"),
@@ -31,6 +29,7 @@ export function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
   const form = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -39,49 +38,48 @@ export function SignIn() {
     },
   });
 
-  const onSubmit = async (values: SignInInput) => {
+  async function onSubmit(data: SignInInput) {
     try {
       setIsLoading(true);
       const response = await fetch("/api/auth/signin/credentials", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        toast.error(data.message || "Authentication failed");
-        return;
+        throw new Error(result.message || "Authentication failed");
       }
 
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error?.message || "An error occurred during sign in");
+      if (result.success) {
+        router.push(result.redirectTo || "/dashboard");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to sign in");
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
-  const handleGoogleSignIn = () => {
-    setIsGoogleLoading(true);
-    window.location.href = "/api/auth/signin/google";
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      window.location.href = "/api/auth/signin/google";
+    } catch (error) {
+      toast.error("Failed to initiate Google sign in");
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center px-4 bg-background">
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
-      <Card className="mx-auto w-full sm:w-[400px] rounded-xl backdrop-blur-md bg-white/50 dark:bg-gray-900/50 shadow-2xl border-2 border-white/30 dark:border-gray-700/50">
-        <CardHeader className="px-6 py-4">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Sign in
-          </CardTitle>
+    <div className="flex min-h-screen items-center justify-center">
+      <Card className="w-full max-w-md backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
+        <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -89,9 +87,9 @@ export function SignIn() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground/80">Username or Email</FormLabel>
+                    <FormLabel className="text-foreground/80">Email or Username</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} disabled={isLoading} autoComplete="username" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -104,7 +102,12 @@ export function SignIn() {
                   <FormItem>
                     <FormLabel className="text-foreground/80">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                        disabled={isLoading}
+                        autoComplete="current-password"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,7 +119,7 @@ export function SignIn() {
                 disabled={isLoading}
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign in
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
           </Form>
@@ -125,10 +128,10 @@ export function SignIn() {
               variant="outline"
               className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30"
               onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading}
+              disabled={isGoogleLoading || isLoading}
             >
               {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign in with Google
+              {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
             </Button>
           </div>
         </CardContent>

@@ -1,10 +1,21 @@
 import { User } from "@prisma/client";
-import { Bell, Download, LogOut, UserIcon, ExternalLink } from "lucide-react";
+import { Bell, Download, ExternalLink, LogOut, UserIcon } from "lucide-react";
 // import {  Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaCaretDown } from "react-icons/fa";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ToastAction } from "@/components/ui/toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -17,17 +28,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface UserMenuProps {
   user: User;
@@ -90,7 +90,7 @@ export function UserMenu({ user }: UserMenuProps) {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     setDeferredPrompt(null);
-    
+
     if (outcome === "accepted") {
       setShowOpenInAppDialog(true);
     }
@@ -107,7 +107,10 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuTrigger asChild>
           <div className="flex items-center bg-muted hover:bg-muted/80 rounded-xl px-2 py-1 cursor-pointer w-16">
             <Avatar className="h-7 w-7 rounded-full cursor-pointer">
-              <AvatarImage src={user.image ?? "/placeholder.jpg"} alt={user.name ?? user.username} />
+              <AvatarImage
+                src={user.image ?? "/placeholder.jpg"}
+                alt={user.name ?? user.username}
+              />
               <AvatarFallback className="rounded-full">
                 {user.name
                   ? user.name

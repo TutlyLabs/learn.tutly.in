@@ -6,97 +6,63 @@ import db from "@/lib/db";
 
 import type { OAuthUser } from ".";
 
-class CredentialsTokens implements OAuth2Tokens {
-  private expiresAt: Date;
-  private tokenId: string;
-
-  constructor(private userId: string) {
-    this.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
-    this.tokenId = `cred_${userId}_${Date.now()}`;
-  }
-
-  accessToken() {
-    return this.userId;
-  }
-  refreshToken() {
-    return this.userId;
-  }
-  accessTokenExpiresAt() {
-    return this.expiresAt;
-  }
-  refreshTokenExpiresAt() {
-    return this.expiresAt;
-  }
-
-  tokenType() {
-    return "Bearer";
-  }
-  accessTokenExpiresInSeconds() {
-    return 86400;
-  }
-  hasRefreshToken() {
-    return true;
-  }
-  isExpired() {
-    return Date.now() > this.expiresAt.getTime();
-  }
-
-  hasScopes() {
-    return true;
-  }
-  scopes() {
-    return ["*"];
-  }
-  idToken() {
-    return this.tokenId;
-  }
-
-  data = {};
-}
-
-async function validateCredentials(email: string, password: string) {
-  const isEmail = email.includes("@");
+async function validateCredentials(identifier: string, password: string) {
+  const isEmail = identifier.includes("@");
+  const query = isEmail
+    ? { email: identifier.toLowerCase() }
+    : { username: identifier.toLowerCase() };
 
   const user = await db.user.findFirst({
-    where: isEmail ? { email: email.toLowerCase() } : { username: email.toUpperCase() },
+    where: query,
     select: {
       id: true,
       email: true,
       username: true,
       password: true,
+      name: true,
+      image: true,
+      role: true,
+      organization: true,
     },
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(isEmail ? "Email not found" : "Username not found");
   }
 
-  if (!user.password || !bcrypt.compareSync(password, user.password)) {
-    throw new Error("Invalid credentials");
+  if (!user.password) {
+    throw new Error("Password not set for this account");
+  }
+
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  if (!isValidPassword) {
+    throw new Error("Invalid password");
   }
 
   return user;
 }
 
-// Main sign in function
 export async function signInWithCredentials(
-  email: string,
+  identifier: string,
   password: string,
   userAgent?: string | null
 ) {
   try {
-    const user = await validateCredentials(email, password);
+    const user = await validateCredentials(identifier, password);
 
-    // Create session
     const session = await db.session.create({
       data: {
         userId: user.id,
         userAgent: userAgent || "Unknown Device",
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 1 day
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
       },
-      select: {
-        id: true,
-        user: true,
+      include: {
+        user: {
+          include: {
+            organization: true,
+            profile: true,
+          },
+        },
       },
     });
 
@@ -124,46 +90,52 @@ export function createAuthorizationURL(url?: URL) {
   };
 }
 
-export async function validateAuthorizationCode(
-  code: string,
-  _codeVerifier?: string
-): Promise<OAuth2Tokens> {
-  if (!code) {
-    throw new Error("Invalid authorization code");
-  }
-
+export async function validateAuthorizationCode(code: string): Promise<OAuth2Tokens> {
   const [email, password] = code.split(":");
   if (!email || !password) {
     throw new Error("Invalid credentials format");
   }
 
   const user = await validateCredentials(email, password);
-  return new CredentialsTokens(user.id);
+
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
+  return {
+    accessToken: () => user.id,
+    refreshToken: () => user.id,
+    accessTokenExpiresAt: () => expiresAt,
+    tokenType: () => "Bearer",
+    accessTokenExpiresInSeconds: () => 86400,
+    hasRefreshToken: () => true,
+    hasScopes: () => true,
+    scopes: () => ["*"],
+    idToken: () => `cred_${user.id}`,
+    data: {},
+  };
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<OAuth2Tokens> {
-  if (!refreshToken) {
-    throw new Error("Refresh token is required");
-  }
-  return new CredentialsTokens(refreshToken);
+  return validateAuthorizationCode(refreshToken);
 }
 
 export async function revokeAccessToken(_token: string): Promise<void> {
-  // No-op for credentials
   return;
 }
 
-export async function fetchUser(tokens: OAuth2Tokens): Promise<OAuthUser | null> {
+export async function fetchUser(tokens: OAuth2Tokens): Promise<OAuthUser> {
   const userId = tokens.accessToken();
   const user = await db.user.findUnique({
     where: { id: userId },
   });
 
-  if (!user) return null;
+  if (!user) {
+    throw new Error("User not found");
+  }
 
   return {
     name: user.name,
     email: user.email || "",
     avatar_url: user.image || "",
+    providerAccountId: userId,
   };
 }

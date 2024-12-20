@@ -25,6 +25,8 @@
     "@hookform/resolvers": "^3.9.1",
     "@lexical/react": "^0.21.0",
     "@monaco-editor/react": "^4.6.0",
+    "@oslojs/crypto": "^1.0.1",
+    "@oslojs/encoding": "^1.1.0",
     "@prisma/client": "^6.0.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.1",

@@ -4,8 +4,8 @@ import { HardDrive, Laptop, Monitor, Smartphone, Tablet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { extractDeviceLabel } from "@/lib/auth";
 import { providers } from "@/lib/auth";
+import { extractDeviceLabel } from "@/lib/device";
 
 type SessionsModalProps = {
   sessions: Session[];

@@ -6,29 +6,28 @@ import { envOrThrow } from "../utils";
 const googleClientId = envOrThrow("GOOGLE_CLIENT_ID");
 const googleClientSecret = envOrThrow("GOOGLE_CLIENT_SECRET");
 
+let lastState: { state: string; codeVerifier: string } | null = null;
+
 function google(url?: URL) {
   url ??= new URL("http://localhost:4321");
-  const httpsUrl = new URL(url.toString());
-  httpsUrl.protocol = "https:";
+  const callbackUrl = new URL("/api/auth/callback/google", url);
 
-  const callbackUrl = import.meta.env.PROD && url.hostname !== "localhost" 
-    ? new URL("/api/auth/callback/google", httpsUrl).toString()
-    : new URL("/api/auth/callback/google", url).toString();
+  if (import.meta.env.PROD) {
+    callbackUrl.protocol = "https:";
+  }
 
-  return new Google(
-    googleClientId,
-    googleClientSecret,
-    callbackUrl
-  );
+  return new Google(googleClientId, googleClientSecret, callbackUrl.toString());
 }
-
-google.default = google();
 
 export function createAuthorizationURL(url?: URL) {
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
-  const scopes = ["email", "profile"];
-  const redirectUrl = google(url).createAuthorizationURL(state, codeVerifier, scopes);
+  const scopes = ["email", "profile", "openid"];
+
+  const g = google(url);
+  const redirectUrl = g.createAuthorizationURL(state, codeVerifier, scopes);
+
+  lastState = { state, codeVerifier };
 
   return {
     state,
@@ -37,42 +36,35 @@ export function createAuthorizationURL(url?: URL) {
   };
 }
 
-export function validateState(receivedState: string, storedState: string) {
-  return receivedState === storedState;
+export function getLastCodeVerifier() {
+  return lastState?.codeVerifier;
 }
 
-export function validateAuthorizationCode(
-  code: string, 
-  codeVerifier: string,
-  url?: URL
-) {
-  const g = url ? google(url) : google.default;
+export function validateAuthorizationCode(code: string, codeVerifier: string, url?: URL) {
+  const g = google(url);
   return g.validateAuthorizationCode(code, codeVerifier);
 }
 
 export function refreshAccessToken(refreshToken: string) {
-  return google.default.refreshAccessToken(refreshToken);
+  const g = google();
+  return g.refreshAccessToken(refreshToken);
 }
 
 export function revokeAccessToken(accessToken: string) {
-  return google.default.revokeToken(accessToken);
+  const g = google();
+  return g.revokeToken(accessToken);
 }
-
-const googleUserEndpoint = "https://www.googleapis.com/oauth2/v1/userinfo";
 
 type GoogleUser = {
   id: string;
   email: string;
   verified_email: boolean;
   name: string;
-  given_name: string;
-  family_name: string;
   picture: string;
-  locale: string;
 };
 
-export async function fetchUser(tokens: OAuth2Tokens) {
-  const res = await fetch(googleUserEndpoint, {
+export async function fetchUser(tokens: OAuth2Tokens): Promise<OAuthUser | null> {
+  const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo", {
     headers: {
       Authorization: `Bearer ${tokens.accessToken()}`,
     },
@@ -89,6 +81,6 @@ export async function fetchUser(tokens: OAuth2Tokens) {
     name: res.name,
     email: res.email,
     avatar_url: res.picture,
-    providerAccountId: res.id
-  } as OAuthUser;
+    providerAccountId: res.id,
+  };
 }

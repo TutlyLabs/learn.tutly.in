@@ -81,19 +81,19 @@ export default function ProfilePage({ userProfile }: { userProfile: User & { pro
           </Card>
         </TabsContent>
 
-        <TabsContent value="social">
+        <TabsContent value="professional">
           <Card className="p-6">
-            <SocialLinks
-              socialLinks={profile?.socialLinks as Record<string, string>}
+            <ProfessionalProfiles
+              professionalProfiles={profile?.professionalProfiles as Record<string, string>}
               onUpdate={handleUpdateProfile}
             />
           </Card>
         </TabsContent>
 
-        <TabsContent value="professional">
+        <TabsContent value="address">
           <Card className="p-6">
-            <ProfessionalProfiles
-              professionalProfiles={profile?.professionalProfiles as Record<string, string>}
+            <Address
+              address={profile?.address as Record<string, string>}
               onUpdate={handleUpdateProfile}
             />
           </Card>
@@ -117,10 +117,10 @@ export default function ProfilePage({ userProfile }: { userProfile: User & { pro
           </Card>
         </TabsContent>
 
-        <TabsContent value="address">
+        <TabsContent value="social">
           <Card className="p-6">
-            <Address
-              address={profile?.address as Record<string, string>}
+            <SocialLinks
+              socialLinks={profile?.socialLinks as Record<string, string>}
               onUpdate={handleUpdateProfile}
             />
           </Card>

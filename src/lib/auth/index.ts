@@ -1,9 +1,10 @@
+import type { User } from "@prisma/client";
 import type { OAuth2Tokens } from "arctic";
 
-import db from "../db.ts";
-import * as credentials from "./credentials.ts";
-import * as github from "./github.ts";
-import * as google from "./google.ts";
+import db from "../db";
+import * as credentials from "./credentials";
+// import * as github from "./github";
+import * as google from "./google";
 
 export type OAuthUser = {
   name: string;
@@ -12,96 +13,44 @@ export type OAuthUser = {
   providerAccountId?: string;
 };
 
-export function tryOr<T, E>(fn: () => T, fallback: E | ((error: unknown) => E)): T | E {
-  try {
-    return fn();
-  } catch (error) {
-    if (typeof fallback === "function") {
-      return (fallback as (error: unknown) => E)(error);
-    }
-    return fallback;
-  }
-}
-
 interface Provider {
-  createAuthorizationURL(
-    url?: URL,
-    codeverifier?: string
-  ): { state: string; codeVerifier?: string; redirectUrl: URL };
-  validateAuthorizationCode(code: string, codeverifier?: string, url?: URL): Promise<OAuth2Tokens>;
+  createAuthorizationURL(url?: URL): {
+    state: string;
+    codeVerifier: string;
+    redirectUrl: URL;
+  };
+  validateAuthorizationCode(code: string, codeVerifier: string, url?: URL): Promise<OAuth2Tokens>;
   refreshAccessToken(refreshToken: string): Promise<OAuth2Tokens>;
-  revokeAccessToken(token: string): void | Promise<void>;
+  revokeAccessToken(token: string): Promise<void>;
   fetchUser(tokens: OAuth2Tokens): Promise<OAuthUser | null>;
+  getLastCodeVerifier?(): string | undefined;
 }
 
-export const AUTH_SESSION_COOKIE = "sessionId";
-export const AUTH_STATE_COOKIE = "authState";
-export type AuthState = { state: string; codeVerifier?: string; from?: string };
+export const AUTH_SESSION_COOKIE = "session";
+export const AUTH_STATE_COOKIE = "oauth_state";
+
+export type AuthState = {
+  state: string;
+  codeVerifier: string;
+  from?: string;
+  provider: ProviderKey;
+  timestamp: number;
+};
 
 export const providers = {
   credentials: credentials as Provider,
-  github: github as Provider,
+  // github: github as Provider,
   google: google as Provider,
 };
+
 export type ProviderKey = keyof typeof providers;
-
-export function extractDeviceLabel(userAgent: string) {
-  let label = ""; // Browser - OS - Device
-  // extract the browser
-  if (userAgent.includes("Edg")) {
-    label += "Edge";
-  } else if (userAgent.includes("Chrome")) {
-    label += "Chrome";
-  } else if (userAgent.includes("Firefox")) {
-    label += "Firefox";
-  } else if (userAgent.includes("Safari")) {
-    label += "Safari";
-  } else if (userAgent.includes("Opera")) {
-    label += "Opera";
-  } else if (userAgent.includes("MSIE") || userAgent.includes("Trident")) {
-    label += "IE";
-  } else {
-    label += "Other";
-  }
-
-  label += " - ";
-
-  // extract the OS
-  if (userAgent.includes("Windows")) {
-    label += "Windows";
-  } else if (userAgent.includes("Macintosh")) {
-    label += "Mac";
-  } else if (userAgent.includes("Linux")) {
-    label += "Linux";
-  } else if (userAgent.includes("Android")) {
-    label += "Android";
-  } else if (userAgent.includes("iOS")) {
-    label += "iOS";
-  } else {
-    label += "Other";
-  }
-
-  label += " - ";
-
-  // extract the device
-  if (userAgent.includes("Mobile")) {
-    label += "Mobile";
-  } else if (userAgent.includes("Tablet")) {
-    label += "Tablet";
-  } else {
-    label += "Desktop";
-  }
-
-  return label || "Unknown Device";
-}
 
 export async function findOrCreateUser(
   provider: ProviderKey,
   userInfo: OAuthUser,
   providerAccountId: string
-) {
+): Promise<User | null> {
   try {
-    // First try to find existing account with this provider
     const existingAccount = await db.account.findFirst({
       where: {
         provider,
@@ -112,32 +61,43 @@ export async function findOrCreateUser(
       },
     });
 
-    // If account exists, return the linked user
     if (existingAccount) {
-      return existingAccount.user;
+      const user = existingAccount.user;
+      return user as User;
     }
 
-    const username = userInfo.email?.split("@")[0]?.toLowerCase() || 
-                    `user_${Math.random().toString(36).slice(2, 7)}`;
-                    
-    return await db.user.create({
+    const username =
+      userInfo.email?.split("@")[0]?.toLowerCase() ||
+      `user_${Math.random().toString(36).slice(2, 7)}`;
+
+    const user = await db.user.create({
       data: {
         email: userInfo.email,
         name: userInfo.name,
         image: userInfo.avatar_url,
-        username: username,
+        username,
         account: {
           create: {
             provider,
             providerAccountId,
-            type: "oauth"
-          }
-        }
+            type: "oauth",
+          },
+        },
       },
     });
+
+    return user as User;
   } catch (error) {
     console.error("Error finding/creating user:", error);
     return null;
+  }
+}
+
+export function tryOr<T, E>(fn: () => T, fallback: E): T | E {
+  try {
+    return fn();
+  } catch {
+    return fallback;
   }
 }
 
@@ -148,7 +108,6 @@ export async function linkAccounts(
   providerAccountId: string
 ) {
   try {
-    // Check if this provider account is already linked to any user
     const existingAccount = await db.account.findFirst({
       where: {
         provider,
@@ -158,7 +117,6 @@ export async function linkAccounts(
 
     if (existingAccount) {
       if (existingAccount.userId === userId) {
-        // Update existing account tokens
         return await db.account.update({
           where: { id: existingAccount.id },
           data: {
@@ -166,16 +124,15 @@ export async function linkAccounts(
             expires_at: tokens.accessTokenExpiresAt()
               ? Math.floor(tokens.accessTokenExpiresAt().getTime() / 1000)
               : null,
-            refresh_token: tryOr(tokens.refreshToken, null),
+            refresh_token: tryOr(() => tokens.refreshToken(), null),
+            token_type: tokens.tokenType(),
           },
         });
       } else {
-        // Provider account already linked to different user
         throw new Error("Provider account already linked to different user");
       }
     }
 
-    // Create new account link
     return await db.account.create({
       data: {
         userId,
@@ -186,8 +143,8 @@ export async function linkAccounts(
         expires_at: tokens.accessTokenExpiresAt()
           ? Math.floor(tokens.accessTokenExpiresAt().getTime() / 1000)
           : null,
-        refresh_token: tryOr(tokens.refreshToken, null),
-        token_type: "Bearer",
+        refresh_token: tryOr(() => tokens.refreshToken(), null),
+        token_type: tokens.tokenType(),
       },
     });
   } catch (error) {
@@ -204,31 +161,36 @@ export async function createSession(
   userAgent?: string
 ) {
   try {
-    // Find or create user
     const user = await findOrCreateUser(provider, userInfo, providerAccountId);
     if (!user) {
       throw new Error("Failed to find or create user");
     }
 
-    // Link accounts (or update tokens)
     await linkAccounts(user.id, provider, tokens, providerAccountId);
 
-    // Create session with 1 day expiry
     const session = await db.session.create({
       data: {
         userId: user.id,
         userAgent: userAgent || "Unknown Device",
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 1 day
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
       },
-      select: {
-        id: true,
+      include: {
+        user: {
+          include: {
+            organization: true,
+            profile: true,
+          },
+        },
       },
     });
 
-    if (!session) return null;
+    if (!session) {
+      throw new Error("Failed to create session");
+    }
+
     return session.id;
   } catch (error) {
-    console.error("Error creating session:", error);
+    console.error("[Auth] Error creating session:", error);
     return null;
   }
 }

@@ -72,9 +72,9 @@ self.addEventListener("push", async function (event) {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  
+
   const notificationId = event.notification.data?.notificationId;
-  
+
   if (!notificationId) {
     console.error("No notification ID found");
     return;
