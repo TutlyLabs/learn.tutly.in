@@ -1,0 +1,11 @@
+---
+import RootLayout from "@layouts/RootLayout.astro";
+import Playground from "./_components/Playground";
+---
+
+<RootLayout title="Playground" hideSidebar hideHeader className="p-1">
+  <div class="w-full h-screen bg-[#1e1e1e]">
+    <Playground client:load />
+  </div>
+</RootLayout>
+

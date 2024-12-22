@@ -9,13 +9,17 @@ import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import { Crisp } from "@/components/Crisp";
 import { RefreshCw } from "lucide-react";
 import { getVersion } from "@/lib/version";
+import { cn } from "@/lib/utils";
 
 interface Props {
   title?: string;
   forceClose?: boolean;
+  hideSidebar?: boolean;
+  hideHeader?: boolean;
+  className?: string;
 }
 
-const { title = "Tutly", forceClose = false } = Astro.props;
+const { title = "Tutly", forceClose = false, hideSidebar = false, hideHeader = false, className = "" } = Astro.props;
 
 const pathname = Astro.url.pathname;
 const user = Astro.locals.user!;
@@ -68,7 +72,7 @@ const version = getVersion();
       user && (
         <div class="flex min-h-screen">
           <div class="relative">
-            <AppSidebar client:load user={user} pathname={pathname} forceClose={forceClose} />
+            {!hideSidebar && <AppSidebar client:load user={user} pathname={pathname} forceClose={forceClose} />}
             <div class="absolute bottom-2 left-0 z-[999] right-0 flex items-center justify-center gap-1.5 px-2 text-xs text-muted-foreground">
               <span>{version}</span>
               <button 
@@ -81,8 +85,8 @@ const version = getVersion();
             </div>
           </div>
           <main class="w-full">
-            <AppHeader client:load user={user} pathname={pathname} />
-            <div class="p-4">
+            {!hideHeader && <AppHeader client:load user={user} pathname={pathname} />}
+            <div class={cn("p-4", className )}>
               <slot />
             </div>
           </main>
