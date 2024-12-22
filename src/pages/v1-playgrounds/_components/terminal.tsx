@@ -2,7 +2,11 @@ import { useState } from "react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Plus, X } from "lucide-react"
 
-export function Terminal() {
+interface TerminalProps {
+  isVisible?: boolean;
+}
+
+export function Terminal({ isVisible = true }: TerminalProps) {
   const [terminals, setTerminals] = useState([
     { id: "1", name: "Terminal 1" }
   ])
@@ -20,6 +24,8 @@ export function Terminal() {
       setActiveTerminal(terminals[0]?.id || "1")
     }
   }
+
+  if (!isVisible) return null;
 
   return (
     <div className="h-full bg-[#1e1e1e] border-t border-[#333333]">

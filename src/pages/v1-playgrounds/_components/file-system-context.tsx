@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import type { FileSystemContextType, FileSystemItem, FileType } from '../_components/types'
 import type { VSCodeState } from "./state";
 
@@ -10,6 +10,18 @@ interface FileSystemProviderProps {
 }
 
 export function FileSystemProvider({ children, initialState }: FileSystemProviderProps) {
+  // Helper function to find a file by path - Move this before state initialization
+  const findFileByPath = (items: FileSystemItem[], path: string): FileSystemItem | null => {
+    for (const item of items) {
+      if (item.path === path) return item;
+      if (item.children) {
+        const found = findFileByPath(item.children, path);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   const convertInitialFiles = () => {
     const fileSystem: FileSystemItem[] = [];
     const folderMap = new Map<string, FileSystemItem>();
@@ -68,8 +80,28 @@ export function FileSystemProvider({ children, initialState }: FileSystemProvide
     return fileSystem;
   };
 
-  const [files, setFiles] = useState<FileSystemItem[]>(convertInitialFiles());
-  const [currentFile, setCurrentFile] = useState<FileSystemItem | undefined>();
+  const initialFiles = convertInitialFiles();
+
+  const [files, setFiles] = useState<FileSystemItem[]>(initialFiles);
+  const [openFiles, setOpenFiles] = useState<FileSystemItem[]>(() => {
+    // Open default files initially
+    return initialState.config.defaultOpenFiles
+      .map(path => {
+        const file = findFileByPath(initialFiles, path);
+        return file || null;
+      })
+      .filter((file): file is FileSystemItem => file !== null);
+  });
+  const [currentFile, setCurrentFile] = useState<FileSystemItem | undefined>(
+    openFiles.length > 0 ? openFiles[0] : undefined
+  );
+
+  // Set first file as current if exists
+  useEffect(() => {
+    if (openFiles.length > 0 && !currentFile) {
+      setCurrentFile(openFiles[0]);
+    }
+  }, [openFiles, currentFile]);
 
   const addItem = (parentPath: string, name: string, type: FileType): FileSystemItem => {
     const newItem: FileSystemItem = {
@@ -183,6 +215,98 @@ export function FileSystemProvider({ children, initialState }: FileSystemProvide
     })
   }
 
+  const openFile = (file: FileSystemItem) => {
+    if (!openFiles.find(f => f.path === file.path)) {
+      setOpenFiles(prev => [...prev, file]);
+    }
+    setCurrentFile(file);
+  };
+
+  const closeFile = (path: string) => {
+    setOpenFiles(prev => {
+      const newFiles = prev.filter(f => f.path !== path);
+      // If closing current file, switch to last open file
+      if (currentFile?.path === path) {
+        setCurrentFile(newFiles[newFiles.length - 1]);
+      }
+      return newFiles;
+    });
+  };
+
+  const reorderFiles = (newOrder: FileSystemItem[]) => {
+    setOpenFiles(newOrder)
+  }
+
+  const moveFile = (sourcePath: string, targetFolderPath: string) => {
+    setFiles(prevFiles => {
+      const newFiles = [...prevFiles];
+      
+      let fileToMove: FileSystemItem | null = null;
+      let fileParentChildren: FileSystemItem[] | undefined;
+      
+      const findFile = (items: FileSystemItem[], parent?: FileSystemItem) => {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (!item) continue;
+          
+          if (item.path === sourcePath) {
+            fileToMove = item;
+            fileParentChildren = parent ? parent.children : newFiles;
+            return true;
+          }
+          if (item.children) {
+            if (findFile(item.children, item)) return true;
+          }
+        }
+        return false;
+      };
+      
+      findFile(newFiles);
+      
+      if (!fileToMove || !fileParentChildren) return prevFiles;
+      
+      const fileIndex = fileParentChildren.findIndex(f => f.path === sourcePath);
+      if (fileIndex === -1) return prevFiles;
+      fileParentChildren.splice(fileIndex, 1);
+      
+      const updatePaths = (item: FileSystemItem, newParentPath: string) => {
+        const newPath = newParentPath ? `${newParentPath}/${item.name}` : item.name;
+        item.path = newPath;
+        if (item.children) {
+          item.children.forEach(child => updatePaths(child, newPath));
+        }
+        return item;
+      };
+      
+      const updatedFile = updatePaths(fileToMove, targetFolderPath);
+      
+      // If target is empty string (root), add to root level
+      if (targetFolderPath === "") {
+        newFiles.push(updatedFile);
+        return newFiles;
+      }
+      
+      // Otherwise add to target folder
+      const addToTarget = (items: FileSystemItem[]) => {
+        for (const item of items) {
+          if (item.path === targetFolderPath && item.type === "folder") {
+            item.children = item.children || [];
+            item.children.push(updatedFile);
+            return true;
+          }
+          if (item.children && addToTarget(item.children)) {
+            return true;
+          }
+        }
+        return false;
+      };
+      
+      addToTarget(newFiles);
+      
+      return newFiles;
+    });
+  };
+
   return (
     <FileSystemContext.Provider 
       value={{ 
@@ -193,7 +317,12 @@ export function FileSystemProvider({ children, initialState }: FileSystemProvide
         updateFileContent,
         renameItem,
         currentFile,
-        setCurrentFile
+        setCurrentFile,
+        openFiles,
+        openFile,
+        closeFile,
+        reorderFiles,
+        moveFile,
       }}
     >
       {children}

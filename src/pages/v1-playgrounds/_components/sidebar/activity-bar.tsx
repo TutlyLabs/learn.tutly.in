@@ -1,10 +1,11 @@
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
-import { Files, Search, GitBranch, Bug, ExpandIcon, Settings } from "lucide-react";
+import { Files, Search, GitBranch, Bug, ExpandIcon, Settings, Info } from "lucide-react";
 import { Explorer } from "./explorer";
 import { cn } from "@/lib/utils";
-import type { VSCodeState } from "./state";
+import type { VSCodeState } from "../state";
+import { Instructions } from "./instructions";
+import { SearchView } from "./search-view";
 
-// First, define the sidebarItemMap
 const sidebarItemMap = {
   "explorer": {
     name: "Explorer",
@@ -28,7 +29,7 @@ const sidebarItemMap = {
   },
   "instructions": {
     name: "Instructions",
-    icon: Files,
+    icon: Info,
   },
   "settings": {
     name: "Settings",
@@ -45,6 +46,8 @@ export function ActivityBar({ config }: ActivityBarProps) {
     value: item,
     icon: sidebarItemMap[item].icon,
     content: item === "explorer" ? Explorer : 
+            item === "instructions" ? Instructions :
+            item === "search" ? SearchView :
             () => <div className="w-full h-full border-r border-[#333333] bg-[#252526] p-4">{sidebarItemMap[item].name} Content</div>
   }));
 

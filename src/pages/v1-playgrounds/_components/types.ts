@@ -20,6 +20,11 @@ export interface FileSystemContextType {
   renameItem: (path: string, newName: string) => void
   currentFile: FileSystemItem | undefined
   setCurrentFile: (file: FileSystemItem | undefined) => void
+  openFiles: FileSystemItem[]
+  openFile: (file: FileSystemItem) => void
+  closeFile: (path: string) => void
+  reorderFiles: (newOrder: FileSystemItem[]) => void
+  moveFile: (sourcePath: string, targetFolderPath: string) => void
 }
 
 export interface VSCodeState {
@@ -30,7 +35,7 @@ export interface VSCodeState {
     runButton: string;
     browserLink: string;
     view: string[];
-    statusBarItems: string[];
+    statusBarItems: ("instructions" | "challenges" | "discussions" | "explorer" | "search" | "settings")[];
     orgIcon: {
       name: string;
       icon: any;

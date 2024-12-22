@@ -2,12 +2,18 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, ExternalLink, Terminal, Lock } from "lucide-react"
 
-export function Preview() {
+interface PreviewProps {
+  isVisible?: boolean;
+}
+
+export function Preview({ isVisible = true }: PreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [isConsoleVisible, setIsConsoleVisible] = useState(true)
   const [currentUrl, setCurrentUrl] = useState("https://google.com")
   const [firstInitOnloadFired, setFirstInitOnloadFired] = useState(false)
   const [errored, setErrored] = useState(false)
+
+  if (!isVisible) return null;
 
   useEffect(() => {
     const iframe = iframeRef.current

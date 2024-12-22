@@ -1,6 +1,6 @@
 import { FileTree } from "./file-tree";
 import { ChevronDown, Plus, FolderPlus } from "lucide-react";
-import { useFileSystem } from "./file-system-context";
+import { useFileSystem } from "../file-system-context";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 

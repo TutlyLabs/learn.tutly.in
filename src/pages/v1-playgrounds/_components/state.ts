@@ -1,4 +1,3 @@
-import { Files, Search, Settings } from 'lucide-react';
 import { FaTerminal } from 'react-icons/fa';
 export interface FileData {
   content: string;
@@ -7,29 +6,23 @@ export interface FileData {
 
 export interface VSCodeState {
   files: Record<string, FileData>;
-  config: Record<string, any>;
-}
-
-const sidebarItemMap = {
-  instructions: {
-    name: 'Instructions',
-    icon: Files,
-  },
-  explorer: {
-    name: 'Explorer',
-    icon: Files,
-  },
-  search: {
-    name: 'Search',
-    icon: Search,
-  },
-  settings: {
-    name: 'Settings',
-    icon: Settings,
+  config: {
+    terminals: string[];
+    defaultOpenFiles: string[];
+    runButton: string;
+    browserLink: string;
+    view: string[];
+    statusBarItems: ("instructions" | "explorer" | "search" | "settings")[];
+    orgIcon: {
+      name: string;
+      icon: any;
+      href: string;
+    };
+    showPreview: boolean;
+    showTerminal: boolean;
+    previewUrl: string;
   }
 }
-
-export type SideBarItemType = keyof typeof sidebarItemMap;
 
 export const initialState: VSCodeState = {
   files: {
@@ -64,7 +57,7 @@ export const initialState: VSCodeState = {
       'cd server && yarn && yarn dev',
       'echo "We\'re ready"',
     ],
-    tabs: ['README.md'],
+    defaultOpenFiles: ['/file.ts', "/folder1/file1.txt"],
     runButton: 'clear && node $$file',
     browserLink: 'https://wikipedia.org',
     view: ['terminal', 'editor', 'browser'],
@@ -75,8 +68,8 @@ export const initialState: VSCodeState = {
       href: "https://tutly.ai"
     },
     previewUrl: "https://google.com",
-    showPreview: true,
-    showTerminal: true,
+    showPreview: false,
+    showTerminal: false,
   }
 };
 
