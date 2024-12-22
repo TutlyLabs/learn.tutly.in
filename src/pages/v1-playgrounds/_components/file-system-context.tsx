@@ -1,11 +1,75 @@
 import { createContext, useContext, useState } from 'react'
 import type { FileSystemContextType, FileSystemItem, FileType } from '../_components/types'
+import type { VSCodeState } from "./state";
 
 const FileSystemContext = createContext<FileSystemContextType | undefined>(undefined)
 
-export function FileSystemProvider({ children }: { children: React.ReactNode }) {
-  const [files, setFiles] = useState<FileSystemItem[]>([])
-  const [currentFile, setCurrentFile] = useState<FileSystemItem | undefined>()
+interface FileSystemProviderProps {
+  children: React.ReactNode;
+  initialState: VSCodeState;
+}
+
+export function FileSystemProvider({ children, initialState }: FileSystemProviderProps) {
+  const convertInitialFiles = () => {
+    const fileSystem: FileSystemItem[] = [];
+    const folderMap = new Map<string, FileSystemItem>();
+
+    const ensureFolder = (path: string): FileSystemItem => {
+      if (folderMap.has(path)) {
+        return folderMap.get(path)!;
+      }
+
+      const parts = path.split("/").filter(Boolean);
+      const name = parts[parts.length - 1]!;
+      const parentPath = "/" + parts.slice(0, -1).join("/");
+      
+      const folder: FileSystemItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        name,
+        type: "folder",
+        path,
+        children: []
+      };
+
+      folderMap.set(path, folder);
+
+      if (parts.length > 1) {
+        const parent = ensureFolder(parentPath);
+        parent.children?.push(folder);
+      } else {
+        fileSystem.push(folder);
+      }
+
+      return folder;
+    };
+
+    // Process each file
+    Object.entries(initialState.files).forEach(([path, data]) => {
+      const parts = path.split("/").filter(Boolean);
+      const fileName = parts[parts.length - 1]!;
+      const parentPath = parts.length > 1 ? "/" + parts.slice(0, -1).join("/") : "";
+
+      const file: FileSystemItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: fileName,
+        type: "file",
+        path,
+        content: data.content
+      };
+
+      if (parentPath) {
+        const parent = ensureFolder(parentPath);
+        parent.children?.push(file);
+      } else {
+        fileSystem.push(file);
+      }
+    });
+
+    return fileSystem;
+  };
+
+  const [files, setFiles] = useState<FileSystemItem[]>(convertInitialFiles());
+  const [currentFile, setCurrentFile] = useState<FileSystemItem | undefined>();
 
   const addItem = (parentPath: string, name: string, type: FileType): FileSystemItem => {
     const newItem: FileSystemItem = {

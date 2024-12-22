@@ -1,3 +1,5 @@
+import { FileData } from "./state"
+
 export type FileType = "file" | "folder"
 
 export interface FileSystemItem {
@@ -18,5 +20,25 @@ export interface FileSystemContextType {
   renameItem: (path: string, newName: string) => void
   currentFile: FileSystemItem | undefined
   setCurrentFile: (file: FileSystemItem | undefined) => void
+}
+
+export interface VSCodeState {
+  files: Record<string, FileData>;
+  config: {
+    terminals: string[];
+    tabs: string[];
+    runButton: string;
+    browserLink: string;
+    view: string[];
+    statusBarItems: string[];
+    orgIcon: {
+      name: string;
+      icon: any;
+      href: string;
+    };
+    showPreview: boolean;
+    showTerminal: boolean;
+    previewUrl: string;
+  }
 }
 

@@ -1,11 +1,14 @@
 ---
 import RootLayout from "@layouts/RootLayout.astro";
 import Playground from "./_components/Playground";
+import { fetchPlaygroundState } from "./_components/state";
+
+const initialState = await fetchPlaygroundState();
 ---
 
 <RootLayout title="Playground" hideSidebar hideHeader className="p-1">
   <div class="w-full h-screen bg-[#1e1e1e]">
-    <Playground client:load />
+    <Playground initialState={initialState} client:load/>
   </div>
 </RootLayout>
 

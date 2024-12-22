@@ -1,51 +1,67 @@
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
-import { Files, Search, GitBranch, Bug, ExpandIcon } from "lucide-react";
+import { Files, Search, GitBranch, Bug, ExpandIcon, Settings } from "lucide-react";
 import { Explorer } from "./explorer";
 import { cn } from "@/lib/utils";
+import type { VSCodeState } from "./state";
 
-const activityItems = [
-  {
-    value: "explorer",
+// First, define the sidebarItemMap
+const sidebarItemMap = {
+  "explorer": {
+    name: "Explorer",
     icon: Files,
-    content: Explorer,
   },
-  {
-    value: "search",
+  "search": {
+    name: "Search",
     icon: Search,
-    content: () => <div className="w-64 h-full border-r border-[#333333] bg-[#252526] p-4">Search Content</div>,
   },
-  {
-    value: "source-control",
+  "source-control": {
+    name: "Source Control",
     icon: GitBranch,
-    content: () => <div className="w-64 h-full border-r border-[#333333] bg-[#252526] p-4">Source Control Content</div>,
   },
-  {
-    value: "debug",
+  "debug": {
+    name: "Debug",
     icon: Bug,
-    content: () => <div className="w-64 h-full border-r border-[#333333] bg-[#252526] p-4">Debug Content</div>,
   },
-  {
-    value: "extensions",
+  "extensions": {
+    name: "Extensions",
     icon: ExpandIcon,
-    content: () => <div className="w-64 h-full border-r border-[#333333] bg-[#252526] p-4">Extensions Content</div>,
   },
-];
+  "instructions": {
+    name: "Instructions",
+    icon: Files,
+  },
+  "settings": {
+    name: "Settings",
+    icon: Settings,
+  }
+} as const;
 
-export function ActivityBar() {
+interface ActivityBarProps {
+  config: VSCodeState["config"];
+}
+
+export function ActivityBar({ config }: ActivityBarProps) {
+  const activityItems = config.statusBarItems.map((item: keyof typeof sidebarItemMap) => ({
+    value: item,
+    icon: sidebarItemMap[item].icon,
+    content: item === "explorer" ? Explorer : 
+            () => <div className="w-full h-full border-r border-[#333333] bg-[#252526] p-4">{sidebarItemMap[item].name} Content</div>
+  }));
+
   return (
-    <Tabs defaultValue="explorer" orientation="vertical" className="flex h-full">
-      <TabsList className="flex h-full w-12 flex-col items-center justify-start gap-0 bg-[#333333] py-2 rounded-none border-r border-[#252526]">
-        {activityItems.map((item) => (
+    <Tabs defaultValue="explorer" orientation="vertical" className="flex h-full p-0 m-0">
+      <TabsList className="flex h-full w-12 flex-col items-center justify-start gap-0 bg-[#333333] pb-2 rounded-none border-r border-[#252526] p-0 m-0">
+        {activityItems.map((item: any) => (
           <ActivityBarItem
             key={item.value}
             value={item.value}
             icon={item.icon}
-            className="w-12 h-12 rounded-none hover:bg-[#2a2d2e]"
+            className="w-12 h-12 rounded-none hover:bg-[#2a2d2e] p-0 m-0"
           />
         ))}
       </TabsList>
-      {activityItems.map((item) => (
-        <TabsContent key={item.value} value={item.value} className="h-full m-0">
+      {activityItems.map((item: any) => (
+        <TabsContent key={item.value} value={item.value} className="h-full w-full m-0 p-0">
           <item.content />
         </TabsContent>
       ))}

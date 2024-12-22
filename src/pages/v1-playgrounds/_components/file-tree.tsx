@@ -38,12 +38,21 @@ function getFileIcon(fileName: string) {
 }
 
 function FileTreeItem({ item, level = 0 }: FileTreeItemProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isAddingFile, setIsAddingFile] = useState(false)
-  const [isAddingFolder, setIsAddingFolder] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [newItemName, setNewItemName] = useState('')
-  const { setCurrentFile, addFile, addFolder, renameItem } = useFileSystem()
+  const { currentFile, setCurrentFile } = useFileSystem();
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (currentFile) {
+      return currentFile.path.startsWith(item.path);
+    }
+    return false;
+  });
+  const [isAddingFile, setIsAddingFile] = useState(false);
+  const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+
+  const isActive = currentFile?.path === item.path;
+
+  const { addFile, addFolder, renameItem } = useFileSystem();
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -103,24 +112,30 @@ function FileTreeItem({ item, level = 0 }: FileTreeItemProps) {
       <div
         className={cn(
           "flex items-center py-[2px] hover:bg-[#2a2d2e] cursor-pointer text-[13px] group relative",
-          item.type === "file" && "pl-7",
-          "mx-0.5 rounded-[3px]"
+          "mx-0.5 rounded-[3px]",
+          isActive && "bg-[#37373d]"
         )}
-        style={{ paddingLeft: `${level * 12}px` }}
+        style={{ 
+          paddingLeft: `${
+            level * 8 +
+            (item.type === "file" ? 20 : 4)
+          }px` 
+        }}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
       >
         {item.type === "folder" && (
           <ChevronRight
             className={cn(
-              "w-[18px] h-[18px] p-0.5 text-[#6b6b6b] transition-transform duration-150",
+              "w-[18px] h-[18px] p-0.5 text-[#6b6b6b] transition-transform duration-150 shrink-0",
               isExpanded && "rotate-90"
             )}
           />
         )}
         <FileIcon className={cn(
-          "w-[16px] h-[16px] mr-1.5",
-          item.type === "folder" ? "text-[#e3a53c]" : "text-[#519aba]"
+          "w-[16px] h-[16px] mr-1.5 shrink-0",
+          item.type === "folder" ? "text-[#e3a53c]" : "text-[#519aba]",
+          isActive && "text-white"
         )} />
         
         {isEditing ? (
@@ -160,8 +175,13 @@ function FileTreeItem({ item, level = 0 }: FileTreeItemProps) {
       {(isAddingFile || isAddingFolder) && (
         <form 
           onSubmit={handleNewItemSubmit} 
-          className="pl-7" 
-          style={{ paddingLeft: `${(level + 1) * 12}px` }}
+          className="flex items-center" 
+          style={{ 
+            paddingLeft: `${
+              level * 8 +
+              (item.type === "folder" ? 28 : 24)
+            }px` 
+          }}
         >
           <Input
             type="text"
@@ -189,14 +209,17 @@ function FileTreeItem({ item, level = 0 }: FileTreeItemProps) {
 }
 
 export function FileTree() {
-  const { files } = useFileSystem()
+  const { files } = useFileSystem();
   
   return (
     <div className="pt-1 select-none">
       {files.map((file: FileSystemItem) => (
-        <FileTreeItem key={file.id} item={file} />
+        <FileTreeItem 
+          key={file.id} 
+          item={file}
+        />
       ))}
     </div>
-  )
+  );
 }
 

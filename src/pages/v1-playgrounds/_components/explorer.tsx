@@ -34,7 +34,7 @@ export function Explorer() {
   };
 
   return (
-    <div className="w-64 h-full flex-shrink-0 border-r border-[#333333] bg-[#252526]">
+    <div className="w-full h-full flex-shrink-0 border-r border-[#333333] bg-[#252526]">
       <div className="flex flex-col h-full">
         <div className="py-1.5 select-none">
           <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-[#bbbbbb] font-semibold px-4 group">
