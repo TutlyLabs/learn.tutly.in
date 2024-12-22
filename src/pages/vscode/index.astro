@@ -1,0 +1,59 @@
+---
+import { initialState } from "@/lib/vscode/state";
+---
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+
+		<!-- Mobile tweaks -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Code">
+		<link rel="apple-touch-icon" href="/vscode/code-192.png" />
+
+		<!-- Disable pinch zooming -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+		<!-- Workbench Icon/Manifest/CSS -->
+		<link rel="icon" href="/vscode/favicon.ico" type="image/x-icon" />
+		<link rel="manifest" href="/vscode/manifest.json">
+		<link data-name="vs/workbench/workbench.web.main" rel="stylesheet" href="/vscode/out/vs/workbench/workbench.web.main.css">
+
+	</head>
+
+	<body aria-label="">
+	</body>
+
+	<!-- Inject state before VS Code loads -->
+	<script is:inline define:vars={{ state: initialState }}>
+		window.vsCodeState = state;
+	</script>
+
+	<!-- VS Code scripts -->
+	<script is:inline src="/vscode/out/vs/loader.js"></script>
+	<script is:inline src="/vscode/out/vs/webPackagePaths.js"></script>
+	<script is:inline>
+		// @ts-ignore
+		Object.keys(self.webPackagePaths).forEach(function (key) {
+			// @ts-ignore
+			self.webPackagePaths[key] = `${window.location.origin}/vscode/node_modules/${key}/${self.webPackagePaths[key]}`;
+		});
+		// @ts-ignore
+		require.config({
+			baseUrl: `${window.location.origin}/vscode/out`,
+			recordStats: true,
+			trustedTypesPolicy: window.trustedTypes?.createPolicy("amdLoader", {
+				createScriptURL(value) {
+					return value;
+				}
+			}),
+			// @ts-ignore
+			paths: self.webPackagePaths
+		});
+	</script>
+	<!-- <script is:inline src="/vscode/out/nls.messages.js"></script> -->
+	<!-- <script is:inline src="/vscode/out/vs/workbench/workbench.web.main.js"></script> -->
+	<script is:inline src="/vscode/out/vs/code/browser/workbench/workbench.js"></script>
+</html> 

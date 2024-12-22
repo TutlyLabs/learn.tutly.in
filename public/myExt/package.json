@@ -1,0 +1,94 @@
+{
+  "name": "vscode-web-playground",
+  "description": "Custom VS Code Web Playground",
+  "version": "0.0.13",
+  "publisher": "vscode",
+  "license": "MIT",
+  "enabledApiProposals": [
+    "fileSearchProvider",
+    "textSearchProvider"
+  ],
+  "private": true,
+  "activationEvents": [
+    "onFileSystem:memfs",
+    "*"
+  ],
+  "browser": "./extension",
+  "engines": {
+    "vscode": "^1.48.0"
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "custom-sidebar",
+          "title": "Custom Sidebar",
+          "icon": "$(files)"
+        }
+      ]
+    },
+    "views": {
+      "custom-sidebar": [
+        {
+          "id": "explorer",
+          "name": "Explorer",
+          "icon": "$(files)",
+          "contextualTitle": "File Explorer"
+        },
+        {
+          "id": "search",
+          "name": "Search",
+          "icon": "$(search)",
+          "contextualTitle": "Search"
+        },
+        {
+          "id": "instructions",
+          "name": "Instructions",
+          "icon": "$(book)",
+          "contextualTitle": "Instructions"
+        },
+        {
+          "id": "settings",
+          "name": "Settings",
+          "icon": "$(settings-gear)",
+          "contextualTitle": "Settings"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "memfs.workspaceInit",
+        "title": "Setup Workspace",
+        "category": "MemFS"
+      },
+      {
+        "command": "memfs.init",
+        "title": "Create Files",
+        "category": "MemFS"
+      },
+      {
+        "command": "memfs.reset",
+        "title": "Delete Files",
+        "category": "MemFS"
+      }
+    ],
+    "configuration": {
+      "title": "Custom VS Code",
+      "properties": {
+        "customVSCode.sidebarItems": {
+          "type": "array",
+          "default": ["explorer", "search", "instructions", "settings"],
+          "description": "Sidebar items to show"
+        },
+        "customVSCode.orgIcon": {
+          "type": "object",
+          "default": {
+            "name": "Tutly",
+            "href": "https://tutly.ai"
+          },
+          "description": "Organization icon configuration"
+        }
+      }
+    }
+  }
+}

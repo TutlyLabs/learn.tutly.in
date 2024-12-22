@@ -3,16 +3,17 @@
   "type": "module",
   "version": "2.0.0.beta.003",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "npm run setup && astro dev",
     "start": "astro dev",
-    "build": "astro check && prisma generate && astro build",
+    "build": "npm run setup && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "setup": "node scripts/setup-vscode.js"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -84,6 +85,7 @@
     "tailwindcss": "^3.4.14",
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.4",
+    "vscode-web": "^1.91.1",
     "web-push": "^3.6.7",
     "workbox-core": "^7.3.0",
     "workbox-expiration": "^7.3.0",
@@ -114,6 +116,7 @@
     "eslint-plugin-astro": "^0.31.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "fs-extra": "^11.2.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "postcss": "^8.4.47",

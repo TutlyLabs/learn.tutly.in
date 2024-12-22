@@ -1,0 +1,63 @@
+{
+  "productConfiguration": {
+    "nameShort": "VSCode Web Sample",
+    "nameLong": "VSCode Web sample",
+    "applicationName": "code-web-sample",
+    "dataFolderName": ".vscode-web-sample",
+    "version": "1.75.0",
+    "extensionEnabledApiProposals": {
+      "vscode.vscode-web-playground": [
+        "fileSearchProvider",
+        "textSearchProvider"
+      ]
+    },
+    "enableTelemetry": false,
+    "extensionsGallery": null,
+    "extensionAllowedProposedApi": [],
+    "windowIndicator": null,
+    "enableExtensions": false,
+    "workbench": {
+      "activityBar": {
+        "visible": false
+      },
+      "statusBar": {
+        "visible": false
+      },
+      "sideBar": {
+        "enabled": true,
+        "visible": true
+      },
+      "editor": {
+        "showTabs": true,
+        "enablePreview": true
+      },
+      "parts": {
+        "activitybar": false,
+        "titlebar": false,
+        "panel": true,
+        "sidebar": true,
+        "editor": true,
+        "statusbar": false
+      }
+    },
+    "configurationDefaults": {
+      "workbench.colorTheme": "Default Dark Modern",
+      "workbench.startupEditor": "none",
+      "workbench.statusBar.visible": false,
+      "workbench.activityBar.visible": false,
+      "editor.minimap.enabled": false,
+      "breadcrumbs.enabled": false,
+      "workbench.layoutControl.enabled": false
+    }
+  },
+  "folderUri": {
+    "scheme": "memfs",
+    "path": "/sample-folder"
+  },
+  "additionalBuiltinExtensions": [
+    {
+      "scheme": "http",
+      "path": "/myExt"
+    }
+  ]
+}

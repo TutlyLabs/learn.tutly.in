@@ -59,6 +59,12 @@ export default defineConfig({
     },
     define: {
       'APP_VERSION': JSON.stringify(process.env.npm_package_version)
+    },
+    server: {
+      fs: {
+        // Allow serving files from node_modules
+        allow: ["../node_modules"]
+      }
     }
   },
 });

@@ -18,6 +18,7 @@ export const auth = defineMiddleware(async ({ cookies, locals, url, redirect }, 
     "/api/auth/signin/google",
     "/api/auth/callback/github",
     "/api/auth/signin/github",
+    "/vscode"
   ];
 
   if (pathname.startsWith("/api/auth")) {
