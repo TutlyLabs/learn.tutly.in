@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronRight, Plus, FolderPlus, Pencil, Copy, Trash } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFileSystem } from '../file-system-context'
@@ -31,6 +31,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { socket } from '@/lib/socket'
 
 interface FileTreeItemProps {
   item: FileSystemItem
@@ -349,7 +350,7 @@ function DragOverlayItem({ item }: { item: FileSystemItem }) {
 }
 
 export function FileTree() {
-  const { files, moveFile } = useFileSystem();
+  const { files, moveFile, setFiles } = useFileSystem();
   const [draggedItem, setDraggedItem] = useState<FileSystemItem | null>(null);
 
   const sensors = useSensors(
@@ -359,6 +360,16 @@ export function FileTree() {
       },
     })
   );
+
+  useEffect(() => {
+    socket.on("file-tree", (data: FileSystemItem[]) => {
+      setFiles(data);
+    });
+
+    return () => {
+      socket.off("file-tree");
+    };
+  }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
     const item = event.active.data.current as FileSystemItem;

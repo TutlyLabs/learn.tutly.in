@@ -90,6 +90,7 @@ const ContextMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.CheckboxItem>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.CheckboxItem>
 >(({ className, children, checked, ...props }, ref) => (
+  // @ts-ignore
   <ContextMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(

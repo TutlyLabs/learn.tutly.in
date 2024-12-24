@@ -31,9 +31,9 @@ COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/prisma ./prisma
 
 ENV HOST=0.0.0.0
-ENV PORT=4321
+ENV PORT=3000
 ENV NODE_ENV=production
 
-EXPOSE 4321
+EXPOSE 3000
 
 CMD ["sh", "-c", "node ./dist/server/entry.mjs"]

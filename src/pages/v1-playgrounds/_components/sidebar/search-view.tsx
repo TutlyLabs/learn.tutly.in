@@ -123,7 +123,7 @@ export function SearchView() {
     setIsSearching(false)
   }
 
-  const handleMatchClick = (result: SearchResult, match: SearchResult["matches"][0]) => {
+  const handleMatchClick = (result: SearchResult, _match: SearchResult["matches"][0]) => {
     const file = flattenFiles(files).find(f => f.path === result.file.path)
     if (file) {
       openFile(file)

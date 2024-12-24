@@ -14,6 +14,9 @@ export default defineConfig({
   experimental: {
     serverIslands: true,
   },
+  server: {
+    port: 3000,
+  },
   integrations: [
     react(),
     tailwind({

@@ -13,6 +13,7 @@ export interface FileSystemItem {
 
 export interface FileSystemContextType {
   files: FileSystemItem[]
+  setFiles: React.Dispatch<React.SetStateAction<FileSystemItem[]>>
   addFile: (parentPath: string, name: string, type: FileType) => FileSystemItem
   addFolder: (parentPath: string, name: string) => FileSystemItem
   deleteItem: (path: string) => void

@@ -83,6 +83,7 @@
     "react-resizable-panels": "^2.1.6",
     "recharts": "^2.14.1",
     "resend": "^4.0.1-alpha.0",
+    "socket.io-client": "^4.8.1",
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss": "^3.4.14",
@@ -96,6 +97,9 @@
     "workbox-strategies": "^7.3.0",
     "workbox-window": "^7.0.0",
     "xlsx": "^0.18.5",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0",
+    "xterm-addon-web-links": "^0.9.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

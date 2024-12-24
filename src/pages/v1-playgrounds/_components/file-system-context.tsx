@@ -311,6 +311,7 @@ export function FileSystemProvider({ children, initialState }: FileSystemProvide
     <FileSystemContext.Provider 
       value={{ 
         files, 
+        setFiles,
         addFile, 
         addFolder, 
         deleteItem, 

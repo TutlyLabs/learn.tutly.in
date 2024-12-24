@@ -12,6 +12,7 @@ import { Terminal } from "./terminal"
 import { Preview } from "./preview"
 import { cn } from "@/lib/utils"
 import { EditorTabs } from "./editor-tabs"
+import { socket } from "@/lib/socket";
 
 interface PlaygroundProps {
   initialState: VSCodeState;
@@ -120,6 +121,15 @@ function PlaygroundContent({ config }: { config: VSCodeState["config"] }) {
                             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK],
                             run: () => setIsCommandOpen(true)
                           });
+                          
+                          socket.on("file-content", (data: { content: string; language: string }) => {
+                            editor.setValue(data.content);
+                            monaco.editor.setModelLanguage(editor.getModel()!, data.language);
+                          });
+
+                          return () => {
+                            socket.off("file-content");
+                          };
                         }}
                         theme="vs-dark"
                         options={{

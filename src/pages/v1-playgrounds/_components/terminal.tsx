@@ -1,24 +1,85 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Plus, X } from "lucide-react"
+import { socket } from "@/lib/socket"
+import XTerm from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import { WebLinksAddon } from "xterm-addon-web-links";
+
+type XtermTerminal = any;
+
+interface Terminal {
+  id: string;
+  name: string;
+  terminal: XtermTerminal | null;
+}
 
 interface TerminalProps {
   isVisible?: boolean;
 }
 
 export function Terminal({ isVisible = true }: TerminalProps) {
-  const [terminals, setTerminals] = useState([
-    { id: "1", name: "Terminal 1" }
+  const terminalRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+  const [terminals, setTerminals] = useState<Terminal[]>([
+    { id: "1", name: "Terminal 1", terminal: null }
   ])
   const [activeTerminal, setActiveTerminal] = useState("1")
 
+  useEffect(() => {
+    terminals.forEach(({ id }) => {
+      if (!terminalRefs.current[id]) return;
+
+      const term = new XTerm.Terminal({
+        cursorBlink: true,
+        theme: {
+          background: "#1e1e1e",
+          foreground: "#cccccc"
+        }
+      });
+
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.loadAddon(new WebLinksAddon());
+
+      term.open(terminalRefs.current[id]!);
+      fitAddon.fit();
+
+      setTerminals(prev => 
+        prev.map(t => 
+          t.id === id ? { ...t, terminal: term } : t
+        )
+      );
+
+      socket.on("terminal-output", (data: string) => {
+        term.write(data);
+      });
+
+      term.onData(data => {
+        socket.emit("terminal-input", data);
+      });
+    });
+
+    return () => {
+      terminals.forEach(({ terminal }) => {
+        if (terminal) {
+          terminal.dispose();
+        }
+      });
+    };
+  }, [terminals.length]);
+
   const addTerminal = () => {
     const newId = (terminals.length + 1).toString()
-    setTerminals([...terminals, { id: newId, name: `Terminal ${newId}` }])
+    setTerminals([...terminals, { id: newId, name: `Terminal ${newId}`, terminal: null }])
     setActiveTerminal(newId)
   }
 
   const removeTerminal = (id: string) => {
+    const terminalToRemove = terminals.find(t => t.id === id)
+    if (terminalToRemove?.terminal) {
+      terminalToRemove.terminal.dispose()
+    }
+    
     setTerminals(terminals.filter(t => t.id !== id))
     if (activeTerminal === id) {
       setActiveTerminal(terminals[0]?.id || "1")
@@ -60,9 +121,12 @@ export function Terminal({ isVisible = true }: TerminalProps) {
           <TabsContent
             key={terminal.id}
             value={terminal.id}
-            className="p-2 text-sm font-mono text-[#cccccc]"
+            className="h-full"
           >
-            <div className="whitespace-pre">$ </div>
+            <div 
+              ref={el => terminalRefs.current[terminal.id] = el} 
+              className="h-full"
+            />
           </TabsContent>
         ))}
       </Tabs>
