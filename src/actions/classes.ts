@@ -3,6 +3,15 @@ import { z } from "zod";
 
 import db from "@/lib/db";
 
+
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
+import { exec } from "child_process";
+import fs from "fs";
+import path from "path";
+import ffmpeg from 'ffmpeg-static';
+
+
 export const createClass = defineAction({
   input: z.object({
     classTitle: z.string().trim().min(1, {
@@ -191,4 +200,90 @@ export const totalNumberOfClasses = defineAction({
       throw new Error("Failed to get total number of classes. Please try again later.");
     }
   },
+});
+
+
+const s3 = new S3Client({
+  region: import.meta.env.AWS_BUCKET_REGION!,
+  credentials: {
+    accessKeyId: import.meta.env.AWS_ACCESS_KEY!,
+    secretAccessKey: import.meta.env.AWS_SECRET_KEY!
+  }
+});
+
+
+const MAX_FILE_SIZE = 1024 * 1024 * 100; // 100 MB
+const ALLOWED_FILE_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
+
+export const uploadAndProcessVideo = defineAction({
+  input: z.object({
+    fileData: z.object({
+      name: z.string(),
+      type: z.string(),
+      buffer: z.array(z.number())
+    })
+  }),
+  handler: async ({ fileData }) => {
+    console.log('Processing video... at src/actions/classes.ts');
+    
+    if (!ALLOWED_FILE_TYPES.includes(fileData.type)) {
+      throw new Error('Invalid file type. Only MP4, MOV, and AVI are allowed.');
+    }
+
+    if (fileData.buffer.length > MAX_FILE_SIZE) {
+      throw new Error('File size exceeds the maximum limit of 100 MB.');
+    }
+
+    const videoId = uuidv4();
+    const tempDir = path.join(process.cwd(), 'src/temp');
+    
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    const inputPath = path.join(tempDir, `${videoId}-input${path.extname(fileData.name)}`);
+    const outputPath = path.join(tempDir, videoId);
+
+    try {
+      // Convert array to Buffer
+      const buffer = Buffer.from(new Uint8Array(fileData.buffer));
+      fs.writeFileSync(inputPath, buffer);
+      fs.mkdirSync(outputPath, { recursive: true });
+
+      // Process video with ffmpeg
+      try {
+        await exec(`ffmpeg -i ${inputPath} -codec:v libx264 -codec:a aac -hls_time 10 -hls_list_size 0 -f hls ${outputPath}/index.m3u8`);
+      } catch (error) {
+        throw new Error(`FFmpeg processing failed: ${(error as Error).message}`);
+      }
+
+      // Upload to S3
+      const files = fs.readdirSync(outputPath);
+      await Promise.all(files.map(async (file) => {
+        const fileContent = fs.readFileSync(`${outputPath}/${file}`);
+        try {
+          await s3.send(new PutObjectCommand({
+            Bucket: import.meta.env.AWS_BUCKET_NAME,
+            Key: `classes/${videoId}/${file}`,
+            Body: fileContent,
+            ContentType: file.endsWith('.m3u8') ? 'application/x-mpegURL' : 'video/MP2T'
+          }));
+        } catch (error) {
+          throw new Error(`S3 upload failed for file ${file}: ${(error as Error).message}`);
+        }
+      }));
+
+      return { 
+        success: true, 
+        videoUrl: `https://${import.meta.env.AWS_BUCKET_NAME}.s3.${import.meta.env.AWS_BUCKET_REGION}.amazonaws.com/classes/${videoId}/index.m3u8` 
+      };
+    } catch (error) {
+      console.error('Video processing failed:', error);
+      throw new Error('Video processing failed: ' + (error as Error).message);
+    } finally {
+      // Cleanup
+      if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+      if (fs.existsSync(outputPath)) fs.rmSync(outputPath, { recursive: true });
+    }
+  }
 });

@@ -1,0 +1,14 @@
+---
+import RootLayout from '@/layouts/RootLayout.astro'
+import FileUpload from './clientfileuploader'
+
+type Props = {
+
+}
+
+const {} = Astro.props
+
+---
+<RootLayout title="File Upload">
+    <FileUpload client:load />
+</RootLayout>
