@@ -33,19 +33,21 @@ export const POST: APIRoute = async ({ request }) => {
     const inputPath = path.join(tempDir, file.name);
     await fs.writeFile(inputPath, buffer);
 
-    const videoId = uuidv4();
+    const courseId = formData.get("courseId") as string;
+    const classTitle = formData.get("classTitle") as string
+    const videoId =  classTitle + "-" + uuidv4();
     const outputDir = path.join(tempDir, videoId);
     await fs.mkdir(outputDir, { recursive: true });
 
     const outputPath = path.join(outputDir, 'index.m3u8');
 
     // Process video with ffmpeg
-    const ffmpegCommand = `ffmpeg -i ${inputPath} -codec:v libx264 -codec:a aac -hls_time 10 -hls_playlist_type vod -hls_segment_filename "${outputDir}/segment%03d.ts" -start_number 0 ${outputPath}`;
+    const ffmpegCommand = `ffmpeg -i ${inputPath} -codec:v libx264 -codec:a aac -hls_time 10 -hls_playlist_type vod -hls_segment_filename  "${outputDir}/segment%03d.ts" -start_number 0 ${outputPath}`;
     await execAsync(ffmpegCommand);
 
     // Upload processed files to S3
     const bucketName = import.meta.env.AWS_BUCKET_NAME;
-    const s3Key = `classes/${videoId}/index.m3u8`;
+    const s3Key = `classes/${courseId}/${videoId}/index.m3u8`;
 
     const uploadPromises = [
       uploadFileToS3(outputPath, bucketName, s3Key),
@@ -54,22 +56,21 @@ export const POST: APIRoute = async ({ request }) => {
         .map(file => uploadFileToS3(
           path.join(outputDir, file),
           bucketName,
-          `classes/${videoId}/${file}`
+          `classes/${courseId}/${videoId}/${file}`
         ))
     ];
 
     await Promise.all(uploadPromises);
 
-    // Generate a signed URL for the main m3u8 file
+    // Generate a URL for the main m3u8 file
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: s3Key,
     });
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
-    console.log(`Video processed and uploaded to ${signedUrl}`);
     
-    // Clean up temporary files
+    // Clean the tempo files
     await fs.rm(tempDir, { recursive: true, force: true });
 
     return new Response(JSON.stringify({ videoUrl: signedUrl }), { status: 200 });

@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useDebounce } from "use-debounce";
+import PlyrVideoPlayer from "./videoEmbeds/PlyrVideoPlayer";
 
 import VideoPlayer from "@/components/VideoPlayer";
 import RichTextEditor from "@/components/editor/RichTextEditor";
@@ -102,6 +103,11 @@ export default function Class({
   const videoId = getVideoId();
 
   const renderVideo = () => {
+    // TODO : have to update the prisma studio so for now temp solution
+    if(videoLink && videoLink.includes("tutly") ){
+      return <PlyrVideoPlayer videoUrl={video?.videoLink || ""} />
+    }
+    
     if (!videoId) {
       return (
         <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
@@ -110,7 +116,7 @@ export default function Class({
       );
     }
 
-    return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
+    else return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
   };
 
   const renderAttachmentLink = (attachment: Attachment) => {
