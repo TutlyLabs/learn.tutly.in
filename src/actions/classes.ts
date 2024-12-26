@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import db from "@/lib/db";
 
-
 export const createClass = defineAction({
   input: z.object({
     classTitle: z.string().trim().min(1, {

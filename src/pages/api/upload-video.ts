@@ -1,12 +1,12 @@
-import type { APIRoute } from "astro";
-import { S3Client, PutObjectCommand ,GetObjectCommand} from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { v4 as uuidv4 } from "uuid";
+import type { APIRoute } from "astro";
 import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs/promises";
-import path from "path";
 import os from "os";
+import path from "path";
+import { promisify } from "util";
+import { v4 as uuidv4 } from "uuid";
 
 const execAsync = promisify(exec);
 
@@ -19,8 +19,8 @@ const s3Client = new S3Client({
 });
 
 export const POST: APIRoute = async ({ request }) => {
-    console.log("At the route of api/upload-video.ts");
-    
+  console.log("At the route of api/upload-video.ts");
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -29,17 +29,17 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'video-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "video-"));
     const inputPath = path.join(tempDir, file.name);
     await fs.writeFile(inputPath, buffer);
 
     const courseId = formData.get("courseId") as string;
-    const classTitle = formData.get("classTitle") as string
-    const videoId =  classTitle + "-" + uuidv4();
+    const classTitle = formData.get("classTitle") as string;
+    const videoId = classTitle + "-" + uuidv4();
     const outputDir = path.join(tempDir, videoId);
     await fs.mkdir(outputDir, { recursive: true });
 
-    const outputPath = path.join(outputDir, 'index.m3u8');
+    const outputPath = path.join(outputDir, "index.m3u8");
 
     // Process video with ffmpeg
     const ffmpegCommand = `ffmpeg -i ${inputPath} -codec:v libx264 -codec:a aac -hls_time 10 -hls_playlist_type vod -hls_segment_filename  "${outputDir}/segment%03d.ts" -start_number 0 ${outputPath}`;
@@ -52,12 +52,14 @@ export const POST: APIRoute = async ({ request }) => {
     const uploadPromises = [
       uploadFileToS3(outputPath, bucketName, s3Key),
       ...(await fs.readdir(outputDir))
-        .filter(file => file.endsWith('.ts'))
-        .map(file => uploadFileToS3(
-          path.join(outputDir, file),
-          bucketName,
-          `classes/${courseId}/${videoId}/${file}`
-        ))
+        .filter((file) => file.endsWith(".ts"))
+        .map((file) =>
+          uploadFileToS3(
+            path.join(outputDir, file),
+            bucketName,
+            `classes/${courseId}/${videoId}/${file}`
+          )
+        ),
     ];
 
     await Promise.all(uploadPromises);
@@ -69,7 +71,6 @@ export const POST: APIRoute = async ({ request }) => {
     });
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
-    
     // Clean the tempo files
     await fs.rm(tempDir, { recursive: true, force: true });
 
@@ -89,4 +90,3 @@ async function uploadFileToS3(filePath: string, bucket: string, key: string) {
   });
   await s3Client.send(command);
 }
-

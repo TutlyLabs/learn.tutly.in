@@ -16,7 +16,6 @@ import {
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useDebounce } from "use-debounce";
-import PlyrVideoPlayer from "./videoEmbeds/PlyrVideoPlayer";
 
 import VideoPlayer from "@/components/VideoPlayer";
 import RichTextEditor from "@/components/editor/RichTextEditor";
@@ -49,6 +48,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import NewAttachmentPage from "./NewAssignments";
+import PlyrVideoPlayer from "./videoEmbeds/PlyrVideoPlayer";
 
 export default function Class({
   classes,
@@ -104,19 +104,17 @@ export default function Class({
 
   const renderVideo = () => {
     // TODO : have to update the prisma studio so for now temp solution
-    if(videoLink && videoLink.includes("tutly") ){
-      return <PlyrVideoPlayer videoUrl={video?.videoLink || ""} />
+    if (videoLink && videoLink.includes("tutly")) {
+      return <PlyrVideoPlayer videoUrl={video?.videoLink || ""} />;
     }
-    
+
     if (!videoId) {
       return (
         <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
           No video to display
         </span>
       );
-    }
-
-    else return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
+    } else return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
   };
 
   const renderAttachmentLink = (attachment: Attachment) => {

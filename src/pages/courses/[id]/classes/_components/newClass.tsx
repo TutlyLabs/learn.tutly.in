@@ -1,5 +1,5 @@
 import { actions } from "astro:actions";
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 
@@ -35,8 +35,6 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  
-
   useEffect(() => {
     const fetchFolders = async () => {
       try {
@@ -54,34 +52,31 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
     fetchFolders();
   }, [courseId]);
 
-
-
   const handleVideoUpload = async () => {
     if (!videoFile) return;
     toast.loading("Uploading video...");
     setIsUploading(true);
     console.log("Uploading video...");
 
-
     try {
       const formData = new FormData();
-      formData.append('file', videoFile);
-      formData.append('courseId', courseId!);
-      formData.append('classTitle', classTitle);
+      formData.append("file", videoFile);
+      formData.append("courseId", courseId!);
+      formData.append("classTitle", classTitle);
 
-      const response = await fetch('/api/upload-video', {
-        method: 'POST',
+      const response = await fetch("/api/upload-video", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Video upload failed');
+        throw new Error("Video upload failed");
       }
 
       const result = await response.json();
       toast.dismiss();
       toast.success("Video uploaded and processed successfully");
-      
+
       setVideoUrl(result.videoUrl);
       return result.videoUrl;
     } catch (error) {
@@ -93,10 +88,8 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
       toast.dismiss();
     }
   };
-  
 
   const handleCreateClass = async () => {
-
     setTextValue("Creating Class");
     try {
       const { data, error } = await actions.classes_createClass({
@@ -156,7 +149,6 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
             onChange={(e) => setClassTitle(e.target.value)}
           />
 
-
           <Input
             ref={fileInputRef}
             type="file"
@@ -168,14 +160,12 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
             disabled={isUploading || classTitle.trim() === ""}
           />
 
-          {isUploading && <div className="text-sm text-gray-500 ml-2">Uploading and processing video...</div>}
-          {
-            videoUrl && (
-              <div className="text-sm text-gray-500 ml-2">
-                Video uploaded successfully ✅
-              </div>
-            )
-          }
+          {isUploading && (
+            <div className="text-sm text-gray-500 ml-2">Uploading and processing video...</div>
+          )}
+          {videoUrl && (
+            <div className="text-sm text-gray-500 ml-2">Video uploaded successfully ✅</div>
+          )}
 
           <Input type="date" value={createdAt} onChange={(e) => setCreatedAt(e.target.value)} />
 
@@ -203,7 +193,7 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
           )}
 
           <Button
-            disabled={classTitle.trim()==="" || textValue === "Creating Class" || isUploading}
+            disabled={classTitle.trim() === "" || textValue === "Creating Class" || isUploading}
             className="w-full"
             onClick={handleCreateClass}
           >
