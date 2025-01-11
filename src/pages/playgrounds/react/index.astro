@@ -1,9 +1,0 @@
----
-import RootLayout from "@/layouts/RootLayout.astro";
-import ReactPlayground from "./ReactPlayground";
-const currentUser = Astro.locals.user;
----
-
-<RootLayout>
-  <ReactPlayground currentUser={currentUser} client:load />
-</RootLayout>
