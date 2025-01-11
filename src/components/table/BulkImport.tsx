@@ -1,0 +1,484 @@
+import { Info, Plus, Trash2 } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+
+type ColumnDef = {
+  key: string;
+  name: string;
+  type?:
+  | "text"
+  | "number"
+  | "date"
+  | "datetime-local"
+  | "time"
+  | "email"
+  | "tel"
+  | "url"
+  | "password"
+  | "select"
+  | "textarea"
+  | "checkbox"
+  | "radio"
+  | "color"
+  | "file"
+  | "range"
+  | "month"
+  | "week";
+  options?: { label: string; value: any }[];
+  min?: number | string;
+  max?: number | string;
+  step?: number | string;
+  rows?: number;
+  accept?: string;
+  multiple?: boolean;
+  placeholder?: string;
+  validation?: {
+    required?: boolean;
+    regex?: RegExp;
+    message?: string;
+    minLength?: number;
+    maxLength?: number;
+    custom?: (value: any) => string | undefined;
+  };
+};
+
+type BulkImportProps = {
+  columns: ColumnDef[];
+  data: any[];
+  onImport: (data: any[]) => void;
+};
+
+type Row = Record<string, any>;
+
+export default function BulkImport({ columns, data, onImport }: BulkImportProps) {
+  const [gridData, setGridData] = useState<Row[]>([]);
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setGridData(data.length > 0 ? data : [{}]);
+  }, [data]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setGridData(data.length > 0 ? data : [{}]);
+      setErrors({});
+    }
+  }, [isOpen, data]);
+
+  const validateRow = (row: Row, rowIndex: number) => {
+    const newErrors: Record<string, string[]> = {};
+
+    columns.forEach((col) => {
+      const value = row[col.key];
+      const validation = col.validation;
+
+      if (validation) {
+        if (validation.required && (!value || value.toString().trim() === "")) {
+          newErrors[`${rowIndex}-${col.key}`] = [`${col.name} is required`];
+        } else if (value && validation.regex) {
+          if (col.type === "datetime-local") {
+            let dateValue = value;
+            if (typeof value === "string" && value.includes("/")) {
+              const date = new Date(value);
+              dateValue = date.toISOString().slice(0, 16);
+            }
+
+            if (!validation.regex.test(dateValue)) {
+              newErrors[`${rowIndex}-${col.key}`] = [
+                validation.message || "Invalid datetime format",
+              ];
+            }
+          } else if (!validation.regex.test(value.toString())) {
+            newErrors[`${rowIndex}-${col.key}`] = [validation.message || "Invalid format"];
+          }
+        }
+      }
+    });
+
+    return newErrors;
+  };
+
+  const validateAllRows = (rows: Row[]) => {
+    const allErrors: Record<string, string[]> = {};
+    rows.forEach((row, index) => {
+      const rowErrors = validateRow(row, index);
+      Object.assign(allErrors, rowErrors);
+    });
+    return allErrors;
+  };
+
+  const handlePaste = useCallback(
+    (event: React.ClipboardEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      const targetCell = (event.target as HTMLElement).closest("td");
+      if (!targetCell) return;
+
+      const columnIndex = Array.from(targetCell.parentElement?.children || []).indexOf(targetCell);
+      const rowIndex = Array.from(targetCell.parentElement?.parentElement?.children || []).indexOf(
+        targetCell.parentElement!
+      );
+
+      const pastedData = event.clipboardData
+        .getData("text")
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((row) => row.split("\t"));
+
+      setGridData((prevData) => {
+        const newData = [...prevData];
+
+        pastedData.forEach((row, index) => {
+          const currentRowIndex = rowIndex + index;
+          if (!newData[currentRowIndex]) {
+            newData[currentRowIndex] = {};
+          }
+
+          row.forEach((value, colOffset) => {
+            const targetColIndex = columnIndex + colOffset;
+            if (targetColIndex < columns.length) {
+              const column = columns[targetColIndex];
+              if (column) {
+                let processedValue = value.trim();
+
+                if (column.type === "datetime-local" && processedValue) {
+                  try {
+                    const date = new Date(processedValue);
+                    if (!isNaN(date.getTime())) {
+                      processedValue = date.toISOString().slice(0, 16);
+                    }
+                  } catch (error) {
+                    console.error("Date parsing error:", error);
+                  }
+                }
+
+                if (column.type === "select" && column.options) {
+                  const option = column.options.find(
+                    (opt) =>
+                      opt.value.toString().toLowerCase() === processedValue.toLowerCase() ||
+                      opt.label.toLowerCase() === processedValue.toLowerCase()
+                  );
+                  processedValue = option ? option.value : processedValue;
+                }
+                if (newData[currentRowIndex]) {
+                  newData[currentRowIndex][column.key] = processedValue;
+                }
+              }
+            }
+          });
+        });
+
+        return newData;
+      });
+
+      setGridData((currentData) => {
+        const newErrors = validateAllRows(currentData);
+        setErrors(newErrors);
+        return currentData;
+      });
+    },
+    [columns]
+  );
+
+  const renderInput = (column: ColumnDef, value: any, rowIndex: number) => {
+    const commonProps = {
+      value: value ?? "",
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+      ) => handleCellChange(rowIndex, column.key, e.target.value),
+      className: `w-full outline-none bg-transparent ${errors[`${rowIndex}-${column.key}`] ? "border-red-500" : ""
+        }`,
+      placeholder: column.placeholder,
+      min: column.min,
+      max: column.max,
+      step: column.step,
+    };
+
+    switch (column.type) {
+      case "select":
+        return (
+          <Select
+            value={value?.toString() || ""}
+            onValueChange={(newValue) => handleCellChange(rowIndex, column.key, newValue)}
+          >
+            <SelectTrigger className="w-full border-none shadow-none">
+              <SelectValue placeholder={`Select ${column.name}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {column.options?.map((option) => (
+                <SelectItem key={option.value} value={option.value.toString()}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+
+      case "textarea":
+        return <textarea {...commonProps} rows={column.rows || 3} />;
+
+      case "checkbox":
+        return (
+          <input
+            type="checkbox"
+            checked={value || false}
+            onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
+            className="w-4 h-4 m-2"
+          />
+        );
+
+      case "radio":
+        return (
+          <div className="flex gap-2">
+            {column.options?.map((option) => (
+              <label key={option.value} className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  value={option.value}
+                  checked={value === option.value}
+                  onChange={(e) => handleCellChange(rowIndex, column.key, e.target.value)}
+                  className="w-4 h-4"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        );
+
+      default:
+        return (
+          <input
+            type={column.type || "text"}
+            {...commonProps}
+            accept={column.type === "file" ? column.accept : undefined}
+            multiple={column.type === "file" ? column.multiple : undefined}
+          />
+        );
+    }
+  };
+
+  const handleAddRow = () => {
+    setGridData((prev) => [...prev, {}]);
+  };
+
+  const handleCellChange = (rowIndex: number, columnKey: string, value: string) => {
+    setGridData((prevData) => {
+      const newData = [...prevData];
+      if (!newData[rowIndex]) {
+        newData[rowIndex] = {};
+      }
+      newData[rowIndex] = {
+        ...newData[rowIndex],
+        [columnKey]: value,
+      };
+
+      const newErrors = validateAllRows(newData);
+      setErrors(newErrors);
+
+      return newData;
+    });
+  };
+
+  const handleImport = () => {
+    const validationErrors = validateAllRows(gridData);
+    setErrors(validationErrors);
+
+    try {
+      if (Object.keys(validationErrors).length === 0) {
+        const validData = gridData.filter((row) =>
+          Object.values(row).some((value) => value !== undefined && value !== "")
+        );
+        console.log("Imported data:", validData);
+        onImport(validData);
+        setIsOpen(false);
+        setGridData([{}]);
+      }
+    } catch (error) {
+      toast.error("Error importing data");
+    }
+  };
+
+  const getValidationRules = (col: ColumnDef): string => {
+    const rules: string[] = [];
+
+    if (col.validation?.required) {
+      rules.push("Required");
+    }
+
+    if (col.type === "select" || col.type === "radio") {
+      const options = col.options?.map((opt) => opt.label).join(", ");
+      rules.push(`Must be one of: ${options}`);
+    }
+
+    if (col.validation?.minLength) {
+      rules.push(`Minimum length: ${col.validation.minLength}`);
+    }
+
+    if (col.validation?.maxLength) {
+      rules.push(`Maximum length: ${col.validation.maxLength}`);
+    }
+
+    if (col.min !== undefined) {
+      rules.push(`Minimum value: ${col.min}`);
+    }
+
+    if (col.max !== undefined) {
+      rules.push(`Maximum value: ${col.max}`);
+    }
+
+    if (col.validation?.regex) {
+      rules.push(col.validation.message || "Must match required format");
+    }
+
+    if (col.type === "file" && col.accept) {
+      rules.push(`Accepted file types: ${col.accept}`);
+    }
+
+    return rules.join("\n") || "No validation rules";
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button className="w-[100px] ml-auto">Bulk Import</Button>
+      </DialogTrigger>
+
+      <DialogContent className="max-h-[90vh] max-w-[90vw] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle>Bulk Import Data</DialogTitle>
+          <DialogDescription>
+            Supports Copy/Paste from Excel, CSV, and other spreadsheet formats.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto p-6 pt-4" onPaste={handlePaste}>
+          <div className="min-h-[300px]">
+            <table className="w-full border-collapse border-gray-100">
+              <thead className="sticky top-0 bg-white shadow-sm z-10">
+                <tr>
+                  {columns.map((col) => (
+                    <th key={col.key} className="border p-2 bg-gray-50">
+                      <div className="flex items-center gap-1 dark:text-gray-950">
+                        {col.name}
+                        {col.validation?.required && <span className="text-red-500">*</span>}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info
+                                size={14}
+                                className="text-gray-400 hover:text-gray-600 cursor-help"
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <pre className="text-sm whitespace-pre-wrap">
+                                {getValidationRules(col)}
+                              </pre>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </th>
+                  ))}
+                  <th className="border p-2 bg-gray-50 dark:text-gray-950 w-16">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gridData.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {columns.map((col) => (
+                      <td
+                        key={`${rowIndex}-${col.key}`}
+                        className={`border dark:border-gray-100 p-2 relative  ${errors[`${rowIndex}-${col.key}`] ? "bg-red-50" : ""
+                          }`}
+                      >
+                        <div className="min-h-[40px]">
+                          {renderInput(col, row[col.key], rowIndex)}
+                          {errors[`${rowIndex}-${col.key}`] && (
+                            <div className="text-red-700 text-xs mt-1">
+                              {errors[`${rowIndex}-${col.key}`]?.[0]}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    ))}
+                    <td className="border p-2 w-16 dark:border-gray-100 ">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-red-100"
+                        onClick={() => {
+                          setGridData((prevData) => {
+                            const newData = [...prevData];
+                            newData.splice(rowIndex, 1);
+                            if (newData.length === 0) newData.push({});
+                            return newData;
+                          });
+                          setErrors((prevErrors) => {
+                            const newErrors: Record<string, string[]> = {};
+                            Object.entries(prevErrors).forEach(([key, value]) => {
+                              const [errRowIndex, colKey] = key.split("-");
+                              if (errRowIndex) {
+                                const errRow = parseInt(errRowIndex);
+                                if (errRow < rowIndex) {
+                                  newErrors[key] = value;
+                                } else if (errRow > rowIndex) {
+                                  newErrors[`${errRow - 1}-${colKey}`] = value;
+                                }
+                              }
+                            });
+                            return newErrors;
+                          });
+                        }}
+                      >
+                        <Trash2 size={16} className="text-red-500 " />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center p-6 border-t bg-gray-50 dark:bg-gray-500 rounded-md">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAddRow}
+            className="flex items-center gap-1"
+          >
+            <Plus size={16} /> Add Row
+          </Button>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleImport} disabled={Object.keys(errors).length > 0}>
+              Import
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
