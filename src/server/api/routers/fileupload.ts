@@ -4,12 +4,13 @@ import { eq } from "drizzle-orm";
 import { files } from "~/server/db/schema";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { env } from "~/env";
 
 const s3Client = new S3Client({
-  region: process.env.AWS_BUCKET_REGION!,
+  region: env.AWS_BUCKET_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.AWS_SECRET_KEY!,
+    accessKeyId: env.AWS_ACCESS_KEY,
+    secretAccessKey: env.AWS_SECRET_KEY,
   },
 });
 
@@ -35,7 +36,7 @@ export const fileUploadRouter = createTRPCRouter({
       }).returning();
 
       const command = new PutObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: env.AWS_BUCKET_NAME,
         Key: `${file.fileType}/${file.internalName}`,
         ContentType: input.mimeType,
       });
@@ -60,7 +61,7 @@ export const fileUploadRouter = createTRPCRouter({
       }
 
       const command = new GetObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: env.AWS_BUCKET_NAME,
         Key: `${file.fileType}/${file.internalName}`,
       });
 
@@ -98,7 +99,7 @@ export const fileUploadRouter = createTRPCRouter({
       if (!file) throw new Error("File not found");
 
       const publicUrl = file.isPublic
-        ? `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${file.fileType}/${file.internalName}`
+        ? `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_BUCKET_REGION}.amazonaws.com/${file.fileType}/${file.internalName}`
         : null;
 
       const [updated] = await ctx.db
@@ -125,7 +126,7 @@ export const fileUploadRouter = createTRPCRouter({
       if (!file) throw new Error("File not found");
 
       const command = new DeleteObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: env.AWS_BUCKET_NAME,
         Key: `${file.fileType}/${file.internalName}`,
       });
       await s3Client.send(command);
