@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState, useMemo } from "react";
+import { actions } from "astro:actions";
 
 
 
@@ -99,52 +100,34 @@ export function ParticipantsList() {
   }, [localParticipant, participants, room.metadata, hosts, isHost]);
 
   const onRaiseHand = async () => {
-    await fetch("/api/raise_hand", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-    });
+    if (!localParticipant) return;
+
+    try {
+      await actions.stream_raiseHand({
+        headers: {
+          Authorization: `Token ${authToken}`
+        }
+      });
+    } catch (error) {
+      console.error("Failed to raise hand:", error);
+    }
   };
 
   const onInviteToStage = async (identity: string) => {
-    await fetch("/api/invite_to_stage", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-      body: JSON.stringify({
-        identity,
-      }),
+    await actions.stream_inviteToStage({
+      identity,
     });
-    setDialogOpen(false);
   };
 
   const onRemoveFromStage = async (identity: string) => {
-    await fetch("/api/remove_from_stage", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-      body: JSON.stringify({
-        identity,
-      }),
+    await actions.stream_removeFromStage({
+      identity,
     });
   };
 
   const onLowerHand = async (identity: string) => {
-    await fetch("/api/lower_hand", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-      body: JSON.stringify({
-        identity,
-      }),
+    await actions.stream_lowerHand({
+      identity,
     });
   };
 
@@ -152,13 +135,7 @@ export function ParticipantsList() {
     if (!localParticipant) return;
 
     try {
-      await fetch("/api/raise_hand", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${authToken}`,
-        },
-      });
+      await actions.stream_raiseHand({});
     } catch (error) {
       console.error("Failed to raise hand:", error);
     }
@@ -168,12 +145,10 @@ export function ParticipantsList() {
     if (!localParticipant) return;
 
     try {
-      await fetch("/api/raise_hand", {
-        method: "POST",
+      await actions.stream_raiseHand({
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${authToken}`,
-        },
+          Authorization: `Token ${authToken}`
+        }
       });
     } catch (error) {
       console.error("Failed to accept invitation:", error);
@@ -184,15 +159,11 @@ export function ParticipantsList() {
     if (!localParticipant) return;
 
     try {
-      await fetch("/api/remove_from_stage", {
-        method: "POST",
+      await actions.stream_removeFromStage({
+        identity: localParticipant.identity,
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${authToken}`,
-        },
-        body: JSON.stringify({
-          identity: localParticipant.identity,
-        }),
+          Authorization: `Token ${authToken}`
+        }
       });
     } catch (error) {
       console.error("Failed to decline invitation:", error);

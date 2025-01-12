@@ -4,16 +4,13 @@ import jwt from "jsonwebtoken";
 import {
   AccessToken,
   CreateIngressOptions,
-  IngressAudioEncodingPreset,
   IngressClient,
   IngressInfo,
   IngressInput,
-  IngressVideoEncodingPreset,
   ParticipantInfo,
   ParticipantPermission,
   RoomServiceClient,
 } from "livekit-server-sdk";
-import { TrackSource } from "livekit-server-sdk";
 
 export type RoomMetadata = {
   creator_identity: string;
@@ -111,9 +108,7 @@ export class Controller {
   private roomService: RoomServiceClient;
 
   constructor() {
-    const httpUrl = process.env
-      .LIVEKIT_WS_URL!.replace("wss://", "https://")
-      .replace("ws://", "http://");
+    const httpUrl = import.meta.env.VITE_LIVEKIT_WS_URL!.replace("wss://", "https://")
     this.ingressService = new IngressClient(httpUrl);
     this.roomService = new RoomServiceClient(
       httpUrl,
@@ -199,7 +194,7 @@ export class Controller {
       ingress,
       auth_token: authToken,
       connection_details: {
-        ws_url: process.env.LIVEKIT_WS_URL!,
+        ws_url: process.env.VITE_LIVEKIT_WS_URL!,
         token: await at.toJwt(),
       },
     };
@@ -234,7 +229,7 @@ export class Controller {
     });
 
     const connection_details = {
-      ws_url: process.env.LIVEKIT_WS_URL!,
+      ws_url: process.env.VITE_LIVEKIT_WS_URL!,
       token: at.toJwt(),
     };
 
@@ -243,7 +238,7 @@ export class Controller {
     return {
       auth_token: authToken,
       connection_details: {
-        ws_url: process.env.LIVEKIT_WS_URL!,
+        ws_url: process.env.VITE_LIVEKIT_WS_URL!,
         token: await at.toJwt(),
       },
     };
@@ -256,7 +251,7 @@ export class Controller {
       throw new Error("Room does not exist");
     }
 
-    const room = rooms[0];
+    const room = rooms[0]!;
     const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
       .creator_identity;
 
@@ -276,7 +271,7 @@ export class Controller {
     try {
       await this.roomService.getParticipant(room_name, identity);
       exists = true;
-    } catch {}
+    } catch { }
 
     if (exists) {
       throw new Error("Participant already exists");
@@ -303,7 +298,7 @@ export class Controller {
     return {
       auth_token: authToken,
       connection_details: {
-        ws_url: process.env.LIVEKIT_WS_URL!,
+        ws_url: process.env.VITE_LIVEKIT_WS_URL!,
         token: await at.toJwt(),
       },
     };
@@ -316,7 +311,7 @@ export class Controller {
       throw new Error("Room does not exist");
     }
 
-    const room = rooms[0];
+    const room = rooms[0]!;
     const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
       .creator_identity;
 
@@ -358,7 +353,7 @@ export class Controller {
       throw new Error("Room does not exist");
     }
 
-    const room = rooms[0];
+    const room = rooms[0]!;
     const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
       .creator_identity;
 
@@ -400,7 +395,7 @@ export class Controller {
 
     const permission = participant.permission || ({} as ParticipantPermission);
     const metadata = this.getOrCreateParticipantMetadata(participant);
-    
+
     // Toggle hand raised state
     metadata.hand_raised = !metadata.hand_raised;
 
@@ -430,7 +425,7 @@ export class Controller {
       throw new Error("Room does not exist");
     }
 
-    const room = rooms[0];
+    const room = rooms[0]!;
     const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
       .creator_identity;
 

@@ -12,10 +12,11 @@ import {
   Text,
   TextField,
 } from "@radix-ui/themes";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AllowParticipationInfo } from "./allow-participation-info";
 import { Spinner } from "./spinner";
+import { useRouter } from "@/hooks/use-router";
+import { actions } from "astro:actions";
 
 export function IngressDialog({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -32,21 +33,17 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
   const onCreateIngress = async () => {
     setLoading(true);
 
-    const res = await fetch("/api/create_ingress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        room_name: roomName,
-        ingress_type: type,
-        metadata: {
-          creator_identity: name,
-          enable_chat: enableChat,
-          allow_participation: allowParticipation,
-        },
-      }),
+    const { data } = await actions.stream_createIngress({
+      room_name: roomName,
+      ingress_type: type,
+      metadata: {
+        creator_identity: name,
+        enable_chat: enableChat,
+        allow_participation: allowParticipation,
+      },
     });
 
-    setIngressResponse(await res.json());
+    setIngressResponse(data);
   };
 
   return (

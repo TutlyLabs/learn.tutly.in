@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const requiredEnvVars = {
       LIVEKIT_API_KEY: process.env.LIVEKIT_API_KEY,
       LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
-      LIVEKIT_WS_URL: process.env.LIVEKIT_WS_URL,
+      LIVEKIT_WS_URL: process.env.VITE_LIVEKIT_WS_URL,
       S3_KEY_ID: process.env.S3_KEY_ID,
       S3_KEY_SECRET: process.env.S3_KEY_SECRET,
       S3_BUCKET: process.env.S3_BUCKET,
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const hostURL = new URL(requiredEnvVars.LIVEKIT_WS_URL!);
+    const hostURL = new URL(requiredEnvVars.VITE_LIVEKIT_WS_URL!);
     hostURL.protocol = 'https:';
 
     const egressClient = new EgressClient(

@@ -17,6 +17,7 @@ import {
 } from "@radix-ui/themes";
 import { Participant } from "livekit-client";
 import { useAuthToken } from "./token-context";
+import { actions } from "astro:actions";
 
 function ParticipantListItem({
   participant,
@@ -35,42 +36,41 @@ function ParticipantListItem({
     JSON.parse(room.metadata)) as RoomMetadata;
 
   const onInvite = async () => {
-    // TODO: optimistic update
-    await fetch("/api/invite_to_stage", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-      body: JSON.stringify({
+    try {
+      await actions.stream_inviteToStage({
         identity: participant.identity,
-      }),
-    });
+        headers: {
+          Authorization: `Token ${authToken}`
+        }
+      });
+    } catch (error) {
+      console.error("Failed to invite:", error);
+    }
   };
 
-  // TODO: optimistic update
   const onRaiseHand = async () => {
-    await fetch("/api/raise_hand", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-    });
+    try {
+      await actions.stream_raiseHand({
+        headers: {
+          Authorization: `Token ${authToken}`
+        }
+      });
+    } catch (error) {
+      console.error("Failed to raise hand:", error);
+    }
   };
 
-  // TODO: optimistic update
   const onCancel = async () => {
-    await fetch("/api/remove_from_stage", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-      body: JSON.stringify({
+    try {
+      await actions.stream_removeFromStage({
         identity: participant.identity,
-      }),
-    });
+        headers: {
+          Authorization: `Token ${authToken}`
+        }
+      });
+    } catch (error) {
+      console.error("Failed to remove from stage:", error);
+    }
   };
 
   function HostActions() {

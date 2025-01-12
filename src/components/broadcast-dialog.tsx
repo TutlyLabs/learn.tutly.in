@@ -9,10 +9,11 @@ import {
   Text,
   TextField,
 } from "@radix-ui/themes";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AllowParticipationInfo } from "./allow-participation-info";
 import { Spinner } from "./spinner";
+import { useRouter } from "@/hooks/use-router";
+import { actions } from "astro:actions";
 
 export function BroadcastDialog({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -25,22 +26,18 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
 
   const onGoLive = async () => {
     setLoading(true);
-    const res = await fetch("/api/create_stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        room_name: roomName,
-        metadata: {
-          creator_identity: name,
-          enable_chat: enableChat,
-          allow_participation: allowParticipation,
-        },
-      }),
+    const { data } = await actions.stream_createStream({
+      room_name: roomName,
+      metadata: {
+        creator_identity: name,
+        enable_chat: enableChat,
+        allow_participation: allowParticipation,
+      },
     });
     const {
       auth_token,
       connection_details: { token },
-    } = (await res.json()) as CreateStreamResponse;
+    } = data;
     router.push(`/host?&at=${auth_token}&rt=${token}`);
   };
 
@@ -69,7 +66,7 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
             <TextField.Input
               type="text"
               placeholder="Roger Dunn"
-              onKeyDown={ (e) => e.key === "Enter" && onGoLive() }
+              onKeyDown={(e) => e.key === "Enter" && onGoLive()}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />

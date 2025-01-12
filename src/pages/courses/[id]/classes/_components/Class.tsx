@@ -16,7 +16,7 @@ import {
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useDebounce } from "use-debounce";
-import {ScrollArea} from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import VideoPlayer from "@/components/VideoPlayer";
 import RichTextEditor from "@/components/editor/RichTextEditor";
 import {
@@ -68,12 +68,12 @@ export default function Class({
   courseId: string;
   currentUser: any;
   details:
-    | (Class & {
-        title: string;
-        video: Video | null;
-        attachments: Attachment[];
-      })
-    | null;
+  | (Class & {
+    title: string;
+    video: Video | null;
+    attachments: Attachment[];
+  })
+  | null;
   isBookmarked: boolean;
   initialNote?: Notes | null;
   serverUrl: string;
@@ -89,60 +89,57 @@ export default function Class({
   );
   const haveAdminAccess = currentUser.role == "INSTRUCTOR" || isCourseAdmin;
 
+  const [loading, setLoading] = useState(false);
+  const [insAuthToken, setInsAuthToken] = useState("");
+  const [insRoomToken, setInsRoomToken] = useState("");
+  const [authToken, setAuthToken] = useState("");
 
   const renderVideo = () => {
-    const [loading, setLoading] = useState(false);
-    const [insAuthToken,setInsAuthToken] = useState("");
-    const [insRoomToken,setInsRoomToken] = useState("");
-    
     const onGoLive = async () => {
       setLoading(true);
-      const res = await fetch("/api/create_stream/route", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      try {
+        const { data: response } = await actions.stream_createStream({
           room_name: details.title,
           metadata: {
             creator_identity: currentUser.name,
             enable_chat: true,
             allow_participation: true,
           },
-        }),
-      });
-      const {
-        auth_token,
-        connection_details: { token },
-      } = (await res.json()) as CreateStreamResponse;
-      
-      setInsAuthToken(auth_token);
-      setInsRoomToken(token);
-      
-    };
-    
+          headers: {
+            Authorization: `Token ${authToken}`
+          }
+        });
 
-    
-    
-    if(haveAdminAccess) {
-      if (!insAuthToken && !insRoomToken)
-        {
+        if (response) {
+          setInsAuthToken(response.auth_token);
+          setInsRoomToken(response.connection_details.token);
+        } else {
+          console.error("No response data received");
+        }
+      } catch (error) {
+        console.error("Failed to go live:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (haveAdminAccess) {
+      if (!insAuthToken && !insRoomToken) {
         return (
           <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
-            <button className="text-blue-500"
+            <Button 
+              variant="link"
+              className="text-blue-500"
               disabled={loading}
-              onClick={() => {
-                onGoLive();
-              }}
-              >
-                {
-                  loading ? "Going Live..." : "Start a Stream"
-                }
-              </button> 
+              onClick={onGoLive}
+            >
+              {loading ? "Going Live..." : "Start a Stream"}
+            </Button>
           </span>
-        )
+        );
       }
 
-
-      return  ( 
+      return (
         <div >
           <TokenContext.Provider value={insAuthToken}>
             <LiveKitRoom serverUrl={serverUrl} token={insRoomToken}>
@@ -152,62 +149,61 @@ export default function Class({
         </div>
       )
     }
-    
-    const [authToken, setAuthToken] = useState("");
-    const [roomToken, setRoomToken] = useState("");
 
+    const [roomToken, setRoomToken] = useState("");
 
     const onJoin = async () => {
       setLoading(true);
-      const res = await fetch("/api/join_stream/route", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      try {
+        const { data } = await actions.stream_joinStream({
           room_name: details.title,
           identity: currentUser.name,
-        }),
-      });
-      const {
-        auth_token,
-        connection_details: { token },
-      } = (await res.json()) as JoinStreamResponse;
+          headers: {
+            Authorization: `Token ${authToken}`
+          }
+        });
 
-      setAuthToken(auth_token);
-      setRoomToken(token);
+        const { auth_token, connection_details: { token } } = data;
+        setAuthToken(auth_token);
+        setRoomToken(token);
+      } catch (error) {
+        console.error("Failed to join:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-  
-    
-    if(!haveAdminAccess) {
-        if(!authToken && !roomToken) {
+
+    if (!haveAdminAccess) {
+      if (!authToken && !roomToken) {
         return (
           <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
-              <button 
-                disabled={loading}
+            <button
+              disabled={loading}
               className="text-blue-500"
-                onClick={() => {
-                  onJoin();
-                }}
-              >
-                {
-                  loading ? "Joining..." : "Join the Stream"
-                }
-                
-              </button> 
-            </span>
-          )
-        }
+              onClick={() => {
+                onJoin();
+              }}
+            >
+              {
+                loading ? "Joining..." : "Join the Stream"
+              }
 
-        return (
-          <TokenContext.Provider value={authToken}>
-            <LiveKitRoom serverUrl={serverUrl} token={roomToken}>
-              <StreamPlayer />
-            </LiveKitRoom>
-          </TokenContext.Provider>
+            </button>
+          </span>
         )
-        
       }
-      
-      return 
+
+      return (
+        <TokenContext.Provider value={authToken}>
+          <LiveKitRoom serverUrl={serverUrl} token={roomToken}>
+            <StreamPlayer />
+          </LiveKitRoom>
+        </TokenContext.Provider>
+      )
+
+    }
+
+    return
   };
 
   const renderAttachmentLink = (attachment: Attachment) => {

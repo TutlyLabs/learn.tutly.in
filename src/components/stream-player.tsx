@@ -36,6 +36,7 @@ import {
   DialogTrigger,
   DialogDescription
 } from "@/components/ui/dialog";
+import { actions } from "astro:actions";
 
 function ConfettiCanvas() {
   const [decoder] = useState(() => new TextDecoder());
@@ -162,22 +163,24 @@ export function StreamPlayer({ isHost = false }) {
   const isRecording = useIsRecording();
 
   const toggleRoomRecording = async () => {
-    const recordingEndpoint = process.env.NEXT_PUBLIC_LK_RECORD_ENDPOINT;
-    if (!recordingEndpoint) {
-      throw TypeError("No recording endpoint specified");
-    }
-
-    const response = await fetch(
-      `${recordingEndpoint}/${isRecording ? "stop" : "start"}?roomName=${roomContext.name
-      }`
-    );
-
-    if (!response.ok) {
-      console.error(
-        "Error handling recording request:",
-        response.status,
-        response.statusText
-      );
+    try {
+      if (isRecording) {
+        await actions.stream_stopRecording({
+          roomName: roomContext.name,
+          headers: {
+            Authorization: `Token ${authToken}`
+          }
+        });
+      } else {
+        await actions.stream_startRecording({
+          roomName: roomContext.name,
+          headers: {
+            Authorization: `Token ${authToken}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Failed to toggle recording:", error);
     }
   };
 
