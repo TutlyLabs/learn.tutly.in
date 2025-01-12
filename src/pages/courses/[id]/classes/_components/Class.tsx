@@ -48,6 +48,10 @@ import {
 import { Input } from "@/components/ui/input";
 
 import NewAttachmentPage from "./NewAssignments";
+import { CreateStreamResponse, JoinStreamResponse } from "@/lib/controller";
+import { StreamPlayer } from "@/components/stream-player";
+import { TokenContext } from "@/components/token-context";
+import { LiveKitRoom } from "@livekit/components-react";
 
 export default function Class({
   classes,
@@ -57,6 +61,7 @@ export default function Class({
   details,
   isBookmarked,
   initialNote,
+  serverUrl,
 }: {
   classes: any;
   classId: string;
@@ -64,53 +69,145 @@ export default function Class({
   currentUser: any;
   details:
     | (Class & {
+        title: string;
         video: Video | null;
         attachments: Attachment[];
       })
     | null;
   isBookmarked: boolean;
   initialNote?: Notes | null;
+  serverUrl: string;
 }) {
   if (!details) {
     return <div className="flex items-center justify-center p-8">Loading...</div>;
   }
 
   const { video, title, createdAt, attachments } = details;
-  const { videoLink, videoType } = video || {};
 
   const isCourseAdmin = currentUser?.adminForCourses?.some(
     (course: { id: string }) => course.id === courseId
   );
   const haveAdminAccess = currentUser.role == "INSTRUCTOR" || isCourseAdmin;
 
-  const getVideoId = () => {
-    if (!videoLink || !videoType) return null;
-
-    const PATTERNS = {
-      YOUTUBE:
-        /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-      DRIVE: /\/file\/d\/([^\/]+)/,
-    };
-
-    const pattern = PATTERNS[videoType as keyof typeof PATTERNS];
-    if (!pattern) return null;
-
-    const match = videoLink.match(pattern);
-    return match ? match[1] : null;
-  };
-
-  const videoId = getVideoId();
 
   const renderVideo = () => {
-    if (!videoId) {
-      return (
-        <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
-          No video to display
-        </span>
-      );
-    }
+    const [loading, setLoading] = useState(false);
+    const [insAuthToken,setInsAuthToken] = useState("");
+    const [insRoomToken,setInsRoomToken] = useState("");
+    
+    const onGoLive = async () => {
+      setLoading(true);
+      const res = await fetch("/api/create_stream/route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_name: details.title,
+          metadata: {
+            creator_identity: currentUser.name,
+            enable_chat: true,
+            allow_participation: true,
+          },
+        }),
+      });
+      const {
+        auth_token,
+        connection_details: { token },
+      } = (await res.json()) as CreateStreamResponse;
+      
+      setInsAuthToken(auth_token);
+      setInsRoomToken(token);
+      
+    };
+    
 
-    return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
+    
+    
+    if(haveAdminAccess) {
+      if (!insAuthToken && !insRoomToken)
+        {
+        return (
+          <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
+            <button className="text-blue-500"
+              disabled={loading}
+              onClick={() => {
+                onGoLive();
+              }}
+              >
+                {
+                  loading ? "Going Live..." : "Start a Stream"
+                }
+              </button> 
+          </span>
+        )
+      }
+
+
+      return  ( 
+        <div >
+          <TokenContext.Provider value={insAuthToken}>
+            <LiveKitRoom serverUrl={serverUrl} token={insRoomToken}>
+              <StreamPlayer isHost />
+            </LiveKitRoom>
+          </TokenContext.Provider>
+        </div>
+      )
+    }
+    
+    const [authToken, setAuthToken] = useState("");
+    const [roomToken, setRoomToken] = useState("");
+
+
+    const onJoin = async () => {
+      setLoading(true);
+      const res = await fetch("/api/join_stream/route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_name: details.title,
+          identity: currentUser.name,
+        }),
+      });
+      const {
+        auth_token,
+        connection_details: { token },
+      } = (await res.json()) as JoinStreamResponse;
+
+      setAuthToken(auth_token);
+      setRoomToken(token);
+    };
+  
+    
+    if(!haveAdminAccess) {
+        if(!authToken && !roomToken) {
+        return (
+          <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
+              <button 
+                disabled={loading}
+              className="text-blue-500"
+                onClick={() => {
+                  onJoin();
+                }}
+              >
+                {
+                  loading ? "Joining..." : "Join the Stream"
+                }
+                
+              </button> 
+            </span>
+          )
+        }
+
+        return (
+          <TokenContext.Provider value={authToken}>
+            <LiveKitRoom serverUrl={serverUrl} token={roomToken}>
+              <StreamPlayer />
+            </LiveKitRoom>
+          </TokenContext.Provider>
+        )
+        
+      }
+      
+      return 
   };
 
   const renderAttachmentLink = (attachment: Attachment) => {
@@ -241,7 +338,7 @@ export default function Class({
                 </div>
                 <p className="text-sm font-medium">{dayjs(createdAt).format("MMM D, YYYY")}</p>
               </div>
-              <div className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl object-cover">
+              <div className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl ">
                 {renderVideo()}
               </div>
             </div>
