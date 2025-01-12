@@ -17,7 +17,7 @@ import {
 import { ToastAction } from "~/components/ui/toast";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { useToast } from "~/hooks/use-toast";
-import { SessionUser } from "~/lib/auth/session";
+import { User } from "next-auth";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -31,7 +31,7 @@ import {
 } from "../ui/dropdown-menu";
 
 interface UserMenuProps {
-  user: SessionUser;
+  user: User;
 }
 
 export function UserMenu({ user }: UserMenuProps) {

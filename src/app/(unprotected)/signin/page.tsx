@@ -1,9 +1,12 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "astro/zod";
+import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
+import { useToast } from "~/hooks/use-toast";
+import { signIn } from "next-auth/react";
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -16,7 +19,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { useRouter } from "~/hooks/use-router";
+import { useRouter } from "next/navigation";
 
 const signInSchema = z.object({
   email: z.string().min(1, "Username or email is required"),
@@ -25,8 +28,9 @@ const signInSchema = z.object({
 
 type SignInInput = z.infer<typeof signInSchema>;
 
-export function SignIn() {
+export default function SignIn() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -41,25 +45,26 @@ export function SignIn() {
   async function onSubmit(data: SignInInput) {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/auth/signin/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Authentication failed");
+      if (result?.error) {
+        throw new Error(result.error);
       }
 
-      if (result.success) {
-        router.push(result.redirectTo || "/dashboard");
+      if (result?.ok) {
+        router.push("/dashboard");
+        router.refresh();
       }
-
-      window.location.reload();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to sign in");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to sign in",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -68,9 +73,13 @@ export function SignIn() {
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
-      window.location.href = "/api/auth/signin/google";
-    } catch (error) {
-      toast.error("Failed to initiate Google sign in");
+      await signIn("google", { callbackUrl: "/dashboard" });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to initiate Google sign in",
+      });
       setIsGoogleLoading(false);
     }
   };
