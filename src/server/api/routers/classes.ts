@@ -109,4 +109,29 @@ export const classesRouter = createTRPCRouter({
     const result = await ctx.db.select().from(classes);
     return result.length;
   }),
+
+  getWithFolders: protectedProcedure
+    .input(z.object({ courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.query.classes.findMany({
+        where: eq(classes.courseId, input.courseId),
+        with: {
+          folder: true,
+        },
+      });
+    }),
+
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const [classDetails] = await ctx.db.query.classes.findMany({
+        where: eq(classes.id, input.id),
+        with: {
+          video: true,
+          attachments: true,
+          folder: true,
+        },
+      });
+      return classDetails;
+    }),
 }); 

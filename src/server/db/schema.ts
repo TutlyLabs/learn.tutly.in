@@ -442,7 +442,7 @@ export const courses = createTable("course", {
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
   endDate: timestamp("end_date", { withTimezone: true }),
-  isPublished: boolean("is_published").default(false),
+  isPublished: boolean("is_published").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),

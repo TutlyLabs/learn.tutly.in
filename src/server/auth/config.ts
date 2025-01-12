@@ -30,10 +30,9 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    role?: (typeof roleEnum.enumValues)[number];
+  }
 }
 
 /**
@@ -81,7 +80,10 @@ export const authConfig = {
           throw new Error("Invalid username or password");
         }
 
-        return user;
+        return {
+          ...user,
+          role: user.role!,
+        };
       },
     }),
   ],

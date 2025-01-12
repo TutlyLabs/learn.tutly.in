@@ -19,6 +19,7 @@ import { statisticsRouter } from "./routers/statistics";
 import { submissionsRouter } from "./routers/submissions";
 import { usersRouter } from "./routers/users";
 import { createCallerFactory, createTRPCRouter } from "./trpc";
+import { foldersRouter } from "./routers/folders";
 
 /**
  * This is the primary router for your server.
@@ -46,6 +47,7 @@ export const appRouter = createTRPCRouter({
   statistics: statisticsRouter,
   submissions: submissionsRouter,
   users: usersRouter,
+  folders: foldersRouter,
 });
 
 // export type definition of API

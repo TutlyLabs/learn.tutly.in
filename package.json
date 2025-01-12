@@ -72,6 +72,7 @@
     "next-auth": "5.0.0-beta.25",
     "next-themes": "^0.4.4",
     "postgres": "^3.4.4",
+    "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-day-picker": "8.10.1",
     "react-dom": "^18.3.1",
@@ -85,6 +86,7 @@
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "use-debounce": "^10.0.4",
     "vaul": "^1.1.2",
     "zod": "^3.24.1"
   },

@@ -1,36 +1,43 @@
 import { z } from "zod";
 import { createTRPCRouter, instructorProcedure, protectedProcedure } from "../trpc";
 import { and, eq } from "drizzle-orm";
-import { courses, enrolledUsers, users } from "~/server/db/schema";
+import { courses, enrolledUsers, classes, folders, attachments, submissions } from "~/server/db/schema";
+import { TRPCError } from "@trpc/server";
 
 export const coursesRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const currentUser = ctx.session.user;
-
-    if (currentUser.role === "INSTRUCTOR") {
-      return await ctx.db.query.courses.findMany({
-        where: eq(courses.createdById, currentUser.id),
-        with: {
-          classes: true,
-        },
-      });
-    }
-
-    if (currentUser.role === "MENTOR") {
-      return await ctx.db.query.courses.findMany({
-        where: eq(enrolledUsers.mentorId, currentUser.id),
-        with: {
-          classes: true,
-        },
-      });
-    }
-
-    return await ctx.db.query.courses.findMany({
+  
+    const enrolledUsersQuery = await ctx.db.query.enrolledUsers.findMany({
       where: eq(enrolledUsers.userId, currentUser.id),
       with: {
-        classes: true,
-      },
+        course: {
+          with: {
+            classes: true,
+            createdBy: {
+              columns: {
+                id: true,
+                username: true,
+                name: true,
+                image: true,
+                email: true,
+                role: true,
+              }
+            },
+            enrolledUsers: {
+              with: {
+                user: true
+              }
+            }
+          }
+        }
+      }
     });
+
+    const enrolledCourses = enrolledUsersQuery.map(enrollment => enrollment.course);
+
+    return enrolledCourses;
+
   }),
 
   create: instructorProcedure
@@ -90,6 +97,20 @@ export const coursesRouter = createTRPCRouter({
   delete: instructorProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      const enrolledCount = await ctx.db.query.enrolledUsers.findMany({
+        where: eq(enrolledUsers.courseId, input.id),
+        columns: {
+          courseId: true
+        }
+      });
+
+      if (enrolledCount.length > 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot delete course with enrolled users",
+        });
+      }
+
       await ctx.db
         .delete(courses)
         .where(
@@ -110,23 +131,52 @@ export const coursesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const [user] = await ctx.db
-        .select()
-        .from(users)
-        .where(eq(users.username, input.username));
-
-      if (!user) {
-        throw new Error("User not found");
-      }
-
       const [enrollment] = await ctx.db
         .insert(enrolledUsers)
         .values({
-          userId: user.id,
+          userId: input.username,
           courseId: input.courseId,
         })
         .returning();
 
       return enrollment;
+    }),
+
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const course = await ctx.db.query.courses.findFirst({
+        where: eq(courses.id, input.id),
+        with: {
+          classes: {
+            with: {
+              attachments: {
+                where: eq(attachments.attachmentType, "ASSIGNMENT"),
+                with: {
+                  submissions: {
+                    where: eq(submissions.enrolledUserId, ctx.session.user.id)
+                  }
+                }
+              }
+            },
+            orderBy: (classes, { asc }) => [asc(classes.createdAt)]
+          }
+        }
+      });
+
+      return course;
+    }),
+
+  getClassesWithFolders: protectedProcedure
+    .input(z.object({ courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const classesWithFolders = await ctx.db.query.classes.findMany({
+        where: eq(classes.courseId, input.courseId),
+        with: {
+          folder: true
+        }
+      });
+
+      return classesWithFolders;
     }),
 }); 
