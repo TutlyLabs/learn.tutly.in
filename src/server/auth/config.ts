@@ -51,23 +51,24 @@ export const authConfig = {
       id: "credentials",
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        email: { label: "email", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
-          throw new Error("Username and password are required");
+        console.log("--------------credentials", credentials);
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("email and password are required");
         }
 
-        const username = credentials.username as string;
+        const email = credentials.email as string;
         const password = credentials.password as string;
 
         const user = await db.query.users.findFirst({
-          where: (users) => eq(users.username, username.trim().toUpperCase()),
+          where: (users) => eq(users.email, email.trim().toLowerCase()),
         });
 
         if (!user) {
-          throw new Error("Invalid username or password");
+          throw new Error("Invalid email or password");
         }
 
         if (!user.password) {
@@ -80,7 +81,7 @@ export const authConfig = {
         // const valid = await bcryptjs.compare(password, user.password);
 
         if (!valid) {
-          throw new Error("Invalid username or password");
+          throw new Error("Invalid email or password");
         }
 
         return {

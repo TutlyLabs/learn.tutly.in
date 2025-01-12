@@ -56,7 +56,7 @@ export default function SignIn() {
       }
 
       if (result?.ok) {
-        router.push("/dashboard");
+        router.push("/");
         router.refresh();
       }
     } catch (error) {
@@ -73,7 +73,7 @@ export default function SignIn() {
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl: "/" });
     } catch {
       toast({
         variant: "destructive",
