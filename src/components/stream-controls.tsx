@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMediaDeviceSelect } from "@livekit/components-react";
+import { useEffect, useState } from "react";
 
 interface StreamControlsProps {
   isHost?: boolean;
@@ -53,7 +54,7 @@ interface StreamControlsProps {
   onToggleParticipants: () => void;
   onLeave: () => void;
   onSendReaction?: (emoji: string) => void;
-  activeTab?: "chat" | "participants";
+  activeTab?: "chat" | "participants" | "assignments";
   analytics?: any;
   roomName?: string;
   canRaiseHand?: boolean;
@@ -95,9 +96,30 @@ export function StreamControls({
     setActiveMediaDevice: setActiveCamera,
   } = useMediaDeviceSelect({ kind: "videoinput" });
 
+  const [isVisible, setIsVisible] = useState(true);
+  let hideTimeout: NodeJS.Timeout;
+
+  useEffect(() => {
+    const handleMouseMove = () => {
+      setIsVisible(true);
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => setIsVisible(false), 5000);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      clearTimeout(hideTimeout);
+    };
+  }, []);
+  
   return (
     <TooltipProvider>
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-4 rounded-full bg-background/95 backdrop-blur border border-border shadow-lg">
+      {/* <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-4 rounded-full bg-background/95 backdrop-blur border border-border shadow-lg"> */}
+      <div className={cn(
+      "fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-4 rounded-full bg-background/95 backdrop-blur border border-border shadow-lg transition-opacity duration-300",
+      !isVisible && "opacity-0 pointer-events-none"
+    )}>
         <div className="flex">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -330,7 +352,7 @@ export function StreamControls({
             <div className="h-8 w-[1px] bg-border mx-2" />
             <Tooltip>
               <TooltipTrigger asChild>
-                <StreamAnalyticsModal analytics={analytics} roomName={roomName}>
+                <StreamAnalyticsModal analytics={analytics} roomName={roomName as string}>
                   <Button
                     variant="secondary"
                     size="lg"

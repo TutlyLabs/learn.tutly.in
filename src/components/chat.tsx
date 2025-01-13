@@ -33,7 +33,7 @@ function ChatMessage({ message }: { message: ReceivedChatMessage }) {
           weight="bold"
           size="1"
           className={
-            localParticipant.identity === message.from?.identityx
+            localParticipant.identity === message.from?.identity
               ? "text-accent-11"
               : "text-gray-11"
           }

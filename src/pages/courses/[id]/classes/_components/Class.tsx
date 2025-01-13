@@ -98,7 +98,7 @@ export default function Class({
     const onGoLive = async () => {
       setLoading(true);
       try {
-        const { data: response } = await actions.stream_createStream({
+        const { data: response,error } = await actions.stream_createStream({
           room_name: details.title,
           metadata: {
             creator_identity: currentUser.name,
@@ -110,9 +110,15 @@ export default function Class({
           }
         });
 
-        if (response) {
-          setInsAuthToken(response.auth_token);
-          setInsRoomToken(response.connection_details.token);
+        if(error) 
+        {
+          console.error("Failed to go live:", error);
+          return;
+        }
+
+        if (response.data) {
+          setInsAuthToken(response.data.auth_token);
+          setInsRoomToken(response.data.connection_details.token);
         } else {
           console.error("No response data received");
         }
@@ -139,6 +145,7 @@ export default function Class({
         );
       }
 
+
       return (
         <div >
           <TokenContext.Provider value={insAuthToken}>
@@ -155,7 +162,7 @@ export default function Class({
     const onJoin = async () => {
       setLoading(true);
       try {
-        const { data } = await actions.stream_joinStream({
+        const { data:response,error } = await actions.stream_joinStream({
           room_name: details.title,
           identity: currentUser.name,
           headers: {
@@ -163,9 +170,17 @@ export default function Class({
           }
         });
 
-        const { auth_token, connection_details: { token } } = data;
-        setAuthToken(auth_token);
-        setRoomToken(token);
+        if(error)
+        {
+          console.error("Failed to join:", error);
+          return;
+        }
+        
+        if ('data' in response) {
+          const { auth_token, connection_details: { token } } = response.data as JoinStreamResponse;
+          setAuthToken(auth_token);
+          setRoomToken(token);
+        } 
       } catch (error) {
         console.error("Failed to join:", error);
       } finally {

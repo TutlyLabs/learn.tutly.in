@@ -181,7 +181,7 @@ export const startRecording = defineAction({
         };
       }
 
-      const hostURL = new URL(requiredEnvVars.VITE_LIVEKIT_WS_URL!);
+      const hostURL = new URL(requiredEnvVars.LIVEKIT_WS_URL!);
       hostURL.protocol = "https:";
 
       const egressClient = new EgressClient(

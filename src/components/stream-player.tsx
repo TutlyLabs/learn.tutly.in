@@ -1,5 +1,5 @@
 import { useCopyToClipboard } from "@/lib/clipboard";
-import { ParticipantMetadata, RoomMetadata } from "@/lib/controller";
+import { ParticipantMetadata } from "@/lib/controller";
 import {
   AudioTrack,
   VideoTrack,
@@ -63,7 +63,7 @@ export function StreamPlayer({ isHost = false }) {
   const localVideoEl = useRef<HTMLVideoElement>(null);
 
   const roomContext = useRoomContext();
-  const { metadata, name: roomName } = roomContext;
+  const {  name: roomName } = roomContext;
   // const roomMetadata = (metadata && JSON.parse(metadata)) as RoomMetadata;
   const { localParticipant } = useLocalParticipant();
   const localMetadata = (localParticipant.metadata &&
@@ -167,17 +167,14 @@ export function StreamPlayer({ isHost = false }) {
       if (isRecording) {
         await actions.stream_stopRecording({
           roomName: roomContext.name,
-          headers: {
-            Authorization: `Token ${authToken}`
-          }
+          // headers: {
+          //   Authorization: `Token ${authToken}`
+          // }
         });
       } else {
         await actions.stream_startRecording({
           roomName: roomContext.name,
-          headers: {
-            Authorization: `Token ${authToken}`
-          }
-        });
+        })
       }
     } catch (error) {
       console.error("Failed to toggle recording:", error);
