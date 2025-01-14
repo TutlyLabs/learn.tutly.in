@@ -19,12 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Radio } from 'lucide-react';
+
 
 const NewClassDialog = ({ courseId }: { courseId: string }) => {
   const [videoLink, setVideoLink] = useState("");
   const [videoType, setVideoType] = useState("DRIVE");
   const [classTitle, setClassTitle] = useState("");
-  const [textValue, setTextValue] = useState("Create Class");
+  
+  const [isCreatingClass, setIsCreatingClass] = useState(false);
+  const [isStartingStream, setIsStartingStream] = useState(false);
+  
   const [folderName, setFolderName] = useState("");
   const [folders, setFolders] = useState([]);
   const [selectedFolder, setSelectedFolder] = useState("");
@@ -48,13 +53,13 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
     fetchFolders();
   }, [courseId]);
 
-  const handleCreateClass = async () => {
+  const handleStartStream = async () => {
     if (!classTitle.trim()) {
       toast.error("Please fill all necessary fields");
       return;
     }
 
-    setTextValue("Creating Class");
+    setIsStartingStream(true);
     try {
       const { data, error } = await actions.classes_createClass({
         classTitle,
@@ -75,15 +80,55 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
         setSelectedFolder("");
         setFolderName("");
         setIsOpen(false);
+        window.location.href = `/courses/${courseId}/classes/${data.id}?stream=true`;
+      }
+    } catch (error) {
+      toast.error("Failed to add new class");
+    } finally {
+      setIsStartingStream(false);
+      // window.location.reload();
+    }
+  };
+
+  const handleCreateClass = async () => {
+    if (!classTitle.trim()) {
+      toast.error("Please fill all necessary fields");
+      return;
+    }
+
+    setIsCreatingClass(true);
+    try {
+      const { data, error } = await actions.classes_createClass({
+        classTitle,
+        videoLink,
+        videoType: videoType as "DRIVE" | "ZOOM" | "YOUTUBE",
+        courseId: courseId!,
+        createdAt,
+        folderId: selectedFolder != "new" ? selectedFolder : undefined,
+        folderName: selectedFolder == "new" ? folderName.trim() : undefined,
+      });
+
+      console.log(data);
+      if (error) {
+        toast.error("Failed to add new class");
+      } else {
+        toast.success("Class added successfully");
+        setVideoLink("");
+        setClassTitle("");
+        setSelectedFolder("");
+        setFolderName("");
+        setIsOpen(false);
         window.location.href = `/courses/${courseId}/classes/${data.id}`;
       }
     } catch (error) {
       toast.error("Failed to add new class");
     } finally {
-      setTextValue("Create Class");
-      window.location.reload();
+      setIsCreatingClass(false);
+      // window.location.reload();
     }
   };
+  
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -145,18 +190,46 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
             />
           )}
 
-          <Button
-            disabled={!classTitle || textValue === "Creating Class"}
-            className="w-full"
-            onClick={handleCreateClass}
+          <div
+            className="grid gap-4 grid-cols-2"
           >
-            {textValue}
-            {textValue === "Creating Class" ? (
-              <FaPlus className="ml-2 animate-spin" />
-            ) : (
-              <FaPlus className="ml-2" />
-            )}
-          </Button>
+            <Button
+              disabled={!classTitle}
+              className="w-full bg-red-500 hover:bg-red-600"
+              onClick={handleStartStream}
+              >
+                
+              {isStartingStream ? (
+                <p className="flex items-center justify-center">
+                  Starting Stream...
+                  <Radio className="ml-2 animate-spin" />
+                </p>
+              ) : (
+                <p className="flex items-center justify-center">
+                  Start Stream
+                  <Radio className="ml-2" />
+                </p>
+              )}
+            </Button>
+            <Button
+              disabled={!classTitle || isCreatingClass }
+              className="w-full"
+              onClick={handleCreateClass}
+              >
+
+              {isCreatingClass ? (
+                <p className="flex items-center justify-center">
+                  Creating Class...
+                  <FaPlus className="ml-2 animate-spin" />
+                </p>
+              ) : (
+                <p className="flex items-center justify-center">
+                  Create Class
+                  <FaPlus className="ml-2" />
+                </p>
+              )}
+            </Button>
+            </div>
         </div>
       </DialogContent>
     </Dialog>

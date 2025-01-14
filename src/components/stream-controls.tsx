@@ -54,7 +54,7 @@ interface StreamControlsProps {
   onToggleParticipants: () => void;
   onLeave: () => void;
   onSendReaction?: (emoji: string) => void;
-  activeTab?: "chat" | "participants" | "assignments";
+  activeTab?: "chat" | "participants" | "assignments"| 'null';
   analytics?: any;
   roomName?: string;
   canRaiseHand?: boolean;
@@ -97,36 +97,55 @@ export function StreamControls({
   } = useMediaDeviceSelect({ kind: "videoinput" });
 
   const [isVisible, setIsVisible] = useState(true);
-  let hideTimeout: NodeJS.Timeout;
-
+  
   useEffect(() => {
+    let hideTimeout: NodeJS.Timeout;
+    
     const handleMouseMove = () => {
       setIsVisible(true);
       clearTimeout(hideTimeout);
       hideTimeout = setTimeout(() => setIsVisible(false), 5000);
     };
-
-    document.addEventListener('mousemove', handleMouseMove);
+  
+    const streamPlayer = document.getElementById('StreamPlayer');
+    if (streamPlayer) {
+      streamPlayer.addEventListener('mousemove', handleMouseMove);
+    }
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      const streamPlayer = document.getElementById('StreamPlayer');
+      if (streamPlayer) {
+        streamPlayer.removeEventListener('mousemove', handleMouseMove);
+      }
       clearTimeout(hideTimeout);
     };
   }, []);
+
   
   return (
     <TooltipProvider>
-      {/* <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-4 rounded-full bg-background/95 backdrop-blur border border-border shadow-lg"> */}
       <div className={cn(
-      "fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-4 rounded-full bg-background/95 backdrop-blur border border-border shadow-lg transition-opacity duration-300",
-      !isVisible && "opacity-0 pointer-events-none"
-    )}>
+        "absolute bottom-6 left-1/2 -translate-x-1/2",
+        "flex items-center gap-2 p-3 rounded-full",
+        "bg-background/95 backdrop-blur border border-border shadow-lg",
+        "transition-opacity duration-300",
+        !isVisible && "opacity-0 pointer-events-none"
+      )}
+        style = {{  
+          background: "rgba(255, 255, 255, 0.3)",
+          boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+          backdropFilter: "blur(5.5px)",
+          WebkitBackdropFilter: "blur(5.5px)", 
+          borderRadius: "10px",
+          border: "1px solid rgba(255, 255, 255, 0.18)",
+        }}
+      >
         <div className="flex">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant={isMuted ? "destructive" : "secondary"}
                 size="lg"
-                className="rounded-l-full w-12 h-12"
+                className="rounded-l-full w-10 h-10"
                 onClick={onToggleAudio}
                 disabled={!canPublish}
               >
@@ -143,7 +162,7 @@ export function StreamControls({
               <Button
                 variant="secondary"
                 size="lg"
-                className="rounded-r-full px-2 h-12"
+                className="rounded-r-full px-2 h-10"
                 disabled={!canPublish}
               >
                 <ChevronDown className="h-4 w-4" />
@@ -173,7 +192,7 @@ export function StreamControls({
               <Button
                 variant={isVideoEnabled ? "secondary" : "destructive"}
                 size="lg"
-                className="rounded-l-full w-12 h-12"
+                className="rounded-l-full w-10 h-10"
                 onClick={onToggleVideo}
                 disabled={!canPublish}
               >
@@ -200,7 +219,7 @@ export function StreamControls({
               <Button
                 variant="secondary"
                 size="lg"
-                className="rounded-r-full px-2 h-12"
+                className="rounded-r-full px-2 h-10"
                 disabled={!canPublish}
               >
                 <ChevronDown className="h-4 w-4" />
@@ -229,7 +248,7 @@ export function StreamControls({
             <Button
               variant={isScreenSharing ? "destructive" : "secondary"}
               size="lg"
-              className="rounded-full w-12 h-12"
+              className="rounded-full w-10 h-10"
               onClick={onToggleScreenShare}
               disabled={!canPublish}
             >
@@ -247,7 +266,7 @@ export function StreamControls({
               <Button
                 variant={isRecording ? "destructive" : "secondary"}
                 size="lg"
-                className="rounded-full w-12 h-12"
+                className="rounded-full w-10 h-10"
                 onClick={onToggleRecording}
                 disabled={!canPublish}
               >
@@ -273,7 +292,7 @@ export function StreamControls({
                 <Button
                   variant="secondary"
                   size="lg"
-                  className="rounded-full w-12 h-12"
+                  className="rounded-full w-10 h-10"
                 >
                   <Smile className="h-5 w-5" />
                 </Button>
@@ -303,7 +322,7 @@ export function StreamControls({
             <Button
               variant={activeTab === "chat" ? "default" : "secondary"}
               size="lg"
-              className="rounded-full w-12 h-12"
+              className="rounded-full w-10 h-10"
               onClick={onToggleChat}
             >
               <MessageSquare className="h-5 w-5" />
@@ -319,7 +338,7 @@ export function StreamControls({
             <Button
               variant={activeTab === "participants" ? "default" : "secondary"}
               size="lg"
-              className="rounded-full w-12 h-12"
+              className="rounded-full w-10 h-10"
               onClick={onToggleParticipants}
             >
               <Users className="h-5 w-5" />
@@ -335,7 +354,7 @@ export function StreamControls({
             <Button
               variant="destructive"
               size="lg"
-              className="rounded-full w-12 h-12"
+              className="rounded-full w-10 h-10"
               onClick={onLeave}
               disabled={!canPublish}
             >
@@ -356,7 +375,7 @@ export function StreamControls({
                   <Button
                     variant="secondary"
                     size="lg"
-                    className="rounded-full w-12 h-12"
+                    className="rounded-full w-10 h-10"
                   >
                     <Activity className="h-5 w-5" />
                   </Button>
@@ -375,7 +394,7 @@ export function StreamControls({
               <Button
                 variant={isHandRaised ? "default" : "secondary"}
                 size="lg"
-                className="rounded-full w-12 h-12"
+                className="rounded-full w-10 h-10"
                 onClick={onRaiseHand}
               >
                 <Hand className="h-5 w-5" />

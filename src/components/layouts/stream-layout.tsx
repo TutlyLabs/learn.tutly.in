@@ -12,8 +12,8 @@ interface StreamLayoutProps {
   participants?: boolean;
   sidebarOpen?: boolean;
   onSidebarOpenChange?: (open: boolean) => void;
-  activeTab?: "chat" | "participants";
-  onTabChange?: (tab: "chat" | "participants") => void;
+  activeTab?: "chat" | "participants" | "null";
+  onTabChange?: (tab: "chat" | "participants" | "null") => void;
 }
 
 export function StreamLayout({
@@ -26,18 +26,10 @@ export function StreamLayout({
   onTabChange
 }: StreamLayoutProps) {
   const [localSidebarOpen, setLocalSidebarOpen] = useState(false);
-  const [localActiveTab, setLocalActiveTab] = useState<"chat" | "participants">("chat");
+  const [localActiveTab, setLocalActiveTab] = useState<"chat" | "participants" | "null">("null");
 
   const isOpen = onSidebarOpenChange ? sidebarOpen : localSidebarOpen;
-  const currentTab: "chat" | "participants" = onTabChange ? activeTab : localActiveTab;
-
-  const setIsOpen = (open: boolean) => {
-    if (onSidebarOpenChange) {
-      onSidebarOpenChange(open);
-    } else {
-      setLocalSidebarOpen(open);
-    }
-  };
+  const currentTab: "chat" | "participants" | 'null' = onTabChange ? activeTab : localActiveTab;
 
   const handleTabChange = (tab: "chat" | "participants") => {
     if (onTabChange) {
@@ -50,18 +42,43 @@ export function StreamLayout({
   return (
     <div className="h-screen flex">
       <main
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            if (isOpen) {
+              if (onSidebarOpenChange) {
+                onTabChange?.("null");
+                onSidebarOpenChange(false);
+              } else {
+                setLocalSidebarOpen(false);
+              }
+            }
+          }
+        }}
         className={cn(
           "flex-1 transition-all duration-300 ease-in-out",
-          isOpen && "mr-[360px]"
         )}
-      >
+        >
         {children}
       </main>
 
       {(chat || participants) && (
         <aside
-          className={cn(
-            "fixed right-0 top-0 h-full w-[360px] border-l border-border bg-background transition-transform duration-300 ease-in-out",
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            if (isOpen) {
+              if (onSidebarOpenChange) {
+                onTabChange?.("null");
+                onSidebarOpenChange(false);
+              } else {
+                setLocalSidebarOpen(false);
+              }
+            }
+          }
+        }}
+        className={cn(
+            "fixed right-0 top-0 h-3/4 w-[360px] border-l border-border bg-background transition-transform duration-300 ease-in-out",
             !isOpen && "translate-x-full"
           )}
         >

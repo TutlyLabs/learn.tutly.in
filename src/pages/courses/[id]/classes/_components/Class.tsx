@@ -89,12 +89,18 @@ export default function Class({
   );
   const haveAdminAccess = currentUser.role == "INSTRUCTOR" || isCourseAdmin;
 
-  const [loading, setLoading] = useState(false);
-  const [insAuthToken, setInsAuthToken] = useState("");
-  const [insRoomToken, setInsRoomToken] = useState("");
-  const [authToken, setAuthToken] = useState("");
-
+  const [liveStarted, setLiveStarted] = useState(false);
+  
+  
   const renderVideo = () => {
+    const [loading, setLoading] = useState(false);
+    const [insAuthToken, setInsAuthToken] = useState("");
+    const [insRoomToken, setInsRoomToken] = useState("");
+    const [authToken, setAuthToken] = useState("");
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const startInstantMeet = searchParams.get("stream");
+
     const onGoLive = async () => {
       setLoading(true);
       try {
@@ -109,25 +115,26 @@ export default function Class({
             Authorization: `Token ${authToken}`
           }
         });
-
+        
         if(error) 
-        {
-          console.error("Failed to go live:", error);
-          return;
-        }
+          {
+            console.error("Failed to go live:", error);
+            return;
+          }
 
-        if (response.data) {
-          setInsAuthToken(response.data.auth_token);
-          setInsRoomToken(response.data.connection_details.token);
-        } else {
-          console.error("No response data received");
+          if (response.data) {
+            setInsAuthToken(response.data.auth_token);
+            setInsRoomToken(response.data.connection_details.token);
+            setLiveStarted(true);
+          } else {
+            console.error("No response data received");
+          }
+        } catch (error) {
+          console.error("Failed to go live:", error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to go live:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
     if (haveAdminAccess) {
       if (!insAuthToken && !insRoomToken) {
@@ -175,12 +182,11 @@ export default function Class({
           console.error("Failed to join:", error);
           return;
         }
-        
-        if ('data' in response) {
-          const { auth_token, connection_details: { token } } = response.data as JoinStreamResponse;
-          setAuthToken(auth_token);
-          setRoomToken(token);
-        } 
+
+        const { auth_token, connection_details: { token } } = response as JoinStreamResponse;
+        setAuthToken(auth_token);
+        setRoomToken(token);
+        setLiveStarted(true);
       } catch (error) {
         console.error("Failed to join:", error);
       } finally {
@@ -218,7 +224,7 @@ export default function Class({
 
     }
 
-    return
+    return "No video available";
   };
 
   const renderAttachmentLink = (attachment: Attachment) => {
@@ -347,16 +353,35 @@ export default function Class({
                     </Button>
                   </div>
                 </div>
-                <p className="text-sm font-medium">{dayjs(createdAt).format("MMM D, YYYY")}</p>
+
+                <div
+                  className="flex items-center justify-end gap-3"
+                >
+                    {
+                      liveStarted && (
+                        <div
+                        className="flex items-center justify-start "
+                        >
+                          <div
+                            className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-1"
+                            />
+                          <span className="text-sm font-semibold text-muted-foreground">Live</span>
+                        </div>
+                      )
+                    }
+                    <p className="text-sm font-medium">{dayjs(createdAt).format("MMM D, YYYY")}</p>
+                </div>
               </div>
-              <div className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl ">
+              <div 
+                id='StreamPlayer'
+              className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl ">
                 {renderVideo()}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full pb-4 md:m-0 md:w-96">
+        <div className="w-full pb-4 md:m-0 md:w-[350px]">
           <div className="h-full w-full rounded-xl p-2">
             {haveAdminAccess && (
               <div className="flex w-full justify-end mb-4">
@@ -386,7 +411,7 @@ export default function Class({
                 <tr>
                   <th className="px-4 py-2">Title</th>
                   <th className="px-4 py-2">Link</th>
-                  <th className="px-4 py-2">Due Date</th>
+                  <th className="px-4 py-2">Due by</th>
                   {haveAdminAccess && <th className="px-4 py-2">Actions</th>}
                 </tr>
               </thead>

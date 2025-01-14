@@ -1,16 +1,15 @@
 "use client";
 
 import { RoomMetadata } from "@/lib/controller";
+import { cn } from "@/lib/utils";
 import {
   ReceivedChatMessage,
   useChat,
   useLocalParticipant,
   useRoomInfo,
 } from "@livekit/components-react";
-import { PaperPlaneIcon, PersonIcon } from "@radix-ui/react-icons";
+import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import {
-  Avatar,
-  Box,
   Flex,
   IconButton,
   Text,
@@ -22,27 +21,28 @@ function ChatMessage({ message }: { message: ReceivedChatMessage }) {
   const { localParticipant } = useLocalParticipant();
 
   return (
-    <Flex gap="2" align="start" className="break-words w-[220px]">
-      <Avatar
-        size="1"
-        fallback={message.from?.identity[0] ?? <PersonIcon />}
-        radius="full"
-      />
-      <Flex direction="column">
-        <Text
-          weight="bold"
-          size="1"
-          className={
-            localParticipant.identity === message.from?.identity
-              ? "text-accent-11"
-              : "text-gray-11"
-          }
+    <div  className="break-words w-[220px] flex items-center justify-start my-3 ">
+      <div
+        className="w-8 h-8 mr-2 font-bold bg-gray-800 rounded-full flex items-center justify-center ring-2 ring-gray-800"
+      >
+        {
+          message.from?.identity[0]
+        }
+      </div>
+      <div className="flex flex-col items-center">
+        <p
+          className={cn(localParticipant.identity === message.from?.identity
+              ? "text-blue-500"
+              : "text-gray-500",
+              "font-bold text-medium overflow-auto"
+
+            )}
         >
           {message.from?.identity ?? "Unknown"}
-        </Text>
-        <Text size="1">{message.message}</Text>
-      </Flex>
-    </Flex>
+        </p>
+        <Text size="1" className="ms-2">{message.message}</Text>
+      </div>
+    </div>
   );
 }
 
@@ -73,12 +73,12 @@ export function Chat() {
   };
 
   return (
-    <Flex direction="column" className="h-full">
-      <Box className="text-center p-2 border-b border-accent-5">
+    <div className=" flex-1 flex flex-col h-full ">
+      <div className="text-center p-2 border-b border-accent-5">
         <Text size="2" className="font-mono text-accent-11">
           Live Chat
         </Text>
-      </Box>
+      </div>
       <Flex
         direction="column"
         justify="end"
@@ -89,10 +89,11 @@ export function Chat() {
           <ChatMessage message={msg} key={msg.timestamp} />
         ))}
       </Flex>
-      <Box>
-        <Flex gap="2" py="2" px="4" mt="4" className="border-t border-accent-5">
-          <Box className="flex-1">
+      <div>
+        <div className="border-t border-slate-500 py-4 px-2 mt-4 flex items-center gap-2">
+          <div className="flex-1">
             <TextField.Input
+              className="w-full text-gray-950"
               disabled={!chatEnabled}
               placeholder={
                 chatEnabled ? "Say something..." : "Chat is disabled"
@@ -106,12 +107,12 @@ export function Chat() {
                 }
               }}
             />
-          </Box>
+          </div>
           <IconButton onClick={onSend} disabled={!draft.trim().length}>
             <PaperPlaneIcon />
           </IconButton>
-        </Flex>
-      </Box>
-    </Flex>
+        </div>
+      </div>
+    </div>
   );
 }

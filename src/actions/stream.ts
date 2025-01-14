@@ -163,11 +163,11 @@ export const startRecording = defineAction({
         LIVEKIT_API_KEY: import.meta.env.LIVEKIT_API_KEY,
         LIVEKIT_API_SECRET: import.meta.env.LIVEKIT_API_SECRET,
         LIVEKIT_WS_URL: import.meta.env.VITE_LIVEKIT_WS_URL,
-        S3_KEY_ID: import.meta.env.S3_KEY_ID,
-        S3_KEY_SECRET: import.meta.env.S3_KEY_SECRET,
-        S3_BUCKET: import.meta.env.S3_BUCKET,
+        S3_KEY_ID: import.meta.env.AWS_ACCESS_KEY,
+        S3_KEY_SECRET: import.meta.env.AWS_SECRET_KEY,
+        S3_BUCKET: import.meta.env.AWS_BUCKET_NAME,
         S3_ENDPOINT: import.meta.env.S3_ENDPOINT,
-        S3_REGION: import.meta.env.S3_REGION,
+        S3_REGION: import.meta.env.AWS_BUCKET_REGION,
       };
 
       const missingVars = Object.entries(requiredEnvVars)
@@ -237,9 +237,12 @@ export const startRecording = defineAction({
 });
 
 export const stopRecording = defineAction({
+  input: z.object({
+    roomName: z.string(),
+  }),
   handler: async (input, { }) => {
     try {
-      const roomName = input.get("roomName");
+      const roomName = input.roomName;
 
       if (!roomName) {
         return {
@@ -251,7 +254,7 @@ export const stopRecording = defineAction({
       const requiredEnvVars = {
         LIVEKIT_API_KEY: import.meta.env.LIVEKIT_API_KEY,
         LIVEKIT_API_SECRET: import.meta.env.LIVEKIT_API_SECRET,
-        LIVEKIT_URL: import.meta.env.LIVEKIT_URL,
+        LIVEKIT_URL: import.meta.env.VITE_LIVEKIT_WS_URL,
       };
 
       const missingVars = Object.entries(requiredEnvVars)

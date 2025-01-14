@@ -116,7 +116,7 @@ export function StreamPlayer({ isHost = false }) {
 
   const authToken = useAuthToken();
   const onLeaveStage = async () => {
-    await fetch("/api/remove_from_stage", {
+    const response = await fetch("/api/remove_from_stage/route", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -126,6 +126,9 @@ export function StreamPlayer({ isHost = false }) {
         identity: localParticipant.identity,
       }),
     });
+
+    console.log("Response at leave stage",response);
+    window.location.reload();
   };
 
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -136,7 +139,7 @@ export function StreamPlayer({ isHost = false }) {
   }, [screenShareTracks]);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "participants">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "participants" | 'null'>("null");
   const [encoder] = useState(() => new TextEncoder());
   const { send: sendReaction } = useDataChannel("reactions");
   const { send: sendChat } = useChat();
@@ -151,13 +154,39 @@ export function StreamPlayer({ isHost = false }) {
   };
 
   const onToggleChat = () => {
-    setActiveTab("chat");
-    setSidebarOpen(true);
-  };
+    const currSideBarOpen = sidebarOpen;
+    const currActiveTab = activeTab
 
+    if(currActiveTab == 'participants') 
+    {
+      setActiveTab("chat");
+    }
+    else {
+      setSidebarOpen(!sidebarOpen);
+
+      if(!currSideBarOpen)
+        setActiveTab("chat")
+      else 
+        setActiveTab("null");
+    }
+    
+    
+  };
+  
   const onToggleParticipants = () => {
-    setActiveTab("participants");
-    setSidebarOpen(true);
+    const currSideBarOpen = sidebarOpen;
+    const currActiveTab = activeTab
+    if(currActiveTab == 'chat') 
+      {
+        setActiveTab("participants");
+      } 
+      else {
+        setSidebarOpen(!sidebarOpen);
+        if(!currSideBarOpen)
+          setActiveTab("participants")
+        else 
+          setActiveTab("null");
+    }
   };
 
   const isRecording = useIsRecording();
@@ -165,16 +194,21 @@ export function StreamPlayer({ isHost = false }) {
   const toggleRoomRecording = async () => {
     try {
       if (isRecording) {
-        await actions.stream_stopRecording({
+
+        const {data:response} = await actions.stream_stopRecording({
           roomName: roomContext.name,
           // headers: {
           //   Authorization: `Token ${authToken}`
           // }
         });
+        console.log("Response at stop stream",response);
       } else {
-        await actions.stream_startRecording({
+        
+        const {data:response} = await actions.stream_startRecording({
           roomName: roomContext.name,
         })
+
+        console.log("Response at start stream",response);
       }
     } catch (error) {
       console.error("Failed to toggle recording:", error);
@@ -225,20 +259,10 @@ export function StreamPlayer({ isHost = false }) {
     switch (layout) {
       case "grid":
         return cn(baseClass, {
-          // Single participant - centered with 16:9 aspect ratio
-          "grid-cols-1 items-center justify-center h-full": totalParticipants === 1,
-
-          // Two participants - side by side with 16:9
-          "grid-cols-2 items-center": totalParticipants === 2,
-
-          // Three participants - 2 on top, 1 centered below
-          "grid-cols-2 grid-rows-1 items-center": totalParticipants === 3,
-
-          // Four participants - 2x2 grid
-          "grid-cols-2 grid-rows-2 items-center": totalParticipants === 4,
-
-          // More than 4 - 3x3 grid
-          "grid-cols-3 items-center": totalParticipants > 4,
+          "grid-cols-1 items-center": totalParticipants === 1,
+          "grid-cols-2": totalParticipants === 2,
+          "grid-cols-2 grid-rows-2": totalParticipants === 3 || totalParticipants === 4,
+          "grid-cols-3 grid-rows-2": totalParticipants > 4
         });
 
       case "spotlight":
@@ -258,7 +282,7 @@ export function StreamPlayer({ isHost = false }) {
   // Add custom styles for the third participant in a 3-participant layout
   const getParticipantStyles = (index: number, totalParticipants: number) => {
     if (totalParticipants === 3 && index === 2) {
-      return "col-span-2"; // Make the third participant span both columns
+      return "col-span-2"; 
     }
     return "";
   };
@@ -273,7 +297,7 @@ export function StreamPlayer({ isHost = false }) {
             onClick={() => setLayout("grid")}
             className="h-8 w-8 p-0"
           >
-            <LayoutGrid className="h-4 w-4" />
+            <Maximize2 className="h-4 w-4" />
           </Button>
           <Button
             size="sm"
@@ -281,7 +305,7 @@ export function StreamPlayer({ isHost = false }) {
             onClick={() => setLayout("spotlight")}
             className="h-8 w-8 p-0"
           >
-            <Maximize2 className="h-4 w-4" />
+            <LayoutGrid className="h-4 w-4" />
           </Button>
           {isScreenSharing && (
             <Button
@@ -333,7 +357,7 @@ export function StreamPlayer({ isHost = false }) {
 
   const onRaiseHand = async () => {
     try {
-      await fetch("/api/raise_hand", {
+      await fetch("/api/raise_hand/route", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -396,6 +420,28 @@ export function StreamPlayer({ isHost = false }) {
     }
   }, [localParticipant.isCameraEnabled]);
 
+  
+
+  // For the host video overlay during screen sharing
+const hostVideoOverlayClass = cn(
+  "absolute bottom-4 right-4 w-[240px] aspect-video rounded-lg overflow-hidden shadow-lg",
+  "transition-opacity duration-300",
+  !isScreenSharing && "hidden"
+);
+
+const PictureInPicture = ({ track }: { track: any }) => {
+  return (
+    <div className="absolute bottom-4 right-4 w-[180px] aspect-video rounded-lg overflow-hidden border border-border shadow-lg">
+      <video
+        // ref={localVideoEl}
+        autoPlay
+        playsInline
+        className="h-full inset-0 absolute w-full "
+      />
+    </div>
+  );
+};
+  
   return (
     <StreamLayout
       sidebarOpen={sidebarOpen}
@@ -406,17 +452,21 @@ export function StreamPlayer({ isHost = false }) {
       <div
         ref={containerRef}
         className={cn(
-          "relative h-full w-full bg-background transition-all",
+          "relative w-full h-full bg-black ",
+          layout === "grid" ? "grid gap-2" : "aspect-video",
           isFullscreen && "fixed inset-0 z-50"
-        )}
+          )}
       >
         <ConfettiCanvas />
         {renderLayoutSwitcher()}
 
         <div className={getLayoutClass()}>
           {/* Screen share */}
-          {isScreenSharing && screenShareTracks.length > 0 && layout !== "grid" ? (
-            <div className="relative w-full h-full rounded-lg overflow-hidden">
+          {isScreenSharing && screenShareTracks.length > 0  ? (
+            <div className={ cn(
+                "relative rounded-lg overflow-hidden",
+                layout === "grid" ? "w-full h-full" : "aspect-video"
+              )}>
               <VideoTrack
                 trackRef={screenShareTracks[0] as TrackReference }
                 className="w-full h-full object-contain bg-black"
@@ -425,6 +475,19 @@ export function StreamPlayer({ isHost = false }) {
                 <Badge variant="secondary" className="bg-background/90 backdrop-blur">
                   Screen Share
                 </Badge>
+              </div>
+
+              {/* Host video overlay */}
+                {/* Picture in Picture for host during screen share */}
+              <div >
+                {isHost && localVideoEl && (
+                  <PictureInPicture track={localVideoEl} />
+                )}
+                <div className="absolute bottom-2 left-2">
+                  <Badge variant="secondary" className="bg-background/90 backdrop-blur">
+                    {localParticipant.identity} (You)
+                  </Badge>
+                </div>
               </div>
             </div>
           ) : null}
@@ -450,7 +513,7 @@ export function StreamPlayer({ isHost = false }) {
                     key={participant.identity}
                     className={cn(
                       "relative rounded-lg overflow-hidden bg-accent",
-                      "aspect-video w-full",
+                      "aspect-video w-full h-full scale-110",
                       totalParticipants === 1 ? "max-w-4xl mx-auto" : "",
                       getParticipantStyles(index, totalParticipants)
                     )}
@@ -466,7 +529,6 @@ export function StreamPlayer({ isHost = false }) {
                         className="absolute inset-0 w-full h-full object-cover"
                         autoPlay
                         playsInline
-                        muted
                       />
                     ) : (
                       videoTrack && (
@@ -474,6 +536,7 @@ export function StreamPlayer({ isHost = false }) {
                           trackRef={videoTrack}
                           className="absolute inset-0 w-full h-full object-cover"
                         />
+                        
                       )
                     )}
                     <div className="absolute bottom-2 left-2">
@@ -524,7 +587,7 @@ export function StreamPlayer({ isHost = false }) {
             <Button
               variant="secondary"
               size="lg"
-              className="absolute bottom-8 right-8 rounded-full"
+              className="absolute top-4 left-4 rounded-full"
             >
               <Share2 className="h-5 w-5" />
             </Button>
