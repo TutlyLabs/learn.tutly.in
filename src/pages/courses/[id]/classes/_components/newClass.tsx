@@ -1,4 +1,5 @@
 import { actions } from "astro:actions";
+import { Radio } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
@@ -19,17 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Radio } from 'lucide-react';
-
 
 const NewClassDialog = ({ courseId }: { courseId: string }) => {
   const [videoLink, setVideoLink] = useState("");
   const [videoType, setVideoType] = useState("DRIVE");
   const [classTitle, setClassTitle] = useState("");
-  
+
   const [isCreatingClass, setIsCreatingClass] = useState(false);
   const [isStartingStream, setIsStartingStream] = useState(false);
-  
+
   const [folderName, setFolderName] = useState("");
   const [folders, setFolders] = useState([]);
   const [selectedFolder, setSelectedFolder] = useState("");
@@ -127,8 +126,6 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
       // window.location.reload();
     }
   };
-  
-  
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -190,15 +187,12 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
             />
           )}
 
-          <div
-            className="grid gap-4 grid-cols-2"
-          >
+          <div className="grid gap-4 grid-cols-2">
             <Button
               disabled={!classTitle}
               className="w-full bg-red-500 hover:bg-red-600"
               onClick={handleStartStream}
-              >
-                
+            >
               {isStartingStream ? (
                 <p className="flex items-center justify-center">
                   Starting Stream...
@@ -212,11 +206,10 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
               )}
             </Button>
             <Button
-              disabled={!classTitle || isCreatingClass }
+              disabled={!classTitle || isCreatingClass}
               className="w-full"
               onClick={handleCreateClass}
-              >
-
+            >
               {isCreatingClass ? (
                 <p className="flex items-center justify-center">
                   Creating Class...
@@ -229,7 +222,7 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
                 </p>
               )}
             </Button>
-            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

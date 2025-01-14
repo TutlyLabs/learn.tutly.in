@@ -1,43 +1,35 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useMediaDeviceSelect } from "@livekit/components-react";
 import {
-  TooltipProvider,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import {
+  Activity,
+  ChevronDown,
+  CircleDot,
+  Hand,
+  MessageSquare,
   Mic,
   MicOff,
+  MonitorUp,
+  Phone,
+  Smile,
+  StopCircle,
+  Users,
   Video,
   VideoOff,
-  MonitorUp,
-  Users,
-  MessageSquare,
-  Phone,
-  CircleDot,
-  StopCircle,
-  Smile,
-  Activity,
-  Hand,
-  ChevronDown,
 } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useEffect, useState } from "react";
+
 import { StreamAnalyticsModal } from "@/components/stream-analytics-modal";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMediaDeviceSelect } from "@livekit/components-react";
-import { useEffect, useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface StreamControlsProps {
   isHost?: boolean;
@@ -54,7 +46,7 @@ interface StreamControlsProps {
   onToggleParticipants: () => void;
   onLeave: () => void;
   onSendReaction?: (emoji: string) => void;
-  activeTab?: "chat" | "participants" | "assignments"| 'null';
+  activeTab?: "chat" | "participants" | "assignments" | "null";
   analytics?: any;
   roomName?: string;
   canRaiseHand?: boolean;
@@ -97,44 +89,44 @@ export function StreamControls({
   } = useMediaDeviceSelect({ kind: "videoinput" });
 
   const [isVisible, setIsVisible] = useState(true);
-  
+
   useEffect(() => {
     let hideTimeout: NodeJS.Timeout;
-    
+
     const handleMouseMove = () => {
       setIsVisible(true);
       clearTimeout(hideTimeout);
       hideTimeout = setTimeout(() => setIsVisible(false), 5000);
     };
-  
-    const streamPlayer = document.getElementById('StreamPlayer');
+
+    const streamPlayer = document.getElementById("StreamPlayer");
     if (streamPlayer) {
-      streamPlayer.addEventListener('mousemove', handleMouseMove);
+      streamPlayer.addEventListener("mousemove", handleMouseMove);
     }
     return () => {
-      const streamPlayer = document.getElementById('StreamPlayer');
+      const streamPlayer = document.getElementById("StreamPlayer");
       if (streamPlayer) {
-        streamPlayer.removeEventListener('mousemove', handleMouseMove);
+        streamPlayer.removeEventListener("mousemove", handleMouseMove);
       }
       clearTimeout(hideTimeout);
     };
   }, []);
 
-  
   return (
     <TooltipProvider>
-      <div className={cn(
-        "absolute bottom-6 left-1/2 -translate-x-1/2",
-        "flex items-center gap-2 p-3 rounded-full",
-        "bg-background/95 backdrop-blur border border-border shadow-lg",
-        "transition-opacity duration-300",
-        !isVisible && "opacity-0 pointer-events-none"
-      )}
-        style = {{  
+      <div
+        className={cn(
+          "absolute bottom-6 left-1/2 -translate-x-1/2",
+          "flex items-center gap-2 p-3 rounded-full",
+          "bg-background/95 backdrop-blur border border-border shadow-lg",
+          "transition-opacity duration-300",
+          !isVisible && "opacity-0 pointer-events-none"
+        )}
+        style={{
           background: "rgba(255, 255, 255, 0.3)",
           boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
           backdropFilter: "blur(5.5px)",
-          WebkitBackdropFilter: "blur(5.5px)", 
+          WebkitBackdropFilter: "blur(5.5px)",
           borderRadius: "10px",
           border: "1px solid rgba(255, 255, 255, 0.18)",
         }}
@@ -196,21 +188,11 @@ export function StreamControls({
                 onClick={onToggleVideo}
                 disabled={!canPublish}
               >
-                {isVideoEnabled ? (
-                  <Video className="h-5 w-5" />
-                ) : (
-                  <VideoOff className="h-5 w-5" />
-                )}
+                {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>
-                {!canPublish
-                  ? "No permission"
-                  : isVideoEnabled
-                  ? "Stop video"
-                  : "Start video"}
-              </p>
+              <p>{!canPublish ? "No permission" : isVideoEnabled ? "Stop video" : "Start video"}</p>
             </TooltipContent>
           </Tooltip>
 
@@ -256,7 +238,9 @@ export function StreamControls({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{!canPublish ? "No permission" : isScreenSharing ? "Stop sharing" : "Present now"}</p>
+            <p>
+              {!canPublish ? "No permission" : isScreenSharing ? "Stop sharing" : "Present now"}
+            </p>
           </TooltipContent>
         </Tooltip>
 
@@ -278,7 +262,9 @@ export function StreamControls({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{!canPublish ? "No permission" : isRecording ? "Stop recording" : "Start recording"}</p>
+              <p>
+                {!canPublish ? "No permission" : isRecording ? "Stop recording" : "Start recording"}
+              </p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -289,11 +275,7 @@ export function StreamControls({
           <Tooltip>
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="rounded-full w-10 h-10"
-                >
+                <Button variant="secondary" size="lg" className="rounded-full w-10 h-10">
                   <Smile className="h-5 w-5" />
                 </Button>
               </PopoverTrigger>
@@ -372,11 +354,7 @@ export function StreamControls({
             <Tooltip>
               <TooltipTrigger asChild>
                 <StreamAnalyticsModal analytics={analytics} roomName={roomName as string}>
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="rounded-full w-10 h-10"
-                  >
+                  <Button variant="secondary" size="lg" className="rounded-full w-10 h-10">
                     <Activity className="h-5 w-5" />
                   </Button>
                 </StreamAnalyticsModal>
@@ -408,4 +386,4 @@ export function StreamControls({
       </div>
     </TooltipProvider>
   );
-} 
+}

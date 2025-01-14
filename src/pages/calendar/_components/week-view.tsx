@@ -1,13 +1,6 @@
-'use client';
+"use client";
 
-import {
-  addDays,
-  format,
-  isSameDay,
-  startOfWeek,
-  startOfDay,
-  endOfDay,
-} from "date-fns";
+import { addDays, endOfDay, format, isSameDay, startOfDay, startOfWeek } from "date-fns";
 
 interface Event {
   name: string;
@@ -47,10 +40,7 @@ export function WeekView({ selectedDate, events, onEventClick }: WeekViewProps) 
 
   const getEventsForDay = (day: Date) => {
     return events
-      .filter(
-        (event) =>
-          event.startDate <= endOfDay(day) && event.endDate >= startOfDay(day)
-      )
+      .filter((event) => event.startDate <= endOfDay(day) && event.endDate >= startOfDay(day))
       .map((event) => splitEventForDay(event, day));
   };
 
@@ -72,9 +62,7 @@ export function WeekView({ selectedDate, events, onEventClick }: WeekViewProps) 
     });
 
     return dayEvents.map((event) => {
-      const columnIndex = columns.findIndex((column) =>
-        column.includes(event)
-      );
+      const columnIndex = columns.findIndex((column) => column.includes(event));
       const totalColumns = columns.length;
       return {
         left: (columnIndex / totalColumns) * 100,
@@ -83,10 +71,7 @@ export function WeekView({ selectedDate, events, onEventClick }: WeekViewProps) 
     });
   };
 
-  const getEventStyle = (
-    event: Event,
-    layout: { left: number; width: number }
-  ) => {
+  const getEventStyle = (event: Event, layout: { left: number; width: number }) => {
     const startMinutes = event.startDate.getHours() * 60 + event.startDate.getMinutes();
     const endMinutes = event.endDate.getHours() * 60 + event.endDate.getMinutes();
     const duration = endMinutes - startMinutes;
@@ -94,7 +79,7 @@ export function WeekView({ selectedDate, events, onEventClick }: WeekViewProps) 
     return {
       top: `${startMinutes}px`,
       height: `${duration}px`,
-      backgroundColor:"#3b82f6",
+      backgroundColor: "#3b82f6",
       left: `${layout.left}%`,
       width: `${layout.width}%`,
       position: "absolute" as const,
@@ -149,15 +134,13 @@ export function WeekView({ selectedDate, events, onEventClick }: WeekViewProps) 
 
                   return (
                     <div
-                        key={`${event.name}-${event.startDate.getTime()}`}
-                        className="text-xs font-semibold rounded cursor-pointer text-primary-foreground break-words whitespace-normal p-2"
-                        style={getEventStyle(event, layout)}
-                        onClick={() => onEventClick(event)}
-                      >
-                        <h1>
-                          {event.name}
-                        </h1>
-                      </div>
+                      key={`${event.name}-${event.startDate.getTime()}`}
+                      className="text-xs font-semibold rounded cursor-pointer text-primary-foreground break-words whitespace-normal p-2"
+                      style={getEventStyle(event, layout)}
+                      onClick={() => onEventClick(event)}
+                    >
+                      <h1>{event.name}</h1>
+                    </div>
                   );
                 })}
               </div>

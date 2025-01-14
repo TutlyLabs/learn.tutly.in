@@ -178,9 +178,15 @@ if (role === Role.STUDENT) {
 
 const name = currentUser.name;
 
-const getAllHolidays = await db.holidays.findMany({})
+const getAllHolidays = await db.holidays.findMany({});
 ---
 
 <RootLayout title="Dashboard">
-  <Dashboard data={dashboardData} name={name} currentUser={currentUser} holidays={getAllHolidays} client:load />
+  <Dashboard
+    data={dashboardData}
+    name={name}
+    currentUser={currentUser}
+    holidays={getAllHolidays}
+    client:load
+  />
 </RootLayout>

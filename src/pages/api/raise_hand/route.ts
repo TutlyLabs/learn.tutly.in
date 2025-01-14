@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
     return Response.json({
       success: true,
-      participant
+      participant,
     });
   } catch (err) {
     console.error("Error in raise_hand:", err);

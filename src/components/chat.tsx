@@ -1,7 +1,5 @@
 "use client";
 
-import { RoomMetadata } from "@/lib/controller";
-import { cn } from "@/lib/utils";
 import {
   ReceivedChatMessage,
   useChat,
@@ -9,38 +7,34 @@ import {
   useRoomInfo,
 } from "@livekit/components-react";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
-import {
-  Flex,
-  IconButton,
-  Text,
-  TextField,
-} from "@radix-ui/themes";
+import { Flex, IconButton, Text, TextField } from "@radix-ui/themes";
 import { useMemo, useState } from "react";
+
+import { RoomMetadata } from "@/lib/controller";
+import { cn } from "@/lib/utils";
 
 function ChatMessage({ message }: { message: ReceivedChatMessage }) {
   const { localParticipant } = useLocalParticipant();
 
   return (
-    <div  className="break-words w-[220px] flex items-center justify-start my-3 ">
-      <div
-        className="w-8 h-8 mr-2 font-bold bg-gray-800 rounded-full flex items-center justify-center ring-2 ring-gray-800"
-      >
-        {
-          message.from?.identity[0]
-        }
+    <div className="break-words w-[220px] flex items-center justify-start my-3 ">
+      <div className="w-8 h-8 mr-2 font-bold bg-gray-800 rounded-full flex items-center justify-center ring-2 ring-gray-800">
+        {message.from?.identity[0]}
       </div>
       <div className="flex flex-col items-center">
         <p
-          className={cn(localParticipant.identity === message.from?.identity
+          className={cn(
+            localParticipant.identity === message.from?.identity
               ? "text-blue-500"
               : "text-gray-500",
-              "font-bold text-medium overflow-auto"
-
-            )}
+            "font-bold text-medium overflow-auto"
+          )}
         >
           {message.from?.identity ?? "Unknown"}
         </p>
-        <Text size="1" className="ms-2">{message.message}</Text>
+        <Text size="1" className="ms-2">
+          {message.message}
+        </Text>
       </div>
     </div>
   );
@@ -51,16 +45,12 @@ export function Chat() {
   const { chatMessages, send } = useChat();
   const { metadata } = useRoomInfo();
 
-  const { enable_chat: chatEnabled } = (
-    metadata ? JSON.parse(metadata) : {}
-  ) as RoomMetadata;
+  const { enable_chat: chatEnabled } = (metadata ? JSON.parse(metadata) : {}) as RoomMetadata;
 
   // HACK: why do we get duplicate messages?
   const messages = useMemo(() => {
     const timestamps = chatMessages.map((msg) => msg.timestamp);
-    const filtered = chatMessages.filter(
-      (msg, i) => !timestamps.includes(msg.timestamp, i + 1)
-    );
+    const filtered = chatMessages.filter((msg, i) => !timestamps.includes(msg.timestamp, i + 1));
 
     return filtered;
   }, [chatMessages]);
@@ -79,12 +69,7 @@ export function Chat() {
           Live Chat
         </Text>
       </div>
-      <Flex
-        direction="column"
-        justify="end"
-        className="flex-1 h-full px-2 overflow-y-auto"
-        gap="2"
-      >
+      <Flex direction="column" justify="end" className="flex-1 h-full px-2 overflow-y-auto" gap="2">
         {messages.map((msg) => (
           <ChatMessage message={msg} key={msg.timestamp} />
         ))}
@@ -95,9 +80,7 @@ export function Chat() {
             <TextField.Input
               className="w-full text-gray-950"
               disabled={!chatEnabled}
-              placeholder={
-                chatEnabled ? "Say something..." : "Chat is disabled"
-              }
+              placeholder={chatEnabled ? "Say something..." : "Chat is disabled"}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyUp={(e) => {

@@ -1,22 +1,15 @@
 "use client";
 
-import { CreateIngressResponse } from "@/lib/controller";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
-import {
-  Button,
-  Code,
-  Dialog,
-  Flex,
-  RadioGroup,
-  Switch,
-  Text,
-  TextField,
-} from "@radix-ui/themes";
+import { Button, Code, Dialog, Flex, RadioGroup, Switch, Text, TextField } from "@radix-ui/themes";
+import { actions } from "astro:actions";
 import { useState } from "react";
+
+import { useRouter } from "@/hooks/use-router";
+import { CreateIngressResponse } from "@/lib/controller";
+
 import { AllowParticipationInfo } from "./allow-participation-info";
 import { Spinner } from "./spinner";
-import { useRouter } from "@/hooks/use-router";
-import { actions } from "astro:actions";
 
 export function IngressDialog({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -27,8 +20,7 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
   const [type, setType] = useState("rtmp");
   const [enableChat, setEnableChat] = useState(true);
   const [allowParticipation, setAllowParticipation] = useState(true);
-  const [ingressResponse, setIngressResponse] =
-    useState<CreateIngressResponse>();
+  const [ingressResponse, setIngressResponse] = useState<CreateIngressResponse>();
 
   const onCreateIngress = async () => {
     setLoading(true);
@@ -56,31 +48,21 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
             <Dialog.Title>Start streaming now</Dialog.Title>
             <Flex direction="column" gap="4" mt="4">
               <Text>
-                Copy these values into your OBS settings under{" "}
-                <Code>Stream</Code> → <Code>Service</Code> →{" "}
-                <Code>{type === "whip" ? "WHIP" : "Custom"}</Code>. When
-                you&rsquo;re ready, press &quot;Start Streaming&quot; and watch
-                the bits flow!
+                Copy these values into your OBS settings under <Code>Stream</Code> →{" "}
+                <Code>Service</Code> → <Code>{type === "whip" ? "WHIP" : "Custom"}</Code>. When
+                you&rsquo;re ready, press &quot;Start Streaming&quot; and watch the bits flow!
               </Text>
               <label>
                 <Text as="div" size="2" mb="1" weight="bold">
                   Server URL
                 </Text>
-                <TextField.Input
-                  type="text"
-                  value={ingressResponse.ingress.url}
-                  readOnly
-                />
+                <TextField.Input type="text" value={ingressResponse.ingress.url} readOnly />
               </label>
               <label>
                 <Text as="div" size="2" mb="1" weight="bold">
                   Stream key
                 </Text>
-                <TextField.Input
-                  type="text"
-                  value={ingressResponse.ingress.streamKey}
-                  readOnly
-                />
+                <TextField.Input type="text" value={ingressResponse.ingress.streamKey} readOnly />
               </label>
               <Flex gap="3" mt="6" justify="end">
                 <Button
@@ -155,10 +137,7 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
                   <Text as="div" size="2" mb="1" weight="bold">
                     Enable chat
                   </Text>
-                  <Switch
-                    checked={enableChat}
-                    onCheckedChange={(e) => setEnableChat(e)}
-                  />
+                  <Switch checked={enableChat} onCheckedChange={(e) => setEnableChat(e)} />
                 </Flex>
                 <Flex justify="between">
                   <Flex align="center" gap="2">
@@ -191,10 +170,7 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
                   Cancel
                 </Button>
               </Dialog.Close>
-              <Button
-                disabled={!(roomName && name && type) || loading}
-                onClick={onCreateIngress}
-              >
+              <Button disabled={!(roomName && name && type) || loading} onClick={onCreateIngress}>
                 {loading ? (
                   <Flex gap="2" align="center">
                     <Spinner />

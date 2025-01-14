@@ -1,9 +1,4 @@
-import {
-  Controller,
-  InviteToStageParams,
-  getSessionFromReq,
-} from "@/lib/controller";
-
+import { Controller, InviteToStageParams, getSessionFromReq } from "@/lib/controller";
 
 // TODO: validate request with Zod
 
@@ -17,7 +12,7 @@ export async function POST(req: Request) {
 
     return Response.json({
       success: true,
-      participant: result
+      participant: result,
     });
   } catch (err) {
     console.error("Error in invite_to_stage:", err);

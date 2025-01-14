@@ -1,9 +1,6 @@
-import {
-  Controller,
-  RemoveFromStageParams,
-  getSessionFromReq,
-} from "@/lib/controller";
-import type {APIRoute} from 'astro';
+import type { APIRoute } from "astro";
+
+import { Controller, RemoveFromStageParams, getSessionFromReq } from "@/lib/controller";
 
 export const POST: APIRoute = async ({ request: req }) => {
   const controller = new Controller();
@@ -24,4 +21,4 @@ export const POST: APIRoute = async ({ request: req }) => {
     }
     return new Response("Internal Server Error", { status: 500 });
   }
-}
+};

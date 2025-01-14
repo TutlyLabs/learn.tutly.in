@@ -1,20 +1,28 @@
-'use client'
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { CalendarIcon } from 'lucide-react'
+"use client";
+
 import { actions } from "astro:actions";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog"
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Holidays() {
-  const [startDate, setStartDate] = useState<Date>()
-  const [endDate, setEndDate] = useState<Date>()
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -24,7 +32,7 @@ export default function Holidays() {
       toast.error("Please select both start and end dates");
       return;
     }
-  
+
     try {
       const result = await actions.holidays_addHoliday({
         reason: formValues.reason as string,
@@ -32,15 +40,15 @@ export default function Holidays() {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
       });
-  
+
       if (result.error) {
         throw new Error(result.error.message || "An error occurred while adding the holiday");
       }
-  
+
       if (!result.data) {
         throw new Error("No data returned from the server");
       }
-      
+
       toast.success("Holiday added successfully");
       window.location.reload();
     } catch (error) {
@@ -48,8 +56,6 @@ export default function Holidays() {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
     }
   };
-  
-  
 
   return (
     <Dialog>
@@ -59,7 +65,10 @@ export default function Holidays() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Holiday</DialogTitle>
-          <form onSubmit={handleSubmit} className="space-y-4 w-full mx-auto pt-4 rounded-lg shadow-md">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 w-full mx-auto pt-4 rounded-lg shadow-md"
+          >
             <div className="space-y-1">
               <Label htmlFor="reason">Reason</Label>
               <Input id="reason" name="reason" required />
@@ -97,19 +106,16 @@ export default function Holidays() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                  />
+                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
                 </PopoverContent>
               </Popover>
             </div>
-            <Button type="submit" className="w-full">Submit</Button>
+            <Button type="submit" className="w-full">
+              Submit
+            </Button>
           </form>
         </DialogHeader>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

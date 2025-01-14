@@ -1,11 +1,13 @@
 "use client";
-import { CiStreamOn } from "react-icons/ci";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { MdEventRepeat } from "react-icons/md";
-import { PiTagChevronBold } from "react-icons/pi";
+
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
+import { CiStreamOn } from "react-icons/ci";
+import { MdEventRepeat } from "react-icons/md";
+import { PiTagChevronBold } from "react-icons/pi";
+
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 dayjs.extend(isBetween);
 
@@ -25,7 +27,7 @@ export function EventsSidebar({ events }: { events: any[] }) {
     if (now.isBetween(start, end, null, "[]")) {
       return (
         <span className="flex justify-center gap-1 ml-auto text-xs font-medium text-purple-500 bg-purple-100 px-3 py-1.5 rounded-full">
-          <CiStreamOn className="text-base font-bold "/> Live
+          <CiStreamOn className="text-base font-bold " /> Live
         </span>
       );
     }
@@ -51,9 +53,7 @@ export function EventsSidebar({ events }: { events: any[] }) {
     >
       <PiTagChevronBold className="h-5 w-5 text-gray-600 dark:text-gray-300" />
       <div>
-        <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-          {event.name}
-        </h1>
+        <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{event.name}</h1>
       </div>
       {getStatusBadge(event.startDate, event.endDate, event.type)}
     </div>
@@ -83,24 +83,14 @@ export function EventsSidebar({ events }: { events: any[] }) {
   );
 
   // upcoming events
-  const upcomingEvents = otherEvents?.filter((event) =>
-    dayjs(event.startDate).isAfter(now)
-  );
+  const upcomingEvents = otherEvents?.filter((event) => dayjs(event.startDate).isAfter(now));
 
   // completed events
-  const completedEvents = otherEvents?.filter((event) =>
-    dayjs(event.endDate).isBefore(now)
-  );
+  const completedEvents = otherEvents?.filter((event) => dayjs(event.endDate).isBefore(now));
 
-  const renderEventSection = (
-    title: string,
-    eventList: any[],
-    emptyMessage: string
-  ) => (
+  const renderEventSection = (title: string, eventList: any[], emptyMessage: string) => (
     <>
-      <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 p-2">
-        {title}
-      </h2>
+      <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 p-2">{title}</h2>
       {eventList.length === 0 ? (
         <div className="flex flex-col justify-center items-center text-gray-500 dark:text-gray-400 my-5">
           <MdEventRepeat className="h-12 w-12 md:h-16 md:w-16 text-gray-300 dark:text-gray-500" />
@@ -114,9 +104,7 @@ export function EventsSidebar({ events }: { events: any[] }) {
 
   const renderAssignmentSection = (assignments: any[]) => (
     <>
-      <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 p-2">
-        Assignments
-      </h2>
+      <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 p-2">Assignments</h2>
       {assignments.length === 0 ? (
         <div className="flex flex-col justify-center items-center text-gray-500 dark:text-gray-400 my-5">
           <MdEventRepeat className="h-12 w-12 md:h-16 md:w-16 text-gray-300 dark:text-gray-500" />
@@ -133,20 +121,11 @@ export function EventsSidebar({ events }: { events: any[] }) {
       <ScrollArea className="md:h-[570px] overflow-auto">
         <Card className="w-full md:w-[290px] bg-white dark:bg-gray-900 p-4 rounded-lg shadow-md">
           {renderEventSection("Live Events", liveEvents, "No live events")}
-          {renderEventSection(
-            "Upcoming Events",
-            upcomingEvents,
-            "No upcoming events"
-          )}
-          {renderEventSection(
-            "Completed Events",
-            completedEvents,
-            "No completed events"
-          )}
+          {renderEventSection("Upcoming Events", upcomingEvents, "No upcoming events")}
+          {renderEventSection("Completed Events", completedEvents, "No completed events")}
           {renderAssignmentSection(assignments)}
         </Card>
       </ScrollArea>
     </div>
   );
 }
-

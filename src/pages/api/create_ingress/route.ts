@@ -7,9 +7,7 @@ export async function POST(req: Request) {
 
   try {
     const reqBody = await req.json();
-    const response = await controller.createIngress(
-      reqBody as CreateIngressParams
-    );
+    const response = await controller.createIngress(reqBody as CreateIngressParams);
 
     return Response.json(response);
   } catch (err) {

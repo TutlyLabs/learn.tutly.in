@@ -1,19 +1,14 @@
 "use client";
 
-import { CreateStreamResponse } from "@/lib/controller";
-import {
-  Button,
-  Dialog,
-  Flex,
-  Switch,
-  Text,
-  TextField,
-} from "@radix-ui/themes";
+import { Button, Dialog, Flex, Switch, Text, TextField } from "@radix-ui/themes";
+import { actions } from "astro:actions";
 import { useState } from "react";
+
+import { useRouter } from "@/hooks/use-router";
+import { CreateStreamResponse } from "@/lib/controller";
+
 import { AllowParticipationInfo } from "./allow-participation-info";
 import { Spinner } from "./spinner";
-import { useRouter } from "@/hooks/use-router";
-import { actions } from "astro:actions";
 
 export function BroadcastDialog({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -76,10 +71,7 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
               <Text as="div" size="2" mb="1" weight="bold">
                 Enable chat
               </Text>
-              <Switch
-                checked={enableChat}
-                onCheckedChange={(e) => setEnableChat(e)}
-              />
+              <Switch checked={enableChat} onCheckedChange={(e) => setEnableChat(e)} />
             </Flex>
             <Flex justify="between">
               <Flex align="center" gap="2">

@@ -1,3 +1,4 @@
+import { LiveKitRoom } from "@livekit/components-react";
 import { type Attachment, type Class, FileType, type Notes, type Video } from "@prisma/client";
 import { actions } from "astro:actions";
 import dayjs from "dayjs";
@@ -16,9 +17,11 @@ import {
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useDebounce } from "use-debounce";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import VideoPlayer from "@/components/VideoPlayer";
 import RichTextEditor from "@/components/editor/RichTextEditor";
+import { StreamPlayer } from "@/components/stream-player";
+import { TokenContext } from "@/components/token-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,12 +49,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CreateStreamResponse, JoinStreamResponse } from "@/lib/controller";
 
 import NewAttachmentPage from "./NewAssignments";
-import { CreateStreamResponse, JoinStreamResponse } from "@/lib/controller";
-import { StreamPlayer } from "@/components/stream-player";
-import { TokenContext } from "@/components/token-context";
-import { LiveKitRoom } from "@livekit/components-react";
 
 export default function Class({
   classes,
@@ -68,12 +69,12 @@ export default function Class({
   courseId: string;
   currentUser: any;
   details:
-  | (Class & {
-    title: string;
-    video: Video | null;
-    attachments: Attachment[];
-  })
-  | null;
+    | (Class & {
+        title: string;
+        video: Video | null;
+        attachments: Attachment[];
+      })
+    | null;
   isBookmarked: boolean;
   initialNote?: Notes | null;
   serverUrl: string;
@@ -90,8 +91,7 @@ export default function Class({
   const haveAdminAccess = currentUser.role == "INSTRUCTOR" || isCourseAdmin;
 
   const [liveStarted, setLiveStarted] = useState(false);
-  
-  
+
   const renderVideo = () => {
     const [loading, setLoading] = useState(false);
     const [insAuthToken, setInsAuthToken] = useState("");
@@ -104,7 +104,7 @@ export default function Class({
     const onGoLive = async () => {
       setLoading(true);
       try {
-        const { data: response,error } = await actions.stream_createStream({
+        const { data: response, error } = await actions.stream_createStream({
           room_name: details.title,
           metadata: {
             creator_identity: currentUser.name,
@@ -112,56 +112,49 @@ export default function Class({
             allow_participation: true,
           },
           headers: {
-            Authorization: `Token ${authToken}`
-          }
+            Authorization: `Token ${authToken}`,
+          },
         });
-        
-        if(error) 
-          {
-            console.error("Failed to go live:", error);
-            return;
-          }
 
-          if (response.data) {
-            setInsAuthToken(response.data.auth_token);
-            setInsRoomToken(response.data.connection_details.token);
-            setLiveStarted(true);
-          } else {
-            console.error("No response data received");
-          }
-        } catch (error) {
+        if (error) {
           console.error("Failed to go live:", error);
-        } finally {
-          setLoading(false);
+          return;
         }
-      };
+
+        if (response.data) {
+          setInsAuthToken(response.data.auth_token);
+          setInsRoomToken(response.data.connection_details.token);
+          setLiveStarted(true);
+        } else {
+          console.error("No response data received");
+        }
+      } catch (error) {
+        console.error("Failed to go live:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     if (haveAdminAccess) {
       if (!insAuthToken && !insRoomToken) {
         return (
           <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
-            <Button 
-              variant="link"
-              className="text-blue-500"
-              disabled={loading}
-              onClick={onGoLive}
-            >
+            <Button variant="link" className="text-blue-500" disabled={loading} onClick={onGoLive}>
               {loading ? "Going Live..." : "Start a Stream"}
             </Button>
           </span>
         );
       }
 
-
       return (
-        <div >
+        <div>
           <TokenContext.Provider value={insAuthToken}>
             <LiveKitRoom serverUrl={serverUrl} token={insRoomToken}>
               <StreamPlayer isHost />
             </LiveKitRoom>
           </TokenContext.Provider>
         </div>
-      )
+      );
     }
 
     const [roomToken, setRoomToken] = useState("");
@@ -169,21 +162,23 @@ export default function Class({
     const onJoin = async () => {
       setLoading(true);
       try {
-        const { data:response,error } = await actions.stream_joinStream({
+        const { data: response, error } = await actions.stream_joinStream({
           room_name: details.title,
           identity: currentUser.name,
           headers: {
-            Authorization: `Token ${authToken}`
-          }
+            Authorization: `Token ${authToken}`,
+          },
         });
 
-        if(error)
-        {
+        if (error) {
           console.error("Failed to join:", error);
           return;
         }
 
-        const { auth_token, connection_details: { token } } = response as JoinStreamResponse;
+        const {
+          auth_token,
+          connection_details: { token },
+        } = response as JoinStreamResponse;
         setAuthToken(auth_token);
         setRoomToken(token);
         setLiveStarted(true);
@@ -205,13 +200,10 @@ export default function Class({
                 onJoin();
               }}
             >
-              {
-                loading ? "Joining..." : "Join the Stream"
-              }
-
+              {loading ? "Joining..." : "Join the Stream"}
             </button>
           </span>
-        )
+        );
       }
 
       return (
@@ -220,8 +212,7 @@ export default function Class({
             <StreamPlayer />
           </LiveKitRoom>
         </TokenContext.Provider>
-      )
-
+      );
     }
 
     return "No video available";
@@ -354,27 +345,20 @@ export default function Class({
                   </div>
                 </div>
 
-                <div
-                  className="flex items-center justify-end gap-3"
-                >
-                    {
-                      liveStarted && (
-                        <div
-                        className="flex items-center justify-start "
-                        >
-                          <div
-                            className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-1"
-                            />
-                          <span className="text-sm font-semibold text-muted-foreground">Live</span>
-                        </div>
-                      )
-                    }
-                    <p className="text-sm font-medium">{dayjs(createdAt).format("MMM D, YYYY")}</p>
+                <div className="flex items-center justify-end gap-3">
+                  {liveStarted && (
+                    <div className="flex items-center justify-start ">
+                      <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-1" />
+                      <span className="text-sm font-semibold text-muted-foreground">Live</span>
+                    </div>
+                  )}
+                  <p className="text-sm font-medium">{dayjs(createdAt).format("MMM D, YYYY")}</p>
                 </div>
               </div>
-              <div 
-                id='StreamPlayer'
-              className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl ">
+              <div
+                id="StreamPlayer"
+                className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl "
+              >
                 {renderVideo()}
               </div>
             </div>
@@ -402,7 +386,6 @@ export default function Class({
                     </ScrollArea>
                   </DialogContent>
                 </Dialog>
-
               </div>
             )}
 

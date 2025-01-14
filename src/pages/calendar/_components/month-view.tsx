@@ -1,14 +1,15 @@
-import { 
-  addDays, 
-  endOfMonth, 
-  getDate, 
-  isSameDay, 
-  isSameMonth, 
-  startOfMonth, 
-  startOfWeek 
+import {
+  addDays,
+  endOfMonth,
+  getDate,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  startOfWeek,
 } from "date-fns";
+
 interface Event {
-  type:string,
+  type: string;
   name: string;
   description: string;
   startDate: Date;
@@ -41,23 +42,19 @@ export function MonthView({ selectedDate, events, onEventClick }: MonthViewProps
   }
 
   const getEventsForDay = (day: Date) => {
-    return events.filter(event => {
+    return events.filter((event) => {
       const eventStart = new Date(event.startDate).setHours(0, 0, 0, 0);
       const eventEnd = new Date(event.endDate).setHours(23, 59, 59, 999);
       const currentDay = day.setHours(0, 0, 0, 0);
       return currentDay >= eventStart && currentDay <= eventEnd;
     });
   };
-  
 
   return (
     <div className="h-full p-4">
       <div className="grid grid-cols-7 gap-px">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((dayName) => (
-          <div
-            key={dayName}
-            className="h-8 text-sm font-medium text-center text-muted-foreground"
-          >
+          <div key={dayName} className="h-8 text-sm font-medium text-center text-muted-foreground">
             {dayName}
           </div>
         ))}
@@ -79,7 +76,9 @@ export function MonthView({ selectedDate, events, onEventClick }: MonthViewProps
               >
                 <div
                   className={`text-sm mb-1 ${
-                    isToday ? "flex justify-center items-center font-bold bg-green-600 w-10 h-10 rounded-full" : ""
+                    isToday
+                      ? "flex justify-center items-center font-bold bg-green-600 w-10 h-10 rounded-full"
+                      : ""
                   }`}
                 >
                   {getDate(day)}
@@ -93,22 +92,19 @@ export function MonthView({ selectedDate, events, onEventClick }: MonthViewProps
                       onClick={() => onEventClick(event)}
                       title={event.name}
                     >
-                      {
-                        event.type==="Holiday"?
+                      {event.type === "Holiday" ? (
                         <div className="ml-auto text-xs font-semibold text-red-500 bg-red-100 px-2 py-1 rounded-full">
                           {event.type}
                         </div>
-                        :
-                        (
-                        event.type==="Assignment"?
+                      ) : event.type === "Assignment" ? (
                         <div className="ml-auto text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
                           {event.name}
-                        </div>:
+                        </div>
+                      ) : (
                         <div className="ml-auto text-xs font-semibold bg-violet-100 text-violet-600 px-2 py-1 rounded-full">
                           {event.name}
                         </div>
-                        )
-                      }
+                      )}
                     </div>
                   ))}
                 </div>

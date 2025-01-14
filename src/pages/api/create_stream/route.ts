@@ -1,5 +1,6 @@
+import type { APIRoute } from "astro";
+
 import { Controller, CreateStreamParams } from "@/lib/controller";
-import type {APIRoute} from "astro";
 
 // TODO: validate request with Zod
 
@@ -8,9 +9,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const reqBody = await request.json();
-    const response = await controller.createStream(
-      reqBody as CreateStreamParams
-    );
+    const response = await controller.createStream(reqBody as CreateStreamParams);
 
     return new Response(JSON.stringify(response), {
       status: 200,
@@ -23,4 +22,4 @@ export const POST: APIRoute = async ({ request }) => {
 
     return new Response(null, { status: 500 });
   }
-}
+};

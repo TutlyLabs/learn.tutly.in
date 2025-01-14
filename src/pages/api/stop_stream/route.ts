@@ -1,10 +1,10 @@
+import type { APIRoute } from "astro";
+
 import { Controller, getSessionFromReq } from "@/lib/controller";
-import type {APIRoute} from 'astro';
 
 // TODO: validate request with Zod
 
-export const POST: APIRoute = async ({ request: req }) =>
-{
+export const POST: APIRoute = async ({ request: req }) => {
   const controller = new Controller();
 
   try {
@@ -19,4 +19,4 @@ export const POST: APIRoute = async ({ request: req }) =>
 
     return new Response(null, { status: 500 });
   }
-}
+};

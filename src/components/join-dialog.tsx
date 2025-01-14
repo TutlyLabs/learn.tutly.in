@@ -3,6 +3,7 @@
 import { Button, Dialog, Flex, Text, TextField } from "@radix-ui/themes";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 import { Spinner } from "./spinner";
 
 export function JoinDialog({ children }: { children: React.ReactNode }) {

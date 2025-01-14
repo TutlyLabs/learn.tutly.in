@@ -1,5 +1,4 @@
 // forked from livestream-mobile-backend
-
 import jwt from "jsonwebtoken";
 import {
   AccessToken,
@@ -108,7 +107,7 @@ export class Controller {
   private roomService: RoomServiceClient;
 
   constructor() {
-    const httpUrl = import.meta.env.VITE_LIVEKIT_WS_URL!.replace("wss://", "https://")
+    const httpUrl = import.meta.env.VITE_LIVEKIT_WS_URL!.replace("wss://", "https://");
     this.ingressService = new IngressClient(httpUrl);
     this.roomService = new RoomServiceClient(
       httpUrl,
@@ -161,21 +160,15 @@ export class Controller {
     }
 
     const ingress = await this.ingressService.createIngress(
-      ingress_type === "whip"
-        ? IngressInput.WHIP_INPUT
-        : IngressInput.RTMP_INPUT,
+      ingress_type === "whip" ? IngressInput.WHIP_INPUT : IngressInput.RTMP_INPUT,
       options
     );
 
     // Create viewer access token
 
-    const at = new AccessToken(
-      process.env.LIVEKIT_API_KEY!,
-      process.env.LIVEKIT_API_SECRET!,
-      {
-        identity: metadata.creator_identity,
-      }
-    );
+    const at = new AccessToken(process.env.LIVEKIT_API_KEY!, process.env.LIVEKIT_API_SECRET!, {
+      identity: metadata.creator_identity,
+    });
 
     at.addGrant({
       room: room_name,
@@ -185,10 +178,7 @@ export class Controller {
       canPublishData: true,
     });
 
-    const authToken = this.createAuthToken(
-      room_name,
-      metadata.creator_identity
-    );
+    const authToken = this.createAuthToken(room_name, metadata.creator_identity);
 
     return {
       ingress,
@@ -204,13 +194,9 @@ export class Controller {
     metadata,
     room_name: roomName,
   }: CreateStreamParams): Promise<CreateStreamResponse> {
-    const at = new AccessToken(
-      process.env.LIVEKIT_API_KEY!,
-      process.env.LIVEKIT_API_SECRET!,
-      {
-        identity: metadata.creator_identity,
-      }
-    );
+    const at = new AccessToken(process.env.LIVEKIT_API_KEY!, process.env.LIVEKIT_API_SECRET!, {
+      identity: metadata.creator_identity,
+    });
 
     if (!roomName) {
       roomName = generateRoomId();
@@ -252,8 +238,7 @@ export class Controller {
     }
 
     const room = rooms[0]!;
-    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
-      .creator_identity;
+    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata).creator_identity;
 
     if (creator_identity !== session.identity) {
       throw new Error("Only the creator can invite to stage");
@@ -262,28 +247,21 @@ export class Controller {
     await this.roomService.deleteRoom(session.room_name);
   }
 
-  async joinStream({
-    identity,
-    room_name,
-  }: JoinStreamParams): Promise<JoinStreamResponse> {
+  async joinStream({ identity, room_name }: JoinStreamParams): Promise<JoinStreamResponse> {
     // Check for existing participant with same identity
     let exists = false;
     try {
       await this.roomService.getParticipant(room_name, identity);
       exists = true;
-    } catch { }
+    } catch {}
 
     if (exists) {
       throw new Error("Participant already exists");
     }
 
-    const at = new AccessToken(
-      process.env.LIVEKIT_API_KEY!,
-      process.env.LIVEKIT_API_SECRET!,
-      {
-        identity,
-      }
-    );
+    const at = new AccessToken(process.env.LIVEKIT_API_KEY!, process.env.LIVEKIT_API_SECRET!, {
+      identity,
+    });
 
     at.addGrant({
       room: room_name,
@@ -312,17 +290,13 @@ export class Controller {
     }
 
     const room = rooms[0]!;
-    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
-      .creator_identity;
+    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata).creator_identity;
 
     if (creator_identity !== session.identity) {
       throw new Error("Only the creator can invite to stage");
     }
 
-    const participant = await this.roomService.getParticipant(
-      session.room_name,
-      identity
-    );
+    const participant = await this.roomService.getParticipant(session.room_name, identity);
     const permission = participant.permission || ({} as ParticipantPermission);
 
     const metadata = this.getOrCreateParticipantMetadata(participant);
@@ -354,22 +328,13 @@ export class Controller {
     }
 
     const room = rooms[0]!;
-    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
-      .creator_identity;
+    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata).creator_identity;
 
-    if (
-      creator_identity !== session.identity &&
-      identity !== session.identity
-    ) {
-      throw new Error(
-        "Only the creator or the participant him self can remove from stage"
-      );
+    if (creator_identity !== session.identity && identity !== session.identity) {
+      throw new Error("Only the creator or the participant him self can remove from stage");
     }
 
-    const participant = await this.roomService.getParticipant(
-      session.room_name,
-      session.identity
-    );
+    const participant = await this.roomService.getParticipant(session.room_name, session.identity);
 
     const permission = participant.permission || ({} as ParticipantPermission);
     const metadata = this.getOrCreateParticipantMetadata(participant);
@@ -388,10 +353,7 @@ export class Controller {
   }
 
   async raiseHand(session: Session) {
-    const participant = await this.roomService.getParticipant(
-      session.room_name,
-      session.identity
-    );
+    const participant = await this.roomService.getParticipant(session.room_name, session.identity);
 
     const permission = participant.permission || ({} as ParticipantPermission);
     const metadata = this.getOrCreateParticipantMetadata(participant);
@@ -414,7 +376,7 @@ export class Controller {
     return {
       identity: session.identity,
       metadata,
-      permission
+      permission,
     };
   }
 
@@ -426,18 +388,14 @@ export class Controller {
     }
 
     const room = rooms[0]!;
-    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata)
-      .creator_identity;
+    const creator_identity = (JSON.parse(room.metadata) as RoomMetadata).creator_identity;
 
     // Only host can lower others' hands
     if (creator_identity !== session.identity) {
       throw new Error("Only the host can lower others' hands");
     }
 
-    const participant = await this.roomService.getParticipant(
-      session.room_name,
-      identity
-    );
+    const participant = await this.roomService.getParticipant(session.room_name, identity);
 
     const permission = participant.permission || ({} as ParticipantPermission);
     const metadata = this.getOrCreateParticipantMetadata(participant);
@@ -454,13 +412,11 @@ export class Controller {
     return {
       identity,
       metadata,
-      permission
+      permission,
     };
   }
 
-  getOrCreateParticipantMetadata(
-    participant: ParticipantInfo
-  ): ParticipantMetadata {
+  getOrCreateParticipantMetadata(participant: ParticipantInfo): ParticipantMetadata {
     if (participant.metadata) {
       return JSON.parse(participant.metadata) as ParticipantMetadata;
     }
@@ -471,10 +427,7 @@ export class Controller {
     };
   }
   createAuthToken(room_name: string, identity: string) {
-    return jwt.sign(
-      JSON.stringify({ room_name, identity }),
-      process.env.LIVEKIT_API_SECRET!
-    );
+    return jwt.sign(JSON.stringify({ room_name, identity }), process.env.LIVEKIT_API_SECRET!);
   }
 }
 

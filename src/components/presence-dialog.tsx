@@ -1,23 +1,14 @@
 "use client";
 
-import { ParticipantMetadata, RoomMetadata } from "@/lib/controller";
-import {
-  useLocalParticipant,
-  useParticipants,
-  useRoomContext,
-} from "@livekit/components-react";
+import { useLocalParticipant, useParticipants, useRoomContext } from "@livekit/components-react";
 import { Cross1Icon, PersonIcon } from "@radix-ui/react-icons";
-import {
-  Avatar,
-  Button,
-  Dialog,
-  Flex,
-  IconButton,
-  Text,
-} from "@radix-ui/themes";
-import { Participant } from "livekit-client";
-import { useAuthToken } from "./token-context";
+import { Avatar, Button, Dialog, Flex, IconButton, Text } from "@radix-ui/themes";
 import { actions } from "astro:actions";
+import { Participant } from "livekit-client";
+
+import { ParticipantMetadata, RoomMetadata } from "@/lib/controller";
+
+import { useAuthToken } from "./token-context";
 
 function ParticipantListItem({
   participant,
@@ -32,16 +23,15 @@ function ParticipantListItem({
   const participantMetadata = (participant.metadata &&
     JSON.parse(participant.metadata)) as ParticipantMetadata;
   const room = useRoomContext();
-  const roomMetadata = (room.metadata &&
-    JSON.parse(room.metadata)) as RoomMetadata;
+  const roomMetadata = (room.metadata && JSON.parse(room.metadata)) as RoomMetadata;
 
   const onInvite = async () => {
     try {
       await actions.stream_inviteToStage({
         identity: participant.identity,
         headers: {
-          Authorization: `Token ${authToken}`
-        }
+          Authorization: `Token ${authToken}`,
+        },
       });
     } catch (error) {
       console.error("Failed to invite:", error);
@@ -52,8 +42,8 @@ function ParticipantListItem({
     try {
       await actions.stream_raiseHand({
         headers: {
-          Authorization: `Token ${authToken}`
-        }
+          Authorization: `Token ${authToken}`,
+        },
       });
     } catch (error) {
       console.error("Failed to raise hand:", error);
@@ -65,8 +55,8 @@ function ParticipantListItem({
       await actions.stream_removeFromStage({
         identity: participant.identity,
         headers: {
-          Authorization: `Token ${authToken}`
-        }
+          Authorization: `Token ${authToken}`,
+        },
       });
     } catch (error) {
       console.error("Failed to remove from stage:", error);
@@ -75,10 +65,7 @@ function ParticipantListItem({
 
   function HostActions() {
     if (!isCurrentUser) {
-      if (
-        participantMetadata.invited_to_stage &&
-        participantMetadata.hand_raised
-      ) {
+      if (participantMetadata.invited_to_stage && participantMetadata.hand_raised) {
         return (
           <Button size="1" variant="outline" onClick={onCancel}>
             Remove
@@ -113,19 +100,13 @@ function ParticipantListItem({
 
   function ViewerActions() {
     if (isCurrentUser) {
-      if (
-        participantMetadata.invited_to_stage &&
-        participantMetadata.hand_raised
-      ) {
+      if (participantMetadata.invited_to_stage && participantMetadata.hand_raised) {
         return (
           <Button size="1" onClick={onCancel}>
             Leave stage
           </Button>
         );
-      } else if (
-        participantMetadata.invited_to_stage &&
-        !participantMetadata.hand_raised
-      ) {
+      } else if (participantMetadata.invited_to_stage && !participantMetadata.hand_raised) {
         return (
           <Flex gap="2">
             <Button size="1" onClick={onRaiseHand}>
@@ -136,19 +117,13 @@ function ParticipantListItem({
             </Button>
           </Flex>
         );
-      } else if (
-        !participantMetadata.invited_to_stage &&
-        participantMetadata.hand_raised
-      ) {
+      } else if (!participantMetadata.invited_to_stage && participantMetadata.hand_raised) {
         return (
           <Button size="1" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
         );
-      } else if (
-        !participantMetadata.invited_to_stage &&
-        !participantMetadata.hand_raised
-      ) {
+      } else if (!participantMetadata.invited_to_stage && !participantMetadata.hand_raised) {
         return (
           <Button size="1" onClick={onRaiseHand}>
             Raise hand
@@ -161,21 +136,13 @@ function ParticipantListItem({
   return (
     <Flex key={participant.sid} justify="between">
       <Flex align="center" gap="2">
-        <Avatar
-          size="1"
-          fallback={participant.identity[0] ?? <PersonIcon />}
-          radius="full"
-        />
+        <Avatar size="1" fallback={participant.identity[0] ?? <PersonIcon />} radius="full" />
         <Text className={isCurrentUser ? "text-accent-11" : ""}>
           {participant.identity}
           {isCurrentUser && " (you)"}
         </Text>
       </Flex>
-      {isHost && roomMetadata.allow_participation ? (
-        <HostActions />
-      ) : (
-        <ViewerActions />
-      )}
+      {isHost && roomMetadata.allow_participation ? <HostActions /> : <ViewerActions />}
     </Flex>
   );
 }
@@ -189,9 +156,7 @@ export function PresenceDialog({
 }) {
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
-  const hosts = participants.filter(
-    (participant) => participant.permissions?.canPublish ?? false
-  );
+  const hosts = participants.filter((participant) => participant.permissions?.canPublish ?? false);
   const viewers = participants.filter(
     (participant) => !participant.permissions?.canPublish ?? true
   );
@@ -220,9 +185,7 @@ export function PresenceDialog({
                 <ParticipantListItem
                   key={participant.identity}
                   participant={participant}
-                  isCurrentUser={
-                    participant.identity === localParticipant.identity
-                  }
+                  isCurrentUser={participant.identity === localParticipant.identity}
                   isHost={isHost}
                 />
               ))}
@@ -237,9 +200,7 @@ export function PresenceDialog({
                 <ParticipantListItem
                   key={participant.identity}
                   participant={participant}
-                  isCurrentUser={
-                    participant.identity === localParticipant.identity
-                  }
+                  isCurrentUser={participant.identity === localParticipant.identity}
                   isHost={isHost}
                 />
               ))}

@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Chat } from "@/components/chat";
 import { ParticipantsList } from "@/components/participants-list";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface StreamLayoutProps {
   children: React.ReactNode;
@@ -23,13 +23,13 @@ export function StreamLayout({
   sidebarOpen = false,
   onSidebarOpenChange,
   activeTab = "chat",
-  onTabChange
+  onTabChange,
 }: StreamLayoutProps) {
   const [localSidebarOpen, setLocalSidebarOpen] = useState(false);
   const [localActiveTab, setLocalActiveTab] = useState<"chat" | "participants" | "null">("null");
 
   const isOpen = onSidebarOpenChange ? sidebarOpen : localSidebarOpen;
-  const currentTab: "chat" | "participants" | 'null' = onTabChange ? activeTab : localActiveTab;
+  const currentTab: "chat" | "participants" | "null" = onTabChange ? activeTab : localActiveTab;
 
   const handleTabChange = (tab: "chat" | "participants") => {
     if (onTabChange) {
@@ -55,29 +55,27 @@ export function StreamLayout({
             }
           }
         }}
-        className={cn(
-          "flex-1 transition-all duration-300 ease-in-out",
-        )}
-        >
+        className={cn("flex-1 transition-all duration-300 ease-in-out")}
+      >
         {children}
       </main>
 
       {(chat || participants) && (
         <aside
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            e.preventDefault();
-            if (isOpen) {
-              if (onSidebarOpenChange) {
-                onTabChange?.("null");
-                onSidebarOpenChange(false);
-              } else {
-                setLocalSidebarOpen(false);
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              if (isOpen) {
+                if (onSidebarOpenChange) {
+                  onTabChange?.("null");
+                  onSidebarOpenChange(false);
+                } else {
+                  setLocalSidebarOpen(false);
+                }
               }
             }
-          }
-        }}
-        className={cn(
+          }}
+          className={cn(
             "fixed right-0 top-0 h-3/4 w-[360px] border-l border-border bg-background transition-transform duration-300 ease-in-out",
             !isOpen && "translate-x-full"
           )}
@@ -106,4 +104,4 @@ export function StreamLayout({
       )}
     </div>
   );
-} 
+}

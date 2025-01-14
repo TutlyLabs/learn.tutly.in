@@ -1,7 +1,8 @@
-import { Controller, LowerHandParams, getSessionFromReq } from "@/lib/controller";
-import {APIRoute} from "astro";
+import { APIRoute } from "astro";
 
-export const POST: APIRoute = async ({ request :req}) => {
+import { Controller, LowerHandParams, getSessionFromReq } from "@/lib/controller";
+
+export const POST: APIRoute = async ({ request: req }) => {
   const controller = new Controller();
 
   try {
@@ -20,4 +21,4 @@ export const POST: APIRoute = async ({ request :req}) => {
     }
     return new Response("Internal Server Error", { status: 500 });
   }
-} 
+};

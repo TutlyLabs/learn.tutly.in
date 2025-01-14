@@ -1,12 +1,12 @@
-import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
-import { NextRequest, NextResponse } from 'next/server';
+import { EgressClient, EncodedFileOutput, S3Upload } from "livekit-server-sdk";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    const roomName = req.nextUrl.searchParams.get('roomName');
+    const roomName = req.nextUrl.searchParams.get("roomName");
 
     if (!roomName) {
-      return new NextResponse('Missing roomName parameter', { status: 400 });
+      return new NextResponse("Missing roomName parameter", { status: 400 });
     }
 
     const requiredEnvVars = {
@@ -26,14 +26,13 @@ export async function GET(req: NextRequest) {
       .map(([key]) => key);
 
     if (missingVars.length > 0) {
-      return new NextResponse(
-        `Missing required environment variables: ${missingVars.join(", ")}`,
-        { status: 500 }
-      );
+      return new NextResponse(`Missing required environment variables: ${missingVars.join(", ")}`, {
+        status: 500,
+      });
     }
 
     const hostURL = new URL(requiredEnvVars.VITE_LIVEKIT_WS_URL!);
-    hostURL.protocol = 'https:';
+    hostURL.protocol = "https:";
 
     const egressClient = new EgressClient(
       hostURL.origin,
@@ -44,7 +43,7 @@ export async function GET(req: NextRequest) {
     const existingEgresses = await egressClient.listEgress({ roomName });
 
     if (existingEgresses.length > 0 && existingEgresses.some((e) => e.status < 2)) {
-      return new NextResponse('Meeting is already being recorded', { status: 409 });
+      return new NextResponse("Meeting is already being recorded", { status: 409 });
     }
 
     const filepath = `${new Date(Date.now()).toISOString()}-${roomName}.mp4`;
@@ -52,7 +51,7 @@ export async function GET(req: NextRequest) {
     const fileOutput = new EncodedFileOutput({
       filepath,
       output: {
-        case: 's3',
+        case: "s3",
         value: new S3Upload({
           endpoint: requiredEnvVars.S3_ENDPOINT,
           accessKey: requiredEnvVars.S3_KEY_ID,
@@ -69,16 +68,15 @@ export async function GET(req: NextRequest) {
         file: fileOutput,
       },
       {
-        layout: 'speaker',
-      },
+        layout: "speaker",
+      }
     );
 
     return new NextResponse(null, { status: 200 });
   } catch (error) {
-    console.error('Recording start error:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Internal Server Error',
-      { status: 500 }
-    );
+    console.error("Recording start error:", error);
+    return new NextResponse(error instanceof Error ? error.message : "Internal Server Error", {
+      status: 500,
+    });
   }
 }

@@ -1,24 +1,22 @@
 "use client";
 
-import { useParticipants, useLocalParticipant } from "@livekit/components-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { useLocalParticipant, useParticipants } from "@livekit/components-react";
+import { useRoomContext } from "@livekit/components-react";
+import { actions } from "astro:actions";
 import {
   Hand,
-  UserPlus,
-  UserMinus,
+  MessageSquare,
   Mic,
   MicOff,
+  UserMinus,
+  UserPlus,
   Video,
   VideoOff,
-  MessageSquare
 } from "lucide-react";
-import { useAuthToken } from "./token-context";
-import { ParticipantMetadata, RoomMetadata } from "@/lib/controller";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { useRoomContext } from "@livekit/components-react";
-import { Badge } from "./ui/badge";
+import { useMemo, useState } from "react";
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -26,10 +24,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState, useMemo } from "react";
-import { actions } from "astro:actions";
+import { ParticipantMetadata, RoomMetadata } from "@/lib/controller";
+import { cn } from "@/lib/utils";
 
-
+import { useAuthToken } from "./token-context";
+import { Badge } from "./ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const parseMetadata = (metadata: string | undefined): ParticipantMetadata | null => {
   try {
@@ -47,7 +47,6 @@ export function ParticipantsList() {
   const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-
   const localMetadata = parseMetadata(localParticipant.metadata);
 
   const isHost = useMemo(() => {
@@ -62,11 +61,9 @@ export function ParticipantsList() {
   }, [localMetadata, localParticipant.identity, room.metadata]);
 
   const hosts = useMemo(() => {
-    const otherParticipants = isHost
-      ? participants
-      : [localParticipant, ...participants];
+    const otherParticipants = isHost ? participants : [localParticipant, ...participants];
 
-    return otherParticipants.filter(p => {
+    return otherParticipants.filter((p) => {
       const metadata = parseMetadata(p.metadata);
       if (metadata?.role === "host") return true;
 
@@ -80,12 +77,10 @@ export function ParticipantsList() {
   }, [localParticipant, participants, room.metadata, isHost]);
 
   const viewers = useMemo(() => {
-    const otherParticipants = isHost
-      ? participants
-      : [localParticipant, ...participants];
+    const otherParticipants = isHost ? participants : [localParticipant, ...participants];
 
-    return otherParticipants.filter(p => {
-      if (hosts.some(h => h.identity === p.identity)) return false;
+    return otherParticipants.filter((p) => {
+      if (hosts.some((h) => h.identity === p.identity)) return false;
 
       const metadata = parseMetadata(p.metadata);
       if (metadata?.role === "host") return false;
@@ -105,8 +100,8 @@ export function ParticipantsList() {
     try {
       await actions.stream_raiseHand({
         headers: {
-          Authorization: `Token ${authToken}`
-        }
+          Authorization: `Token ${authToken}`,
+        },
       });
     } catch (error) {
       console.error("Failed to raise hand:", error);
@@ -147,8 +142,8 @@ export function ParticipantsList() {
     try {
       await actions.stream_raiseHand({
         headers: {
-          Authorization: `Token ${authToken}`
-        }
+          Authorization: `Token ${authToken}`,
+        },
       });
     } catch (error) {
       console.error("Failed to accept invitation:", error);
@@ -162,8 +157,8 @@ export function ParticipantsList() {
       await actions.stream_removeFromStage({
         identity: localParticipant.identity,
         headers: {
-          Authorization: `Token ${authToken}`
-        }
+          Authorization: `Token ${authToken}`,
+        },
       });
     } catch (error) {
       console.error("Failed to decline invitation:", error);
@@ -177,10 +172,13 @@ export function ParticipantsList() {
         <div className="bg-muted/50 p-3 rounded-lg mb-4">
           <p className="text-sm font-medium flex items-center gap-2">
             <Hand className="h-4 w-4" />
-            {participants.filter(p => {
-              const metadata = parseMetadata(p.metadata);
-              return metadata?.hand_raised && !metadata?.invited_to_stage;
-            }).length} raised hand(s)
+            {
+              participants.filter((p) => {
+                const metadata = parseMetadata(p.metadata);
+                return metadata?.hand_raised && !metadata?.invited_to_stage;
+              }).length
+            }{" "}
+            raised hand(s)
           </p>
         </div>
       )}
@@ -193,18 +191,10 @@ export function ParticipantsList() {
             Would you like to share your audio and video?
           </p>
           <div className="flex gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={onAcceptInvitation}
-            >
+            <Button variant="default" size="sm" onClick={onAcceptInvitation}>
               Accept
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onDeclineInvitation}
-            >
+            <Button variant="outline" size="sm" onClick={onDeclineInvitation}>
               Decline
             </Button>
           </div>
@@ -214,12 +204,7 @@ export function ParticipantsList() {
       {/* Raise Hand Button for Viewers */}
       {!isHost && !localMetadata?.invited_to_stage && !localMetadata?.hand_raised && (
         <div className="mb-4">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="w-full"
-            onClick={onRaiseHandForSelf}
-          >
+          <Button variant="secondary" size="sm" className="w-full" onClick={onRaiseHandForSelf}>
             <Hand className="h-4 w-4 mr-2" />
             Raise Hand
           </Button>
@@ -310,9 +295,7 @@ export function ParticipantsList() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={() => selectedParticipant && onInviteToStage(selectedParticipant)}
-            >
+            <Button onClick={() => selectedParticipant && onInviteToStage(selectedParticipant)}>
               Invite
             </Button>
           </div>
@@ -337,15 +320,17 @@ function ParticipantItem({
   isHost,
   onInvite,
   onRemove,
-  onLowerHand
+  onLowerHand,
 }: ParticipantItemProps) {
   const metadata = parseMetadata(participant.metadata);
 
   return (
-    <div className={cn(
-      "flex items-center justify-between p-3 rounded-lg",
-      metadata?.hand_raised ? "bg-primary/5" : "hover:bg-accent"
-    )}>
+    <div
+      className={cn(
+        "flex items-center justify-between p-3 rounded-lg",
+        metadata?.hand_raised ? "bg-primary/5" : "hover:bg-accent"
+      )}
+    >
       <div className="flex items-center gap-3">
         <Avatar>
           <AvatarFallback>{participant.identity[0].toUpperCase()}</AvatarFallback>
@@ -359,21 +344,23 @@ function ParticipantItem({
             {metadata?.hand_raised && (
               <Tooltip>
                 <TooltipTrigger>
-                  <Hand className={cn(
-                    "h-3 w-3",
-                    isLocal ? "text-primary fill-primary" : "text-primary"
-                  )} />
+                  <Hand
+                    className={cn(
+                      "h-3 w-3",
+                      isLocal ? "text-primary fill-primary" : "text-primary"
+                    )}
+                  />
                 </TooltipTrigger>
                 <TooltipContent>Hand Raised</TooltipContent>
               </Tooltip>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground">
-              {metadata?.role || "Viewer"}
-            </p>
+            <p className="text-xs text-muted-foreground">{metadata?.role || "Viewer"}</p>
             {metadata?.invited_to_stage && (
-              <Badge variant="secondary" className="text-xs">On Stage</Badge>
+              <Badge variant="secondary" className="text-xs">
+                On Stage
+              </Badge>
             )}
           </div>
         </div>
@@ -414,33 +401,21 @@ function ParticipantItem({
         {isHost && !isLocal && (
           <div className="flex items-center gap-2">
             {metadata?.hand_raised && !metadata?.invited_to_stage && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={onInvite}
-              >
+              <Button variant="default" size="sm" onClick={onInvite}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Accept Request
               </Button>
             )}
 
             {metadata?.hand_raised && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onLowerHand}
-              >
+              <Button variant="ghost" size="sm" onClick={onLowerHand}>
                 <Hand className="h-4 w-4" />
                 Lower Hand
               </Button>
             )}
 
             {metadata?.invited_to_stage && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onRemove}
-              >
+              <Button variant="destructive" size="sm" onClick={onRemove}>
                 <UserMinus className="h-4 w-4 mr-2" />
                 Remove from Stage
               </Button>
@@ -450,4 +425,4 @@ function ParticipantItem({
       </div>
     </div>
   );
-} 
+}

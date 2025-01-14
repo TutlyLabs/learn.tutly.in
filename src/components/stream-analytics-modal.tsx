@@ -1,5 +1,9 @@
 "use client";
 
+import { format } from "date-fns";
+import { BarChart, Users } from "lucide-react";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,10 +12,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
-import { BarChart, Users } from "lucide-react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface StreamAnalyticsModalProps {
   analytics: any;
@@ -34,11 +42,7 @@ export function StreamAnalyticsModal({ analytics, roomName, children }: StreamAn
     <Dialog>
       <DialogTrigger asChild>
         {children || (
-          <Button 
-            variant="secondary" 
-            size="lg" 
-            className="rounded-full w-12 h-12"
-          >
+          <Button variant="secondary" size="lg" className="rounded-full w-12 h-12">
             <BarChart className="h-5 w-5" />
           </Button>
         )}
@@ -127,7 +131,8 @@ export function StreamAnalyticsModal({ analytics, roomName, children }: StreamAn
                         )}
                         {participant.videoEnabled && (
                           <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs text-blue-700">
-                            Video {participant.connectionQuality && `(${participant.connectionQuality})`}
+                            Video{" "}
+                            {participant.connectionQuality && `(${participant.connectionQuality})`}
                           </span>
                         )}
                         {participant.hasScreenShared && (
@@ -147,4 +152,3 @@ export function StreamAnalyticsModal({ analytics, roomName, children }: StreamAn
     </Dialog>
   );
 }
-

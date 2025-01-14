@@ -1,8 +1,10 @@
 import { MdOutlineNoteAlt } from "react-icons/md";
 import { PiStudentBold } from "react-icons/pi";
 import { SiGoogleclassroom } from "react-icons/si";
-import Holidays from "./Holidays";
+
 import { InstructorDashboardData } from "@/types/dashboard";
+
+import Holidays from "./Holidays";
 
 interface Props {
   data: InstructorDashboardData;

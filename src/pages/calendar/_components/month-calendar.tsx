@@ -10,7 +10,7 @@ import {
 } from "date-fns";
 
 interface Event {
-  type:string,
+  type: string;
   name: string;
   description: string;
   startDate: Date;
@@ -70,9 +70,7 @@ export function MonthCalendar({
         {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((dayName) => (
           <div
             key={dayName}
-            className={`${
-              compact ? "h-8" : "h-10"
-            } font-medium text-center text-muted-foreground`}
+            className={`${compact ? "h-8" : "h-10"} font-medium text-center text-muted-foreground`}
           >
             {dayName}
           </div>
@@ -86,9 +84,7 @@ export function MonthCalendar({
             return (
               <div
                 key={`${weekIndex}-${dayIndex}`}
-                className={`${
-                  compact ? "h-8" : "h-10"
-                } ${
+                className={`${compact ? "h-8" : "h-10"} ${
                   isCurrentMonth ? "bg-background" : "bg-muted/50"
                 } ${
                   isToday ? "bg-green-600 text-white rounded-full" : ""

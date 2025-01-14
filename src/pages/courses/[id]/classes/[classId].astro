@@ -34,7 +34,7 @@ const classDetails = await db.class.findUnique({
     video: true,
     attachments: true,
     Folder: true,
-  }
+  },
 });
 
 const initialNote = await db.notes.findUnique({
@@ -56,11 +56,11 @@ const bookmark = await db.bookMarks.findUnique({
 });
 
 const isBookmarked = bookmark ? true : false;
-const serverUrl = import.meta.env.VITE_LIVEKIT_WS_URL!.replace("wss://", "https://")
-.replace("ws://", "http://");
+const serverUrl = import.meta.env
+  .VITE_LIVEKIT_WS_URL!.replace("wss://", "https://")
+  .replace("ws://", "http://");
 
-console.log("server URL ",serverUrl);
-
+console.log("server URL ", serverUrl);
 ---
 
 <RootLayout title="Classes" forceClose={true}>
@@ -82,7 +82,7 @@ console.log("server URL ",serverUrl);
         details={classDetails}
         isBookmarked={isBookmarked}
         initialNote={initialNote}
-        serverUrl = {serverUrl}
+        serverUrl={serverUrl}
         client:only
       />
     </div>

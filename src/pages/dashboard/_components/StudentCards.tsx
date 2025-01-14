@@ -422,7 +422,7 @@ const PlatformScores = () => {
   return renderChart();
 };
 
-export function StudentCards({ data, selectedCourse }: Props,{holidays}:any) {
+export function StudentCards({ data, selectedCourse }: Props, { holidays }: any) {
   const course = data.courses.find((c) => c.courseId === selectedCourse);
 
   const groupedAssignments = course?.assignments?.reduce(

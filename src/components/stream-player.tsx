@@ -1,42 +1,40 @@
-import { useCopyToClipboard } from "@/lib/clipboard";
-import { ParticipantMetadata } from "@/lib/controller";
 import {
   AudioTrack,
+  TrackReference,
   VideoTrack,
   useDataChannel,
+  useIsRecording,
   useLocalParticipant,
   useMediaDeviceSelect,
   useParticipants,
   useRoomContext,
   useTracks,
-  useIsRecording,
-  TrackReference,
 } from "@livekit/components-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  LocalVideoTrack,
-  Track,
-  createLocalTracks,
-} from "livekit-client";
-import { useEffect, useRef, useState } from "react";
-import { useAuthToken } from "./token-context";
-import { useStreamAnalytics } from "@/hooks/use-stream-analytics";
-import { StreamLayout } from "./layouts/stream-layout";
-import { StreamControls } from "./stream-controls";
-import { cn } from "@/lib/utils";
 import { useChat } from "@livekit/components-react";
-import { LayoutGrid, Maximize2, MonitorPlay, Share2, Maximize, Minimize } from "lucide-react";
+import { actions } from "astro:actions";
+import { LocalVideoTrack, Track, createLocalTracks } from "livekit-client";
+import { LayoutGrid, Maximize, Maximize2, Minimize, MonitorPlay, Share2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription
 } from "@/components/ui/dialog";
-import { actions } from "astro:actions";
+import { useStreamAnalytics } from "@/hooks/use-stream-analytics";
+import { useCopyToClipboard } from "@/lib/clipboard";
+import { ParticipantMetadata } from "@/lib/controller";
+import { cn } from "@/lib/utils";
+
+import { StreamLayout } from "./layouts/stream-layout";
+import { StreamControls } from "./stream-controls";
+import { useAuthToken } from "./token-context";
 
 function ConfettiCanvas() {
   const [decoder] = useState(() => new TextDecoder());
@@ -48,7 +46,6 @@ function ConfettiCanvas() {
       options.emojis = [decoder.decode(data.payload)];
       options.confettiNumber = 12;
     }
-
   });
 
   return <canvas ref={canvasEl} className="absolute h-full w-full" />;
@@ -63,23 +60,21 @@ export function StreamPlayer({ isHost = false }) {
   const localVideoEl = useRef<HTMLVideoElement>(null);
 
   const roomContext = useRoomContext();
-  const {  name: roomName } = roomContext;
+  const { name: roomName } = roomContext;
   // const roomMetadata = (metadata && JSON.parse(metadata)) as RoomMetadata;
   const { localParticipant } = useLocalParticipant();
   const localMetadata = (localParticipant.metadata &&
     JSON.parse(localParticipant.metadata)) as ParticipantMetadata;
-  const canHost =
-    isHost || (localMetadata?.invited_to_stage && localMetadata?.hand_raised);
+  const canHost = isHost || (localMetadata?.invited_to_stage && localMetadata?.hand_raised);
   const participants = useParticipants();
 
   const analytics = useStreamAnalytics(participants, roomName);
 
   const showNotification = isHost
     ? participants.some((p) => {
-      const metadata = (p.metadata &&
-        JSON.parse(p.metadata)) as ParticipantMetadata;
-      return metadata?.hand_raised && !metadata?.invited_to_stage;
-    })
+        const metadata = (p.metadata && JSON.parse(p.metadata)) as ParticipantMetadata;
+        return metadata?.hand_raised && !metadata?.invited_to_stage;
+      })
     : localMetadata?.invited_to_stage && !localMetadata?.hand_raised;
 
   useEffect(() => {
@@ -127,7 +122,7 @@ export function StreamPlayer({ isHost = false }) {
       }),
     });
 
-    console.log("Response at leave stage",response);
+    console.log("Response at leave stage", response);
     window.location.reload();
   };
 
@@ -139,7 +134,7 @@ export function StreamPlayer({ isHost = false }) {
   }, [screenShareTracks]);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "participants" | 'null'>("null");
+  const [activeTab, setActiveTab] = useState<"chat" | "participants" | "null">("null");
   const [encoder] = useState(() => new TextEncoder());
   const { send: sendReaction } = useDataChannel("reactions");
   const { send: sendChat } = useChat();
@@ -155,37 +150,27 @@ export function StreamPlayer({ isHost = false }) {
 
   const onToggleChat = () => {
     const currSideBarOpen = sidebarOpen;
-    const currActiveTab = activeTab
+    const currActiveTab = activeTab;
 
-    if(currActiveTab == 'participants') 
-    {
+    if (currActiveTab == "participants") {
       setActiveTab("chat");
-    }
-    else {
+    } else {
       setSidebarOpen(!sidebarOpen);
 
-      if(!currSideBarOpen)
-        setActiveTab("chat")
-      else 
-        setActiveTab("null");
+      if (!currSideBarOpen) setActiveTab("chat");
+      else setActiveTab("null");
     }
-    
-    
   };
-  
+
   const onToggleParticipants = () => {
     const currSideBarOpen = sidebarOpen;
-    const currActiveTab = activeTab
-    if(currActiveTab == 'chat') 
-      {
-        setActiveTab("participants");
-      } 
-      else {
-        setSidebarOpen(!sidebarOpen);
-        if(!currSideBarOpen)
-          setActiveTab("participants")
-        else 
-          setActiveTab("null");
+    const currActiveTab = activeTab;
+    if (currActiveTab == "chat") {
+      setActiveTab("participants");
+    } else {
+      setSidebarOpen(!sidebarOpen);
+      if (!currSideBarOpen) setActiveTab("participants");
+      else setActiveTab("null");
     }
   };
 
@@ -194,21 +179,19 @@ export function StreamPlayer({ isHost = false }) {
   const toggleRoomRecording = async () => {
     try {
       if (isRecording) {
-
-        const {data:response} = await actions.stream_stopRecording({
+        const { data: response } = await actions.stream_stopRecording({
           roomName: roomContext.name,
           // headers: {
           //   Authorization: `Token ${authToken}`
           // }
         });
-        console.log("Response at stop stream",response);
+        console.log("Response at stop stream", response);
       } else {
-        
-        const {data:response} = await actions.stream_startRecording({
+        const { data: response } = await actions.stream_startRecording({
           roomName: roomContext.name,
-        })
+        });
 
-        console.log("Response at start stream",response);
+        console.log("Response at start stream", response);
       }
     } catch (error) {
       console.error("Failed to toggle recording:", error);
@@ -223,8 +206,7 @@ export function StreamPlayer({ isHost = false }) {
     }
   };
 
-  const canPublish =
-    isHost || (localMetadata?.invited_to_stage && localMetadata?.hand_raised);
+  const canPublish = isHost || (localMetadata?.invited_to_stage && localMetadata?.hand_raised);
 
   const [layout, setLayout] = useState<LayoutType>("grid");
 
@@ -262,7 +244,7 @@ export function StreamPlayer({ isHost = false }) {
           "grid-cols-1 items-center": totalParticipants === 1,
           "grid-cols-2": totalParticipants === 2,
           "grid-cols-2 grid-rows-2": totalParticipants === 3 || totalParticipants === 4,
-          "grid-cols-3 grid-rows-2": totalParticipants > 4
+          "grid-cols-3 grid-rows-2": totalParticipants > 4,
         });
 
       case "spotlight":
@@ -277,14 +259,6 @@ export function StreamPlayer({ isHost = false }) {
       default:
         return baseClass;
     }
-  };
-
-  // Add custom styles for the third participant in a 3-participant layout
-  const getParticipantStyles = (index: number, totalParticipants: number) => {
-    if (totalParticipants === 3 && index === 2) {
-      return "col-span-2"; 
-    }
-    return "";
   };
 
   const renderLayoutSwitcher = () => (
@@ -325,11 +299,7 @@ export function StreamPlayer({ isHost = false }) {
         onClick={toggleFullscreen}
         className="h-8 w-8 p-0 bg-background/90 backdrop-blur"
       >
-        {isFullscreen ? (
-          <Minimize className="h-4 w-4" />
-        ) : (
-          <Maximize className="h-4 w-4" />
-        )}
+        {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
       </Button>
     </div>
   );
@@ -342,10 +312,7 @@ export function StreamPlayer({ isHost = false }) {
         </Avatar>
       </div>
       {videoTrack && (
-        <VideoTrack
-          trackRef={videoTrack}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <VideoTrack trackRef={videoTrack} className="absolute inset-0 w-full h-full object-cover" />
       )}
       <div className="absolute bottom-2 left-2">
         <Badge variant="secondary" className="bg-background/90 backdrop-blur">
@@ -375,9 +342,7 @@ export function StreamPlayer({ isHost = false }) {
   const canRaiseHand = !isHost && !localMetadata?.invited_to_stage;
   const isHandRaised = localMetadata?.hand_raised;
 
-  const uniqueParticipants = participants.filter(p =>
-    p.identity !== localParticipant.identity
-  );
+  const uniqueParticipants = participants.filter((p) => p.identity !== localParticipant.identity);
 
   useEffect(() => {
     if (canPublish) {
@@ -385,10 +350,10 @@ export function StreamPlayer({ isHost = false }) {
         try {
           const tracks = await createLocalTracks({
             audio: true,
-            video: true
+            video: true,
           });
 
-          const videoTrack = tracks.find(t => t.kind === Track.Kind.Video) as LocalVideoTrack;
+          const videoTrack = tracks.find((t) => t.kind === Track.Kind.Video) as LocalVideoTrack;
           if (videoTrack && localVideoEl?.current) {
             videoTrack.attach(localVideoEl.current);
             setLocalVideoTrack(videoTrack);
@@ -416,32 +381,30 @@ export function StreamPlayer({ isHost = false }) {
 
   useEffect(() => {
     if (localVideoEl.current) {
-      localVideoEl.current.style.display = localParticipant.isCameraEnabled ? 'block' : 'none';
+      localVideoEl.current.style.display = localParticipant.isCameraEnabled ? "block" : "none";
     }
   }, [localParticipant.isCameraEnabled]);
 
-  
-
   // For the host video overlay during screen sharing
-const hostVideoOverlayClass = cn(
-  "absolute bottom-4 right-4 w-[240px] aspect-video rounded-lg overflow-hidden shadow-lg",
-  "transition-opacity duration-300",
-  !isScreenSharing && "hidden"
-);
-
-const PictureInPicture = ({ track }: { track: any }) => {
-  return (
-    <div className="absolute bottom-4 right-4 w-[180px] aspect-video rounded-lg overflow-hidden border border-border shadow-lg">
-      <video
-        // ref={localVideoEl}
-        autoPlay
-        playsInline
-        className="h-full inset-0 absolute w-full "
-      />
-    </div>
+  const hostVideoOverlayClass = cn(
+    "absolute bottom-4 right-4 w-[240px] aspect-video rounded-lg overflow-hidden shadow-lg",
+    "transition-opacity duration-300",
+    !isScreenSharing && "hidden"
   );
-};
-  
+
+  const PictureInPicture = ({ track }: { track: any }) => {
+    return (
+      <div className="absolute bottom-5 right-4 w-[180px] aspect-video rounded-lg overflow-hidden border border-blue-500 shadow-lg ">
+        <video
+          ref={track}
+          className="inset-0 absolute w-full h-full object-cover"
+          autoPlay
+          playsInline
+        />
+      </div>
+    );
+  };
+
   return (
     <StreamLayout
       sidebarOpen={sidebarOpen}
@@ -455,34 +418,34 @@ const PictureInPicture = ({ track }: { track: any }) => {
           "relative w-full h-full bg-black ",
           layout === "grid" ? "grid gap-2" : "aspect-video",
           isFullscreen && "fixed inset-0 z-50"
-          )}
+        )}
       >
         <ConfettiCanvas />
         {renderLayoutSwitcher()}
 
         <div className={getLayoutClass()}>
           {/* Screen share */}
-          {isScreenSharing && screenShareTracks.length > 0  ? (
-            <div className={ cn(
-                "relative rounded-lg overflow-hidden",
+          {isScreenSharing && screenShareTracks.length > 0 ? (
+            <div
+              className={cn(
+                "relative mt-8 rounded-lg overflow-hidden",
                 layout === "grid" ? "w-full h-full" : "aspect-video"
-              )}>
+              )}
+            >
               <VideoTrack
-                trackRef={screenShareTracks[0] as TrackReference }
+                trackRef={screenShareTracks[0] as TrackReference}
                 className="w-full h-full object-contain bg-black"
               />
-              <div className="absolute top-2 left-2">
+              <div className="absolute top-8 left-2">
                 <Badge variant="secondary" className="bg-background/90 backdrop-blur">
                   Screen Share
                 </Badge>
               </div>
 
               {/* Host video overlay */}
-                {/* Picture in Picture for host during screen share */}
-              <div >
-                {isHost && localVideoEl && (
-                  <PictureInPicture track={localVideoEl} />
-                )}
+              {/* Picture in Picture for host during screen share */}
+              <div>
+                {localVideoEl && <PictureInPicture track={localVideoEl} />}
                 <div className="absolute bottom-2 left-2">
                   <Badge variant="secondary" className="bg-background/90 backdrop-blur">
                     {localParticipant.identity} (You)
@@ -503,9 +466,12 @@ const PictureInPicture = ({ track }: { track: any }) => {
               )}
             >
               {[localParticipant, ...uniqueParticipants].map((participant, index) => {
-                const videoTrack = participant === localParticipant
-                  ? undefined
-                  : remoteVideoTracks.find(t => t.participant.identity === participant.identity);
+                const videoTrack =
+                  participant === localParticipant
+                    ? undefined
+                    : remoteVideoTracks.find(
+                        (t) => t.participant.identity === participant.identity
+                      );
                 const totalParticipants = [localParticipant, ...uniqueParticipants].length;
 
                 return (
@@ -514,8 +480,7 @@ const PictureInPicture = ({ track }: { track: any }) => {
                     className={cn(
                       "relative rounded-lg overflow-hidden bg-accent",
                       "aspect-video w-full h-full scale-110",
-                      totalParticipants === 1 ? "max-w-4xl mx-auto" : "",
-                      getParticipantStyles(index, totalParticipants)
+                      "max-w-4xl mx-auto" 
                     )}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -534,14 +499,14 @@ const PictureInPicture = ({ track }: { track: any }) => {
                       videoTrack && (
                         <VideoTrack
                           trackRef={videoTrack}
-                          className="absolute inset-0 w-full h-full object-cover"
+                          className="absolute inset-0  object-cover"
                         />
-                        
                       )
                     )}
                     <div className="absolute bottom-2 left-2">
                       <Badge variant="secondary" className="bg-background/90 backdrop-blur">
-                        {participant.identity} {participant.identity === localParticipant.identity && "(You)"}
+                        {participant.identity}{" "}
+                        {participant.identity === localParticipant.identity && "(You)"}
                       </Badge>
                     </div>
                   </div>
@@ -561,16 +526,19 @@ const PictureInPicture = ({ track }: { track: any }) => {
           activeTab={activeTab}
           onToggleAudio={() =>
             canPublish &&
-            localParticipant.setMicrophoneEnabled(
-              !localParticipant.isMicrophoneEnabled
-            )
+            localParticipant.setMicrophoneEnabled(!localParticipant.isMicrophoneEnabled)
           }
           onToggleVideo={() =>
-            canPublish &&
-            localParticipant.setCameraEnabled(!localParticipant.isCameraEnabled)
+            canPublish && localParticipant.setCameraEnabled(!localParticipant.isCameraEnabled)
           }
           onToggleScreenShare={onToggleScreenShare}
-          onToggleRecording={isHost ? () => { void toggleRoomRecording(); } : () => {}}
+          onToggleRecording={
+            isHost
+              ? () => {
+                  void toggleRoomRecording();
+                }
+              : () => {}
+          }
           onToggleChat={onToggleChat}
           onToggleParticipants={onToggleParticipants}
           onSendReaction={onSendReaction}
@@ -584,29 +552,18 @@ const PictureInPicture = ({ track }: { track: any }) => {
 
         <Dialog>
           <DialogTrigger asChild>
-            <Button
-              variant="secondary"
-              size="lg"
-              className="absolute top-4 left-4 rounded-full"
-            >
+            <Button variant="secondary" className="absolute top-4 left-4 rounded-full">
               <Share2 className="h-5 w-5" />
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Share meeting</DialogTitle>
-              <DialogDescription>
-                Anyone with this link can join the meeting
-              </DialogDescription>
+              <DialogDescription>Anyone with this link can join the meeting</DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-muted-foreground break-all">
-                {window.location.href}
-              </p>
-              <Button
-                onClick={() => copy(window.location.href)}
-                className="w-full"
-              >
+              <p className="text-sm text-muted-foreground break-all">{window.location.href}</p>
+              <Button onClick={() => copy(window.location.href)} className="w-full">
                 Copy Link
               </Button>
             </div>
@@ -614,11 +571,8 @@ const PictureInPicture = ({ track }: { track: any }) => {
         </Dialog>
 
         {/* Add audio tracks for remote participants */}
-        {remoteAudioTracks.map(track => (
-          <AudioTrack 
-            key={track.publication.trackSid} 
-            trackRef={track} 
-          />
+        {remoteAudioTracks.map((track) => (
+          <AudioTrack key={track.publication.trackSid} trackRef={track} />
         ))}
       </div>
     </StreamLayout>
