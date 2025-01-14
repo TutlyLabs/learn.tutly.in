@@ -23,11 +23,18 @@ const classDetails = await db.class.findUnique({
   where: {
     id: classId,
   },
-  include: {
+  select: {
+    id: true,
+    title: true,
+    createdAt: true,
+    updatedAt: true,
+    courseId: true,
+    videoId: true,
+    folderId: true,
     video: true,
     attachments: true,
     Folder: true,
-  },
+  }
 });
 
 const initialNote = await db.notes.findUnique({
@@ -49,6 +56,11 @@ const bookmark = await db.bookMarks.findUnique({
 });
 
 const isBookmarked = bookmark ? true : false;
+const serverUrl = import.meta.env.VITE_LIVEKIT_WS_URL!.replace("wss://", "https://")
+.replace("ws://", "http://");
+
+console.log("server URL ",serverUrl);
+
 ---
 
 <RootLayout title="Classes" forceClose={true}>
@@ -70,6 +82,7 @@ const isBookmarked = bookmark ? true : false;
         details={classDetails}
         isBookmarked={isBookmarked}
         initialNote={initialNote}
+        serverUrl = {serverUrl}
         client:only
       />
     </div>

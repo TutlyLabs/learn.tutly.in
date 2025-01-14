@@ -21,6 +21,7 @@ import * as statistics from "./statistics";
 import * as submissions from "./submission";
 import * as users from "./users";
 import * as holidays from "./holidays";
+import * as stream from "./stream";
 
 export const server = {
   ...groupActions("courses", courses, "_"),
@@ -43,4 +44,5 @@ export const server = {
   ...groupActions("schedule", schedule, "_"),
   ...groupActions("codingPlatforms", codingPlatforms, "_"),
   ...groupActions("holidays", holidays, "_"),
+  ...groupActions("stream", stream, "_"),
 };

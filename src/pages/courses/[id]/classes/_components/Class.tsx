@@ -16,7 +16,7 @@ import {
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useDebounce } from "use-debounce";
-import {ScrollArea} from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import VideoPlayer from "@/components/VideoPlayer";
 import RichTextEditor from "@/components/editor/RichTextEditor";
 import {
@@ -48,6 +48,10 @@ import {
 import { Input } from "@/components/ui/input";
 
 import NewAttachmentPage from "./NewAssignments";
+import { CreateStreamResponse, JoinStreamResponse } from "@/lib/controller";
+import { StreamPlayer } from "@/components/stream-player";
+import { TokenContext } from "@/components/token-context";
+import { LiveKitRoom } from "@livekit/components-react";
 
 export default function Class({
   classes,
@@ -57,60 +61,170 @@ export default function Class({
   details,
   isBookmarked,
   initialNote,
+  serverUrl,
 }: {
   classes: any;
   classId: string;
   courseId: string;
   currentUser: any;
   details:
-    | (Class & {
-        video: Video | null;
-        attachments: Attachment[];
-      })
-    | null;
+  | (Class & {
+    title: string;
+    video: Video | null;
+    attachments: Attachment[];
+  })
+  | null;
   isBookmarked: boolean;
   initialNote?: Notes | null;
+  serverUrl: string;
 }) {
   if (!details) {
     return <div className="flex items-center justify-center p-8">Loading...</div>;
   }
 
   const { video, title, createdAt, attachments } = details;
-  const { videoLink, videoType } = video || {};
 
   const isCourseAdmin = currentUser?.adminForCourses?.some(
     (course: { id: string }) => course.id === courseId
   );
   const haveAdminAccess = currentUser.role == "INSTRUCTOR" || isCourseAdmin;
 
-  const getVideoId = () => {
-    if (!videoLink || !videoType) return null;
-
-    const PATTERNS = {
-      YOUTUBE:
-        /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-      DRIVE: /\/file\/d\/([^\/]+)/,
-    };
-
-    const pattern = PATTERNS[videoType as keyof typeof PATTERNS];
-    if (!pattern) return null;
-
-    const match = videoLink.match(pattern);
-    return match ? match[1] : null;
-  };
-
-  const videoId = getVideoId();
-
+  const [liveStarted, setLiveStarted] = useState(false);
+  
+  
   const renderVideo = () => {
-    if (!videoId) {
+    const [loading, setLoading] = useState(false);
+    const [insAuthToken, setInsAuthToken] = useState("");
+    const [insRoomToken, setInsRoomToken] = useState("");
+    const [authToken, setAuthToken] = useState("");
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const startInstantMeet = searchParams.get("stream");
+
+    const onGoLive = async () => {
+      setLoading(true);
+      try {
+        const { data: response,error } = await actions.stream_createStream({
+          room_name: details.title,
+          metadata: {
+            creator_identity: currentUser.name,
+            enable_chat: true,
+            allow_participation: true,
+          },
+          headers: {
+            Authorization: `Token ${authToken}`
+          }
+        });
+        
+        if(error) 
+          {
+            console.error("Failed to go live:", error);
+            return;
+          }
+
+          if (response.data) {
+            setInsAuthToken(response.data.auth_token);
+            setInsRoomToken(response.data.connection_details.token);
+            setLiveStarted(true);
+          } else {
+            console.error("No response data received");
+          }
+        } catch (error) {
+          console.error("Failed to go live:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+    if (haveAdminAccess) {
+      if (!insAuthToken && !insRoomToken) {
+        return (
+          <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
+            <Button 
+              variant="link"
+              className="text-blue-500"
+              disabled={loading}
+              onClick={onGoLive}
+            >
+              {loading ? "Going Live..." : "Start a Stream"}
+            </Button>
+          </span>
+        );
+      }
+
+
       return (
-        <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
-          No video to display
-        </span>
-      );
+        <div >
+          <TokenContext.Provider value={insAuthToken}>
+            <LiveKitRoom serverUrl={serverUrl} token={insRoomToken}>
+              <StreamPlayer isHost />
+            </LiveKitRoom>
+          </TokenContext.Provider>
+        </div>
+      )
     }
 
-    return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
+    const [roomToken, setRoomToken] = useState("");
+
+    const onJoin = async () => {
+      setLoading(true);
+      try {
+        const { data:response,error } = await actions.stream_joinStream({
+          room_name: details.title,
+          identity: currentUser.name,
+          headers: {
+            Authorization: `Token ${authToken}`
+          }
+        });
+
+        if(error)
+        {
+          console.error("Failed to join:", error);
+          return;
+        }
+
+        const { auth_token, connection_details: { token } } = response as JoinStreamResponse;
+        setAuthToken(auth_token);
+        setRoomToken(token);
+        setLiveStarted(true);
+      } catch (error) {
+        console.error("Failed to join:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!haveAdminAccess) {
+      if (!authToken && !roomToken) {
+        return (
+          <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
+            <button
+              disabled={loading}
+              className="text-blue-500"
+              onClick={() => {
+                onJoin();
+              }}
+            >
+              {
+                loading ? "Joining..." : "Join the Stream"
+              }
+
+            </button>
+          </span>
+        )
+      }
+
+      return (
+        <TokenContext.Provider value={authToken}>
+          <LiveKitRoom serverUrl={serverUrl} token={roomToken}>
+            <StreamPlayer />
+          </LiveKitRoom>
+        </TokenContext.Provider>
+      )
+
+    }
+
+    return "No video available";
   };
 
   const renderAttachmentLink = (attachment: Attachment) => {
@@ -239,16 +353,35 @@ export default function Class({
                     </Button>
                   </div>
                 </div>
-                <p className="text-sm font-medium">{dayjs(createdAt).format("MMM D, YYYY")}</p>
+
+                <div
+                  className="flex items-center justify-end gap-3"
+                >
+                    {
+                      liveStarted && (
+                        <div
+                        className="flex items-center justify-start "
+                        >
+                          <div
+                            className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-1"
+                            />
+                          <span className="text-sm font-semibold text-muted-foreground">Live</span>
+                        </div>
+                      )
+                    }
+                    <p className="text-sm font-medium">{dayjs(createdAt).format("MMM D, YYYY")}</p>
+                </div>
               </div>
-              <div className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl object-cover">
+              <div 
+                id='StreamPlayer'
+              className="flex-1 text-secondary-100 w-full aspect-video bg-gray-500/10 rounded-xl ">
                 {renderVideo()}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full pb-4 md:m-0 md:w-96">
+        <div className="w-full pb-4 md:m-0 md:w-[350px]">
           <div className="h-full w-full rounded-xl p-2">
             {haveAdminAccess && (
               <div className="flex w-full justify-end mb-4">
@@ -278,7 +411,7 @@ export default function Class({
                 <tr>
                   <th className="px-4 py-2">Title</th>
                   <th className="px-4 py-2">Link</th>
-                  <th className="px-4 py-2">Due Date</th>
+                  <th className="px-4 py-2">Due by</th>
                   {haveAdminAccess && <th className="px-4 py-2">Actions</th>}
                 </tr>
               </thead>
