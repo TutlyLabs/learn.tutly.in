@@ -80,7 +80,7 @@ const classesWithFolders = await db.class.findMany({
       client:only
       courseId={String(Astro.params.id)}
       classes={classesWithFolders || []}
-      title="Assignments"
+      title="Classes"
       currentUser={currentUser}
       isCourseAdmin={currentUser.role === "INSTRUCTOR"}
     />

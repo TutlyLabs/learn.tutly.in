@@ -241,20 +241,22 @@ export function StreamPlayer({ isHost = false }) {
     switch (layout) {
       case "grid":
         return cn(baseClass, {
-          "grid-cols-1 items-center": totalParticipants === 1,
+          "grid-cols-1": totalParticipants === 1,
           "grid-cols-2": totalParticipants === 2,
           "grid-cols-2 grid-rows-2": totalParticipants === 3 || totalParticipants === 4,
-          "grid-cols-3 grid-rows-2": totalParticipants > 4,
+          "grid-cols-4 grid-rows-3": totalParticipants > 4,
         });
 
       case "spotlight":
         return cn(baseClass, {
-          "grid-cols-1 md:grid-cols-[1fr_300px]": isScreenSharing,
-          "grid-cols-1 md:grid-cols-[1fr_300px] auto-rows-[1fr_300px]": !isScreenSharing,
+          "grid-cols-1 md:grid-cols-2": isScreenSharing,
+          "grid-cols-1": !isScreenSharing,
         });
 
       case "screenShare":
-        return cn(baseClass, "grid-cols-1");
+        return cn(baseClass,
+            "grid-cols-2"
+        );
 
       default:
         return baseClass;
@@ -262,24 +264,24 @@ export function StreamPlayer({ isHost = false }) {
   };
 
   const renderLayoutSwitcher = () => (
-    <div className="absolute top-4 right-4 flex gap-2 z-[102]">
+    <div className="flex items-center absolute top-4 right-4 gap-2 z-[102]">
       <div className="bg-background/90 rounded-full p-2 backdrop-blur border border-border">
         <div className="flex gap-2">
           <Button
             size="sm"
-            variant={layout === "grid" ? "default" : "ghost"}
-            onClick={() => setLayout("grid")}
-            className="h-8 w-8 p-0"
+            variant={layout === "spotlight" ? "default" : "ghost"}
+            onClick={() => setLayout("spotlight")}
+            className="h-6 w-6 p-0"
           >
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="h-6 w-6" />
           </Button>
           <Button
             size="sm"
-            variant={layout === "spotlight" ? "default" : "ghost"}
-            onClick={() => setLayout("spotlight")}
-            className="h-8 w-8 p-0"
+            variant={layout === "grid" ? "default" : "ghost"}
+            onClick={() => setLayout("grid")}
+            className="h-6 w-6 p-0"
           >
-            <LayoutGrid className="h-4 w-4" />
+            <LayoutGrid className="h-6 w-6" />
           </Button>
           {isScreenSharing && (
             <Button
@@ -293,14 +295,16 @@ export function StreamPlayer({ isHost = false }) {
           )}
         </div>
       </div>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={toggleFullscreen}
-        className="h-8 w-8 p-0 bg-background/90 backdrop-blur"
-      >
-        {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-      </Button>
+      <div>
+        <Button
+              size="sm"
+              variant="ghost"
+              onClick={toggleFullscreen}
+              className="h-6 w-6 p-0 bg-background/90 backdrop-blur"
+            >
+              {isFullscreen ? <Minimize className="h-6 w-6" /> : <Maximize className="h-6 w-6" />}
+        </Button>
+      </div>
     </div>
   );
 
