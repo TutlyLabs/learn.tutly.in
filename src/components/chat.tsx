@@ -27,12 +27,12 @@ function ChatMessage({ message }: { message: ReceivedChatMessage }) {
             localParticipant.identity === message.from?.identity
               ? "text-blue-500"
               : "text-gray-500",
-            "font-bold text-medium overflow-auto"
+            "font-bold text-medium overflow-auto "
           )}
         >
           {message.from?.identity ?? "Unknown"}
         </p>
-        <Text size="1" className="ms-2">
+        <Text size="1" className="ms-2 ">
           {message.message}
         </Text>
       </div>
@@ -69,11 +69,11 @@ export function Chat() {
           Live Chat
         </Text>
       </div>
-      <Flex direction="column" justify="end" className="flex-1 h-full px-2 overflow-y-auto" gap="2">
+      <div className=" flex-col justify-end items-center gap-2 px-2 overflow-y-auto h-3/4" >
         {messages.map((msg) => (
           <ChatMessage message={msg} key={msg.timestamp} />
         ))}
-      </Flex>
+      </div>
       <div>
         <div className="border-t border-slate-500 py-4 px-2 mt-4 flex items-center gap-2">
           <div className="flex-1">

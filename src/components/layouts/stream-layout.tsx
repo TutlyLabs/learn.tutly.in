@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Chat } from "@/components/chat";
 import { ParticipantsList } from "@/components/participants-list";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import {Card} from "@/components/ui/card"
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+
 
 interface StreamLayoutProps {
   children: React.ReactNode;
@@ -39,8 +42,22 @@ export function StreamLayout({
     }
   };
 
+  const ref = useRef(null)
+
   return (
-    <div className="h-screen flex">
+    <div className="h-screen flex rounded-xl"
+      ref={ref}
+      onClick={(e) => {
+        if (isOpen) {
+          if (onSidebarOpenChange) {
+            onTabChange?.("null");
+            onSidebarOpenChange(false);
+          } else {
+            setLocalSidebarOpen(false);
+          }
+        }
+      }}
+    >
       <main
         onKeyDown={(e) => {
           if (e.key === "Escape") {
@@ -62,6 +79,7 @@ export function StreamLayout({
 
       {(chat || participants) && (
         <aside
+          
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.preventDefault();
@@ -76,30 +94,31 @@ export function StreamLayout({
             }
           }}
           className={cn(
-            "fixed right-0 top-0 h-3/4 w-[360px] border-l border-border bg-background transition-transform duration-300 ease-in-out",
+            "fixed right-2 top-1/7 h-3/4 w-[385px] border-l border-border bg-background transition-transform duration-300 ease-in-out rounded-xl",
             !isOpen && "translate-x-full"
           )}
         >
-          <Tabs
-            value={currentTab}
-            onValueChange={(value) => handleTabChange(value as "chat" | "participants")}
-            className="h-full flex flex-col"
-          >
-            <TabsList className="justify-start px-4 pt-2">
-              {chat && <TabsTrigger value="chat">Chat</TabsTrigger>}
-              {participants && <TabsTrigger value="participants">People</TabsTrigger>}
-            </TabsList>
-            {chat && (
-              <TabsContent value="chat" className="flex-1 m-0">
-                <Chat />
-              </TabsContent>
-            )}
-            {participants && (
-              <TabsContent value="participants" className="flex-1 m-0">
-                <ParticipantsList />
-              </TabsContent>
-            )}
-          </Tabs>
+          <Card className="h-full w-full rounded-xl p-4">
+            <Tabs
+              value={currentTab}
+              onValueChange={(value) => handleTabChange(value as "chat" | "participants")}
+            >
+              <TabsList  className=" mx-auto w-full ">
+                {chat && <TabsTrigger value="chat" className="flex-1">Chat</TabsTrigger>}
+                {participants && <TabsTrigger value="participants" className="flex-1">People</TabsTrigger>}
+              </TabsList>
+              {chat && (
+                <TabsContent value="chat" className="flex-1 m-0">
+                  <Chat />
+                </TabsContent>
+              )}
+              {participants && (
+                <TabsContent value="participants" className="flex-1 m-0">
+                  <ParticipantsList />
+                </TabsContent>
+              )}
+            </Tabs>
+          </Card>
         </aside>
       )}
     </div>

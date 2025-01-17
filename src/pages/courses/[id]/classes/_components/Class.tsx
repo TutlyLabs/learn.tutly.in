@@ -6,6 +6,12 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Table,
   TableBody,
   TableCell,
@@ -372,31 +378,13 @@ export default function Class({
             </div>
           </div>
         </div>
-
-        <div className="w-full md:m-0 md:w-[350px]">
-          <Card className="h-full w-full rounded-xl p-4">
-          <Tabs defaultValue="assignments">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="participants">Participants</TabsTrigger>
-              <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            </TabsList>
-            <TabsContent value="chat">
-              <div>
-                Chat
-              </div>
-            </TabsContent>
-            <TabsContent value="participants">
-              <div>
-                Participants
-              </div>
-            </TabsContent>
-            <TabsContent value="assignments">
+        <div className="w-full pb-4 md:m-0 md:w-[350px]">
+          <div className="h-full w-full rounded-xl p-2">
             {haveAdminAccess && (
-              <div className="flex w-full justify-end my-2">
+              <div className="flex w-full justify-end mb-4">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button className="text-white flex items-center gap-2 mt-3">
+                    <Button className="text-white flex items-center gap-2 -mt-2">
                       Add an assignment
                       <FaPlus />
                     </Button>
@@ -411,64 +399,82 @@ export default function Class({
                     </ScrollArea>
                   </DialogContent>
                 </Dialog>
-
               </div>
             )}
 
-            <div className="gap-4">
-              {!attachments?.length ? (
-                <div className="col-span-full flex justify-center items-center p-6 bg-blue-500 rounded-lg text-lg font-semibold text-white">
-                  No assignments
-                </div>
-              ) : (
-                attachments.map((attachment, index) => (
-                  <div
-                    key={index}
-                    className="bg-slate-800 rounded-lg p-4 shadow-md text-white"
-                  >
-                    <div className="flex justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg">{attachment.title}</h3>
-                        <p className="text-sm font-medium text-neutral-300">
-                          {attachment.attachmentType.toLowerCase()}
-                        </p>
-                      </div>
-                      <div className="mt-2">
-                        {renderAttachmentLink(attachment)}
-                      </div>
-                    </div>
-                    {haveAdminAccess && (
-                      <div className="flex justify-between items-center">
-                        <button
-                          onClick={() => {
-                            setSelectedAttachment(attachment);
-                            setIsEditDialogOpen(true);
-                          }}
-                          className="flex mt-2 items-center gap-2 px-3 py-1 text-sm bg-blue-600 rounded hover:bg-blue-700"
-                        >
-                          <FaPencilAlt className="h-4 w-4" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedAttachment(attachment);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                          className="flex mt-2 items-center gap-2 px-3 py-1 text-sm bg-red-600 rounded hover:bg-red-700"
-                        >
-                          <FaTrashAlt className="h-4 w-4" />
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-
-           </TabsContent>
-           </Tabs>
-          </Card>
+            <table className="w-full border-collapse">
+              <thead className="mb-4 border-b-2 border-secondary-400 font-semibold">
+                <tr>
+                  <th className="px-4 py-2">Title</th>
+                  <th className="px-4 py-2">Link</th>
+                  <th className="px-4 py-2">Due by</th>
+                  {haveAdminAccess && <th className="px-4 py-2">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="text-white">
+                {!attachments?.length ? (
+                  <tr className="bg-blue-500 text-center">
+                    <td className="py-4 text-center text-lg" colSpan={4}>
+                      No assignments
+                    </td>
+                  </tr>
+                ) : (
+                  attachments.map((attachment, index) => (
+                    <tr className="bg-blue-500 text-center" key={index}>
+                      <td className="px-4 py-2">
+                        <div className="font-semibold">
+                          {attachment.title}
+                          <div className="text-sm font-medium text-neutral-300">
+                            {attachment.attachmentType.toLowerCase()}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2">{renderAttachmentLink(attachment)}</td>
+                      <td className="px-4 py-2">
+                        {attachment.attachmentType === "ASSIGNMENT" && attachment.dueDate
+                          ? dayjs(attachment.dueDate).format("MMM D, YYYY")
+                          : "-"}
+                      </td>
+                      {haveAdminAccess && (
+                        <td className="px-4 py-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger>
+                              <BsThreeDotsVertical className="h-5 w-5" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedAttachment(attachment);
+                                  setIsEditDialogOpen(true);
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FaPencilAlt className="h-4 w-4" />
+                                  Edit
+                                </div>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => {
+                                  setSelectedAttachment(attachment);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FaTrashAlt className="h-4 w-4" />
+                                  Delete
+                                </div>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
