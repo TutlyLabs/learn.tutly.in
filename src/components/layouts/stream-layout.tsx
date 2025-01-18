@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Chat } from "@/components/chat";
 import { ParticipantsList } from "@/components/participants-list";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {Card} from "@/components/ui/card"
-import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 
 interface StreamLayoutProps {
@@ -42,22 +41,8 @@ export function StreamLayout({
     }
   };
 
-  const ref = useRef(null)
-
   return (
-    <div className="h-screen flex rounded-xl"
-      ref={ref}
-      onClick={(e) => {
-        if (isOpen) {
-          if (onSidebarOpenChange) {
-            onTabChange?.("null");
-            onSidebarOpenChange(false);
-          } else {
-            setLocalSidebarOpen(false);
-          }
-        }
-      }}
-    >
+    <div className="h-screen flex rounded-xl">
       <main
         onKeyDown={(e) => {
           if (e.key === "Escape") {
