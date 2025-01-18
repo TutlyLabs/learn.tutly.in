@@ -208,7 +208,7 @@ export function StreamPlayer({ isHost = false }) {
 
   const canPublish = isHost || (localMetadata?.invited_to_stage && localMetadata?.hand_raised);
 
-  const [layout, setLayout] = useState<LayoutType>("grid");
+  const [layout, setLayout] = useState<LayoutType>("spotlight");
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -234,34 +234,6 @@ export function StreamPlayer({ isHost = false }) {
     };
   }, []);
 
-  const getLayoutClass = () => {
-    const totalParticipants = [localParticipant, ...uniqueParticipants].length;
-    const baseClass = "grid gap-2 p-4";
-
-    switch (layout) {
-      case "grid":
-        return cn(baseClass, {
-          "grid-cols-1": totalParticipants === 1,
-          "grid-cols-2": totalParticipants === 2,
-          "grid-cols-2 grid-rows-2": totalParticipants === 3 || totalParticipants === 4,
-          "grid-cols-4 grid-rows-3": totalParticipants > 4,
-        });
-
-      case "spotlight":
-        return cn(baseClass, {
-          "grid-cols-1 md:grid-cols-2": isScreenSharing,
-          "grid-cols-1": !isScreenSharing,
-        });
-
-      case "screenShare":
-        return cn(baseClass,
-            "grid-cols-2"
-        );
-
-      default:
-        return baseClass;
-    }
-  };
 
   const renderLayoutSwitcher = () => (
     <div className="flex items-center absolute top-4 right-4 gap-2 z-[102]">
@@ -288,9 +260,9 @@ export function StreamPlayer({ isHost = false }) {
               size="sm"
               variant={layout === "screenShare" ? "default" : "ghost"}
               onClick={() => setLayout("screenShare")}
-              className="h-8 w-8 p-0"
+              className="h-6 w-6 p-0"
             >
-              <MonitorPlay className="h-4 w-4" />
+              <MonitorPlay className="h-6 w-6" />
             </Button>
           )}
         </div>
@@ -347,6 +319,8 @@ export function StreamPlayer({ isHost = false }) {
   const isHandRaised = localMetadata?.hand_raised;
 
   const uniqueParticipants = participants.filter((p) => p.identity !== localParticipant.identity);
+  
+  console.log("Participants : ",participants[0]?.permissions);
 
   useEffect(() => {
     if (canPublish) {
@@ -390,11 +364,6 @@ export function StreamPlayer({ isHost = false }) {
   }, [localParticipant.isCameraEnabled]);
 
   // For the host video overlay during screen sharing
-  const hostVideoOverlayClass = cn(
-    "absolute bottom-4 right-4 w-[240px] aspect-video rounded-lg overflow-hidden shadow-lg",
-    "transition-opacity duration-300",
-    !isScreenSharing && "hidden"
-  );
 
   const PictureInPicture = ({ track }: { track: any }) => {
     return (
@@ -419,64 +388,98 @@ export function StreamPlayer({ isHost = false }) {
       <div
         ref={containerRef}
         className={cn(
-          "relative w-full h-full bg-black ",
-          layout === "grid" ? "grid gap-2" : "aspect-video",
+          "relative w-full h-full bg-black grid gap-2",
           isFullscreen && "fixed inset-0 z-50"
         )}
       >
         <ConfettiCanvas />
         {renderLayoutSwitcher()}
 
-        <div className={getLayoutClass()}>
-          {/* Screen share */}
-          {isScreenSharing && screenShareTracks.length > 0 ? (
-            <div
-              className={cn(
-                "relative mt-8 rounded-lg overflow-hidden",
-                layout === "grid" ? "w-full h-full" : "aspect-video"
-              )}
-            >
-              <VideoTrack
-                trackRef={screenShareTracks[0] as TrackReference}
-                className="w-full h-full object-contain bg-black"
-              />
-              <div className="absolute top-8 left-2">
-                <Badge variant="secondary" className="bg-background/90 backdrop-blur">
-                  Screen Share
-                </Badge>
-              </div>
-
-              {/* Host video overlay */}
-              {/* Picture in Picture for host during screen share */}
-              <div>
-                {localVideoEl && <PictureInPicture track={localVideoEl} />}
-                <div className="absolute bottom-2 left-2">
-                  <Badge variant="secondary" className="bg-background/90 backdrop-blur">
-                    {localParticipant.identity} (You)
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Participant videos */}
-          {layout !== "screenShare" && (
-            <div
-              className={cn(
-                "grid gap-2",
-                layout === "spotlight" && isScreenSharing
-                  ? "grid-rows-[repeat(auto-fit,minmax(150px,1fr))]"
-                  : getLayoutClass()
-              )}
-            >
-              {[localParticipant, ...uniqueParticipants].map((participant, index) => {
+        <div className="grid p-4">
+        {layout === "spotlight" && isScreenSharing && (
+          <div className={cn("relative grid px-8 py-4")}>
+            {[localParticipant, ...uniqueParticipants]
+              .filter((participant) => participant?.permissions?.canPublish === true)
+              .map((participant) => {
                 const videoTrack =
                   participant === localParticipant
                     ? undefined
                     : remoteVideoTracks.find(
                         (t) => t.participant.identity === participant.identity
                       );
-                const totalParticipants = [localParticipant, ...uniqueParticipants].length;
+
+                return (
+                  <div
+                    key={participant.identity}
+                    className={cn(
+                      "relative rounded-lg overflow-hidden bg-accent",
+                      "max-w-full w-full h-full"
+                    )}
+                  >
+                    {/* Fallback Avatar */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Avatar className="h-24 w-24">
+                        <AvatarFallback>{participant.identity[0] ?? "?"}</AvatarFallback>
+                      </Avatar>
+                    </div>
+
+                    {/* Video: Screen Share */}
+                    {isScreenSharing && screenShareTracks.length > 0 ? (
+                      <div
+                        className={cn(
+                          "absolute inset-0 w-full h-full rounded-lg overflow-hidden",
+                          "bg-black"
+                        )}
+                      >
+                        <VideoTrack
+                          trackRef={screenShareTracks[0] as TrackReference}
+                          className="w-full h-full object-contain"
+                        />
+                        <div className="absolute top-8 left-2">
+                          <Badge variant="secondary" className="bg-background/90 backdrop-blur">
+                            Screen Share
+                          </Badge>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Video: Participant */}
+                    {participant === localParticipant ? (
+                      <video
+                        ref={localVideoEl}
+                        className="absolute bottom-4 right-4 w-48 h-24 object-cover rounded-md"
+                        autoPlay
+                        playsInline
+                      />
+                    ) : (
+                      videoTrack && (
+                        <VideoTrack
+                          trackRef={videoTrack}
+                          className="absolute bottom-4 right-4 w-48 h-24 object-cover rounded-md"
+                        />
+                      )
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        )}
+
+        {layout === "spotlight" && !isScreenSharing && (
+          <div
+            className={cn(
+              "grid px-8 py-4"
+            )}
+          >
+            {[localParticipant, ...uniqueParticipants]
+              .filter((participant) => participant?.permissions?.canPublish===true)
+              .map((participant) => {
+                const videoTrack =
+                  participant === localParticipant
+                    ? undefined
+                    : remoteVideoTracks.find(
+                        (t) => t.participant.identity === participant.identity
+                      );
 
                 return (
                   <div
@@ -484,7 +487,62 @@ export function StreamPlayer({ isHost = false }) {
                     className={cn(
                       "relative rounded-lg overflow-hidden bg-accent",
                       "aspect-video w-full h-full scale-110",
-                      "max-w-4xl mx-auto" 
+                      "max-w-4xl mx-auto"
+                    )}
+                  >
+                    {/* Fallback Avatar */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Avatar className="h-24 w-24">
+                        <AvatarFallback>{participant.identity[0] ?? "?"}</AvatarFallback>
+                      </Avatar>
+                    </div>
+
+                    {/* Video Display */}
+                    {participant === localParticipant ? (
+                      <video
+                        ref={localVideoEl}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        autoPlay
+                        playsInline
+                      />
+                    ) : (
+                      videoTrack && (
+                        <VideoTrack
+                          trackRef={videoTrack}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      )
+                    )}
+
+                    {/* Badge with Participant Identity */}
+                    <div className="absolute bottom-2 left-2">
+                      <Badge variant="secondary" className="bg-background/90 backdrop-blur">
+                        {participant.identity}{" "}
+                        {participant.identity === localParticipant.identity && "(You)"}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+
+          {layout === "grid" && (
+            <div className="grid grid-cols-3 gap-4 overflow-auto">
+              {[localParticipant, ...uniqueParticipants].map((participant) => {
+                const videoTrack =
+                  participant === localParticipant
+                    ? undefined
+                    : remoteVideoTracks.find(
+                        (t) => t.participant.identity === participant.identity
+                      );
+
+                return (
+                  <div
+                    key={participant.identity}
+                    className={cn(
+                      "relative rounded-lg overflow-hidden bg-accent",
+                      "aspect-video"
                     )}
                   >
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -503,7 +561,7 @@ export function StreamPlayer({ isHost = false }) {
                       videoTrack && (
                         <VideoTrack
                           trackRef={videoTrack}
-                          className="absolute inset-0  object-cover"
+                          className="absolute inset-0 w-full h-full object-cover"
                         />
                       )
                     )}
@@ -518,6 +576,7 @@ export function StreamPlayer({ isHost = false }) {
               })}
             </div>
           )}
+
         </div>
 
         <StreamControls

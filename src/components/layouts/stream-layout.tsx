@@ -94,7 +94,7 @@ export function StreamLayout({
             }
           }}
           className={cn(
-            "fixed right-2 top-1/7 h-3/4 w-[385px] border-l border-border bg-background transition-transform duration-300 ease-in-out rounded-xl",
+            "absolute right-0 h-3/5 mt-16 w-[385px] border-l border-border bg-background transition-transform duration-300 ease-in-out rounded-xl",
             !isOpen && "translate-x-full"
           )}
         >

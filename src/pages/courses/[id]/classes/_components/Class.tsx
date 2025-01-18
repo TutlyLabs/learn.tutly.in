@@ -19,12 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
 
 import {
   FaBookmark,
@@ -236,7 +230,7 @@ export default function Class({
     if (attachment.attachmentType === "ASSIGNMENT") {
       return (
         <a href={`/assignments/${attachment.id}`}>
-          <FaExternalLinkAlt className="m-auto h-4 w-4" />
+          <FaExternalLinkAlt className="h-4 w-4" />
         </a>
       );
     }
@@ -244,7 +238,7 @@ export default function Class({
     if (attachment.link) {
       return (
         <a href={attachment.link} className="text-sm">
-          <FaExternalLinkAlt className="m-auto h-4 w-4" />
+          <FaExternalLinkAlt className="h-4 w-4" />
         </a>
       );
     }
@@ -378,13 +372,13 @@ export default function Class({
             </div>
           </div>
         </div>
-        <div className="w-full pb-4 md:m-0 md:w-[350px]">
+        <div className="w-full">
           <div className="h-full w-full rounded-xl p-2">
             {haveAdminAccess && (
               <div className="flex w-full justify-end mb-4">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button className="text-white flex items-center gap-2 -mt-2">
+                    <Button className="text-white flex items-center justify-end gap-2 -mt-2">
                       Add an assignment
                       <FaPlus />
                     </Button>
@@ -401,79 +395,70 @@ export default function Class({
                 </Dialog>
               </div>
             )}
-
-            <table className="w-full border-collapse">
-              <thead className="mb-4 border-b-2 border-secondary-400 font-semibold">
-                <tr>
-                  <th className="px-4 py-2">Title</th>
-                  <th className="px-4 py-2">Link</th>
-                  <th className="px-4 py-2">Due by</th>
-                  {haveAdminAccess && <th className="px-4 py-2">Actions</th>}
-                </tr>
-              </thead>
-              <tbody className="text-white">
-                {!attachments?.length ? (
-                  <tr className="bg-blue-500 text-center">
-                    <td className="py-4 text-center text-lg" colSpan={4}>
-                      No assignments
-                    </td>
-                  </tr>
-                ) : (
-                  attachments.map((attachment, index) => (
-                    <tr className="bg-blue-500 text-center" key={index}>
-                      <td className="px-4 py-2">
-                        <div className="font-semibold">
-                          {attachment.title}
-                          <div className="text-sm font-medium text-neutral-300">
-                            {attachment.attachmentType.toLowerCase()}
-                          </div>
+            <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Link</TableHead>
+                {haveAdminAccess && <TableHead>Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!attachments?.length ? (
+                <TableRow>
+                  <TableCell colSpan={haveAdminAccess ? 3 : 2} className="text-center">
+                    <div className="py-4 text-lg">No assignments</div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                attachments.map((attachment, index) => (
+                  <TableRow key={index} className="bg-blue-500">
+                    <TableCell>
+                      <div className="font-semibold">
+                        {attachment.title}
+                        <div className="text-sm font-medium text-neutral-300">
+                          {attachment.attachmentType.toLowerCase()}
                         </div>
-                      </td>
-                      <td className="px-4 py-2">{renderAttachmentLink(attachment)}</td>
-                      <td className="px-4 py-2">
-                        {attachment.attachmentType === "ASSIGNMENT" && attachment.dueDate
-                          ? dayjs(attachment.dueDate).format("MMM D, YYYY")
-                          : "-"}
-                      </td>
-                      {haveAdminAccess && (
-                        <td className="px-4 py-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger>
+                      </div>
+                    </TableCell>
+                    <TableCell>{renderAttachmentLink(attachment)}</TableCell>
+                    {haveAdminAccess && (
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button className="p-2">
                               <BsThreeDotsVertical className="h-5 w-5" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedAttachment(attachment);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <FaPencilAlt className="h-4 w-4" />
-                                  Edit
-                                </div>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() => {
-                                  setSelectedAttachment(attachment);
-                                  setIsDeleteDialogOpen(true);
-                                }}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <FaTrashAlt className="h-4 w-4" />
-                                  Delete
-                                </div>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedAttachment(attachment);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <FaPencilAlt className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedAttachment(attachment);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              className="text-red-600"
+                            >
+                              <FaTrashAlt className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
           </div>
         </div>
       </div>
