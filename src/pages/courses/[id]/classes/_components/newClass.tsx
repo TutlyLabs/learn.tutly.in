@@ -1,5 +1,5 @@
 import { actions } from "astro:actions";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
 
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 
 const NewClassDialog = ({ courseId }: { courseId: string }) => {
-  const [videoLink, setVideoLink] = useState("");
+  // const [videoLink, setVideoLink] = useState("");
   const [videoType, setVideoType] = useState("DRIVE");
   const [classTitle, setClassTitle] = useState("");
   const [textValue, setTextValue] = useState("Create Class");
@@ -30,6 +30,10 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
   const [selectedFolder, setSelectedFolder] = useState("");
   const [createdAt, setCreatedAt] = useState(new Date().toISOString().split("T")[0]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchFolders = async () => {
@@ -48,17 +52,49 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
     fetchFolders();
   }, [courseId]);
 
-  const handleCreateClass = async () => {
-    if (!classTitle.trim()) {
-      toast.error("Please fill all necessary fields");
-      return;
-    }
+  const handleVideoUpload = async () => {
+    if (!videoFile) return;
+    toast.loading("Uploading video...");
+    setIsUploading(true);
+    console.log("Uploading video...");
 
+    try {
+      const formData = new FormData();
+      formData.append("file", videoFile);
+      formData.append("courseId", courseId!);
+      formData.append("classTitle", classTitle);
+
+      const response = await fetch("/api/upload-video", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Video upload failed");
+      }
+
+      const result = await response.json();
+      toast.dismiss();
+      toast.success("Video uploaded and processed successfully");
+
+      setVideoUrl(result.videoUrl);
+      return result.videoUrl;
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Video upload failed: " + (error as Error).message);
+      console.error(error);
+    } finally {
+      setIsUploading(false);
+      toast.dismiss();
+    }
+  };
+
+  const handleCreateClass = async () => {
     setTextValue("Creating Class");
     try {
       const { data, error } = await actions.classes_createClass({
         classTitle,
-        videoLink,
+        videoLink: videoUrl,
         videoType: videoType as "DRIVE" | "ZOOM" | "YOUTUBE",
         courseId: courseId!,
         createdAt,
@@ -70,7 +106,7 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
         toast.error("Failed to add new class");
       } else {
         toast.success("Class added successfully");
-        setVideoLink("");
+        setVideoUrl("");
         setClassTitle("");
         setSelectedFolder("");
         setFolderName("");
@@ -114,11 +150,22 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
           />
 
           <Input
-            type="text"
-            placeholder="Enter video link"
-            value={videoLink}
-            onChange={(e) => setVideoLink(e.target.value)}
+            ref={fileInputRef}
+            type="file"
+            accept="video/*"
+            onChange={(e) => {
+              setVideoFile(e.target.files?.[0] ?? null);
+              handleVideoUpload();
+            }}
+            disabled={isUploading || classTitle.trim() === ""}
           />
+
+          {isUploading && (
+            <div className="text-sm text-gray-500 ml-2">Uploading and processing video...</div>
+          )}
+          {videoUrl && (
+            <div className="text-sm text-gray-500 ml-2">Video uploaded successfully ✅</div>
+          )}
 
           <Input type="date" value={createdAt} onChange={(e) => setCreatedAt(e.target.value)} />
 
@@ -146,7 +193,7 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
           )}
 
           <Button
-            disabled={!classTitle || textValue === "Creating Class"}
+            disabled={classTitle.trim() === "" || textValue === "Creating Class" || isUploading}
             className="w-full"
             onClick={handleCreateClass}
           >

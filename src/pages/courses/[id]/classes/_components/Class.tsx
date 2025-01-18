@@ -48,6 +48,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import NewAttachmentPage from "./NewAssignments";
+import PlyrVideoPlayer from "./videoEmbeds/PlyrVideoPlayer";
 
 export default function Class({
   classes,
@@ -102,15 +103,18 @@ export default function Class({
   const videoId = getVideoId();
 
   const renderVideo = () => {
+    // TODO : have to update the prisma studio so for now temp solution
+    if (videoLink && videoLink.includes("tutly")) {
+      return <PlyrVideoPlayer videoUrl={video?.videoLink || ""} />;
+    }
+
     if (!videoId) {
       return (
         <span className="text-sm text-muted-foreground flex items-center justify-center h-full">
           No video to display
         </span>
       );
-    }
-
-    return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
+    } else return <VideoPlayer videoId={videoId} videoType={videoType as "YOUTUBE" | "DRIVE"} />;
   };
 
   const renderAttachmentLink = (attachment: Attachment) => {
