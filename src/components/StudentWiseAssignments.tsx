@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MdOutlineSportsScore } from "react-icons/md";
 
-import { useRouter } from "@/hooks/use-router";
+import { useRouter } from "~/hooks/use-router";
 
 export default function StudentWiseAssignments({ courses, assignments, userId }: any) {
   const [currentCourse, setCurrentCourse] = useState<string>(courses[0]?.id);
@@ -27,9 +27,8 @@ export default function StudentWiseAssignments({ courses, assignments, userId }:
             return (
               <button
                 onClick={() => setCurrentCourse(course.id)}
-                className={`rounded p-2 sm:w-auto ${
-                  currentCourse === course.id && "rounded border"
-                }`}
+                className={`rounded p-2 sm:w-auto ${currentCourse === course.id && "rounded border"
+                  }`}
                 key={course.id}
               >
                 <h1 className="max-w-xs truncate text-sm font-medium">{course.title}</h1>

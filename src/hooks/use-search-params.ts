@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { useRouter } from "@/hooks/use-router";
+import { useRouter } from "~/hooks/use-router";
 
 export function useSearchParams() {
   const router = useRouter();

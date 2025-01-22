@@ -1,6 +1,6 @@
 import { FaRankingStar } from "react-icons/fa6";
 
-import CalendarHeatmap from "@/pages/statistics/_components/heatmap";
+import CalendarHeatmap from "~/pages/statistics/_components/heatmap";
 
 import { Radialchart } from "./charts/radialchart";
 import { StudentBarchart } from "./charts/studentBarchart";
@@ -30,9 +30,9 @@ function StudentStats({ studentData, attendanceData }: any) {
     attendanceData?.classes.length - thisWeekClasses == 0
       ? 0
       : (
-          ((attendanceData?.attendanceDates.length - thisWeekAttended) * 100) /
-          (attendanceData?.classes.length - thisWeekClasses)
-        ).toFixed(2);
+        ((attendanceData?.attendanceDates.length - thisWeekAttended) * 100) /
+        (attendanceData?.classes.length - thisWeekClasses)
+      ).toFixed(2);
   return (
     <div className="mx-4 flex flex-col gap-4 md:mx-8 md:gap-6">
       <div className="flex flex-col gap-4 md:flex-row md:gap-6">

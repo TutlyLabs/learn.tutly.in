@@ -1,0 +1,145 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { FaFolder, FaFolderOpen } from "react-icons/fa6";
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { MdOndemandVideo } from "react-icons/md";
+import { Button } from "~/components/ui/button";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { cn } from "~/lib/utils";
+import NewClassDialog from "./newClass";
+import { type RouterOutputs } from "~/trpc/react";
+import type { User } from "next-auth";
+
+type ClassWithFolder = RouterOutputs["courses"]["getClassesWithFolders"][0];
+
+function ClassSidebar({
+  courseId,
+  classes,
+  title,
+  currentUser,
+  isCourseAdmin = false,
+}: {
+  courseId: string;
+  classes: ClassWithFolder[];
+  title: string;
+  currentUser: User;
+  isCourseAdmin: boolean;
+}) {
+  const [openFolders, setOpenFolders] = useState<string[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = window.location.pathname;
+
+  useEffect(() => {
+    const classId = pathname.split("/").pop();
+    const currentClass = classes.find((c) => c.id === classId);
+    if (currentClass?.folderId && !openFolders.includes(currentClass.folderId)) {
+      setOpenFolders([...openFolders, currentClass.folderId]);
+    }
+  }, [pathname, classes]);
+
+  const { folderClasses, unfolderClasses } = classes.reduce(
+    (acc, classItem) => {
+      if (classItem.folderId) {
+        acc.folderClasses[classItem.folderId] = acc.folderClasses[classItem.folderId] ?? [];
+        acc.folderClasses[classItem.folderId]!.push(classItem);
+      } else {
+        acc.unfolderClasses.push(classItem);
+      }
+      return acc;
+    },
+    { folderClasses: {} as Record<string, ClassWithFolder[]>, unfolderClasses: [] as ClassWithFolder[] }
+  );
+
+  const renderClassButton = (classItem: ClassWithFolder) => (
+    <Button
+      key={classItem.id}
+      variant={pathname === `/courses/${courseId}/classes/${classItem.id}` ? "secondary" : "ghost"}
+      asChild
+      className="w-full justify-start gap-2"
+    >
+      <a href={`/courses/${courseId}/classes/${classItem.id}`}>
+        <MdOndemandVideo className="h-4 w-4" />
+        {classItem.title}
+      </a>
+    </Button>
+  );
+
+  return (
+    <div className="relative z-10">
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          isCollapsed ? "w-0" : "w-[200px]",
+          "sticky flex h-dvh flex-col bg-background shadow-sm border-r max-sm:absolute sm:top-10"
+        )}
+      >
+        <div className={cn("border-b px-3 py-2", isCollapsed && "hidden")}>
+          <a href={`/courses/${courseId}`} className="hover:opacity-80">
+            <h1 className="text-sm font-semibold">{title}</h1>
+          </a>
+        </div>
+
+        <ScrollArea className={cn("flex-1 px-1", isCollapsed && "hidden")}>
+          <div className="space-y-1 p-2">
+            {Object.entries(folderClasses).map(([folderId, classItems]) => {
+              const folder = classes.find((c) => c.folderId === folderId)?.folder;
+              if (!folder) return null;
+
+              const isOpen = openFolders.includes(folder.id);
+
+              return (
+                <div key={folder.id} className="space-y-1">
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      setOpenFolders(
+                        isOpen
+                          ? openFolders.filter((id) => id !== folder.id)
+                          : [...openFolders, folder.id]
+                      )
+                    }
+                    className="w-full justify-start gap-2 font-medium"
+                  >
+                    {isOpen ? (
+                      <FaFolderOpen className="h-4 w-4" />
+                    ) : (
+                      <FaFolder className="h-4 w-4" />
+                    )}
+                    {folder.title}
+                  </Button>
+                  {isOpen && (
+                    <div className="ml-4 space-y-1">{classItems.map(renderClassButton)}</div>
+                  )}
+                </div>
+              );
+            })}
+
+            {unfolderClasses.length > 0 && (
+              <div className="space-y-1">{unfolderClasses.map(renderClassButton)}</div>
+            )}
+          </div>
+        </ScrollArea>
+        {pathname !== `/courses/${courseId}/classes/new` &&
+          (currentUser?.role === "INSTRUCTOR" || isCourseAdmin) && (
+            <div className={cn("p-4 sticky bottom-0 bg-background", isCollapsed && "hidden")}>
+              {/* <NewClassDialog courseId={courseId} /> */}
+            </div>
+          )}
+
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "absolute h-8 w-8 rounded-full shadow-md transition-all duration-300 -right-4 top-[350px]"
+          )}
+        >
+          {isCollapsed ? <IoIosArrowForward /> : <IoIosArrowBack />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export default ClassSidebar;

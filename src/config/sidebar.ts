@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role } from "~/server/db/types";
 import {
   BarChart,
   Bookmark,
@@ -12,7 +12,7 @@ import {
   Users2,
 } from "lucide-react";
 
-import type { SidebarItem } from "@/components/sidebar/AppSidebar";
+import type { SidebarItem } from "~/components/sidebar/AppSidebar";
 
 const InstructorItems = [
   {
@@ -268,14 +268,15 @@ const StudentItems = [
 ];
 
 export function getDefaultSidebarItems(role: Role): SidebarItem[] {
-  switch (role) {
-    case "INSTRUCTOR":
-      return InstructorItems as SidebarItem[];
-    case "MENTOR":
-      return MentorItems as SidebarItem[];
-    case "STUDENT":
-      return StudentItems as SidebarItem[];
-    default:
-      return [];
-  }
+  //todo: must change this
+  return InstructorItems as SidebarItem[];
+  // switch (role) {
+  //   case "INSTRUCTOR":
+  //   case "MENTOR":
+  //     return MentorItems as SidebarItem[];
+  //   case "STUDENT":
+  //     return StudentItems as SidebarItem[];
+  //   default:
+  //     return [];
+  // }
 }

@@ -14,26 +14,26 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from "~/components/ui/dropdown-menu";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "~/components/ui/select";
 import {
   Table,
   TableBody,
@@ -41,9 +41,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { useSearchParams } from "@/hooks/use-search-params";
-import { useToast } from "@/hooks/use-toast";
+} from "~/components/ui/table";
+import { useSearchParams } from "~/hooks/use-search-params";
+import { useToast } from "~/hooks/use-toast";
 
 import { AdvancedCrudDialog } from "./AdvancedCrudDialog";
 import BulkImport from "./BulkImport";
@@ -67,24 +67,24 @@ export type Column = {
   name: string;
   label?: string;
   type?:
-    | "text"
-    | "number"
-    | "date"
-    | "datetime-local"
-    | "time"
-    | "email"
-    | "tel"
-    | "url"
-    | "password"
-    | "select"
-    | "textarea"
-    | "checkbox"
-    | "radio"
-    | "color"
-    | "file"
-    | "range"
-    | "month"
-    | "week";
+  | "text"
+  | "number"
+  | "date"
+  | "datetime-local"
+  | "time"
+  | "email"
+  | "tel"
+  | "url"
+  | "password"
+  | "select"
+  | "textarea"
+  | "checkbox"
+  | "radio"
+  | "color"
+  | "file"
+  | "range"
+  | "month"
+  | "week";
   options?: { label: string; value: any }[];
   sortable?: boolean;
   filterable?: boolean;
@@ -169,9 +169,9 @@ export default function DisplayTable({
 
   const sortConfig = searchParams.get("sort")
     ? {
-        key: searchParams.get("sort") || "",
-        direction: (searchParams.get("direction") as "asc" | "desc") || "asc",
-      }
+      key: searchParams.get("sort") || "",
+      direction: (searchParams.get("direction") as "asc" | "desc") || "asc",
+    }
     : null;
 
   useEffect(() => {
@@ -606,43 +606,43 @@ export default function DisplayTable({
 
   const filteredData = clientSideProcessing
     ? data.filter((row) => {
-        if (localSearchTerm) {
-          const searchFields = columns
-            .filter((col) => !col.hidden)
-            .map((col) => row[col.key])
-            .join(" ")
-            .toLowerCase();
+      if (localSearchTerm) {
+        const searchFields = columns
+          .filter((col) => !col.hidden)
+          .map((col) => row[col.key])
+          .join(" ")
+          .toLowerCase();
 
-          if (!searchFields.includes(localSearchTerm.toLowerCase())) {
-            return false;
-          }
+        if (!searchFields.includes(localSearchTerm.toLowerCase())) {
+          return false;
         }
+      }
 
-        return activeFilters.every((filter) => {
-          const value = row[filter.column];
-          if (value === undefined || value === null) return false;
+      return activeFilters.every((filter) => {
+        const value = row[filter.column];
+        if (value === undefined || value === null) return false;
 
-          const stringValue = String(value).toLowerCase();
-          const filterValue = filter.value.toLowerCase();
+        const stringValue = String(value).toLowerCase();
+        const filterValue = filter.value.toLowerCase();
 
-          switch (filter.operator) {
-            case "contains":
-              return stringValue.includes(filterValue);
-            case "equals":
-              return stringValue === filterValue;
-            case "startsWith":
-              return stringValue.startsWith(filterValue);
-            case "endsWith":
-              return stringValue.endsWith(filterValue);
-            case "greaterThan":
-              return Number(value) > Number(filterValue);
-            case "lessThan":
-              return Number(value) < Number(filterValue);
-            default:
-              return true;
-          }
-        });
-      })
+        switch (filter.operator) {
+          case "contains":
+            return stringValue.includes(filterValue);
+          case "equals":
+            return stringValue === filterValue;
+          case "startsWith":
+            return stringValue.startsWith(filterValue);
+          case "endsWith":
+            return stringValue.endsWith(filterValue);
+          case "greaterThan":
+            return Number(value) > Number(filterValue);
+          case "lessThan":
+            return Number(value) < Number(filterValue);
+          default:
+            return true;
+        }
+      });
+    })
     : data;
 
   useEffect(() => {

@@ -18,7 +18,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -26,14 +26,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { SessionUser } from "@/lib/auth/session";
-import day from "@/lib/dayjs";
-import { cn } from "@/lib/utils";
+} from "~/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { SessionUser } from "~/lib/auth/session";
+import day from "~/lib/dayjs";
+import { cn } from "~/lib/utils";
 
 interface NotificationLink {
   href: string;
@@ -50,15 +50,15 @@ interface causedObjects {
 }
 
 export const NOTIFICATION_HREF_MAP: Record<NotificationEventTypes, (obj: causedObjects) => string> =
-  {
-    CLASS_CREATED: (obj: causedObjects) => `/classes/${obj.classId}`,
-    ASSIGNMENT_CREATED: (obj: causedObjects) => `/assignments/${obj.assignmentId}`,
-    ASSIGNMENT_REVIEWED: (obj: causedObjects) => `/assignments/${obj.assignmentId}`,
-    LEADERBOARD_UPDATED: (_obj: causedObjects) => `/leaderboard`,
-    DOUBT_RESPONDED: (obj: causedObjects) => `/doubts/${obj.doubtId}`,
-    ATTENDANCE_MISSED: (_obj: causedObjects) => `/attendance`,
-    CUSTOM_MESSAGE: (_obj: causedObjects) => `/`,
-  };
+{
+  CLASS_CREATED: (obj: causedObjects) => `/classes/${obj.classId}`,
+  ASSIGNMENT_CREATED: (obj: causedObjects) => `/assignments/${obj.assignmentId}`,
+  ASSIGNMENT_REVIEWED: (obj: causedObjects) => `/assignments/${obj.assignmentId}`,
+  LEADERBOARD_UPDATED: (_obj: causedObjects) => `/leaderboard`,
+  DOUBT_RESPONDED: (obj: causedObjects) => `/doubts/${obj.doubtId}`,
+  ATTENDANCE_MISSED: (_obj: causedObjects) => `/attendance`,
+  CUSTOM_MESSAGE: (_obj: causedObjects) => `/`,
+};
 
 const DEFAULT_NOTIFICATION_CONFIG = {
   label: "Notification",
@@ -682,19 +682,19 @@ export default function Notifications({ user }: { user: SessionUser }) {
                 {filteredNotifications.filter((n: Notification) =>
                   tab === "all" ? true : !n.readAt
                 ).length === 0 && (
-                  <div className="h-full flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <Eye className="h-8 w-8 text-muted-foreground/50" />
-                      <span className="text-sm text-muted-foreground">
-                        {selectedCategories.length > 0
-                          ? "No notifications in selected categories"
-                          : tab === "unread"
-                            ? "No unread notifications"
-                            : "No notifications"}
-                      </span>
+                    <div className="h-full flex items-center justify-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <Eye className="h-8 w-8 text-muted-foreground/50" />
+                        <span className="text-sm text-muted-foreground">
+                          {selectedCategories.length > 0
+                            ? "No notifications in selected categories"
+                            : tab === "unread"
+                              ? "No unread notifications"
+                              : "No notifications"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
 
               <div className="border-t bg-background h-12">

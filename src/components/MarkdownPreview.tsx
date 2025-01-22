@@ -1,7 +1,7 @@
 import { marked } from "marked";
 import { useEffect, useState } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "~/lib/utils";
 
 marked.use({
   breaks: true,

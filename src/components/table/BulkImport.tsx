@@ -2,7 +2,7 @@ import { Info, Plus, Trash2 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,38 +10,38 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "~/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from "~/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 
 type ColumnDef = {
   key: string;
   name: string;
   type?:
-    | "text"
-    | "number"
-    | "date"
-    | "datetime-local"
-    | "time"
-    | "email"
-    | "tel"
-    | "url"
-    | "password"
-    | "select"
-    | "textarea"
-    | "checkbox"
-    | "radio"
-    | "color"
-    | "file"
-    | "range"
-    | "month"
-    | "week";
+  | "text"
+  | "number"
+  | "date"
+  | "datetime-local"
+  | "time"
+  | "email"
+  | "tel"
+  | "url"
+  | "password"
+  | "select"
+  | "textarea"
+  | "checkbox"
+  | "radio"
+  | "color"
+  | "file"
+  | "range"
+  | "month"
+  | "week";
   options?: { label: string; value: any }[];
   min?: number | string;
   max?: number | string;
@@ -205,9 +205,8 @@ export default function BulkImport({ columns, data, onImport }: BulkImportProps)
       onChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
       ) => handleCellChange(rowIndex, column.key, e.target.value),
-      className: `w-full outline-none bg-transparent ${
-        errors[`${rowIndex}-${column.key}`] ? "border-red-500" : ""
-      }`,
+      className: `w-full outline-none bg-transparent ${errors[`${rowIndex}-${column.key}`] ? "border-red-500" : ""
+        }`,
       placeholder: column.placeholder,
       min: column.min,
       max: column.max,
@@ -408,9 +407,8 @@ export default function BulkImport({ columns, data, onImport }: BulkImportProps)
                     {columns.map((col) => (
                       <td
                         key={`${rowIndex}-${col.key}`}
-                        className={`border dark:border-gray-100 p-2 relative  ${
-                          errors[`${rowIndex}-${col.key}`] ? "bg-red-50" : ""
-                        }`}
+                        className={`border dark:border-gray-100 p-2 relative  ${errors[`${rowIndex}-${col.key}`] ? "bg-red-50" : ""
+                          }`}
                       >
                         <div className="min-h-[40px]">
                           {renderInput(col, row[col.key], rowIndex)}

@@ -1,13 +1,13 @@
 // @ts-nocheck
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "~/components/ui/chart";
 
 const chartData = [
   { assignment: "Assignment-1", submissions: 186 },
@@ -54,7 +54,7 @@ export function Barchart({ data }: { data: any }) {
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              // tickFormatter={(value) => value.slice(0,3)}
+            // tickFormatter={(value) => value.slice(0,3)}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
             <Bar dataKey="submissions" fill="var(--color-submissions)" radius={[8, 8, 0, 0]}>

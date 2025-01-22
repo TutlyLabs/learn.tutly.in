@@ -12,11 +12,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { ToastAction } from "@/components/ui/toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useToast } from "@/hooks/use-toast";
-import { SessionUser } from "@/lib/auth/session";
+} from "~/components/ui/alert-dialog";
+import { ToastAction } from "~/components/ui/toast";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { useToast } from "~/hooks/use-toast";
+import { User } from "next-auth";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -30,7 +30,7 @@ import {
 } from "../ui/dropdown-menu";
 
 interface UserMenuProps {
-  user: SessionUser;
+  user: User;
 }
 
 export function UserMenu({ user }: UserMenuProps) {
@@ -128,9 +128,9 @@ export function UserMenu({ user }: UserMenuProps) {
               <AvatarFallback className="rounded-full">
                 {user.name
                   ? user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
                   : user.username}
               </AvatarFallback>
             </Avatar>

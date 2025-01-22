@@ -1,8 +1,12 @@
+"use client";
+
 import { ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
+import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import {
   Sidebar,
   SidebarContent,
@@ -14,11 +18,12 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar";
-import { getDefaultSidebarItems } from "@/config/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { SessionUser } from "@/lib/auth/session";
-import { cn } from "@/lib/utils";
+} from "~/components/ui/sidebar";
+import { getDefaultSidebarItems } from "~/config/sidebar";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
+import type { users } from "~/server/db/schema";
+import { Role } from "~/server/db/types";
 
 export interface SidebarItem {
   title: string;
@@ -30,16 +35,19 @@ export interface SidebarItem {
 }
 
 interface AppSidebarProps {
-  user: SessionUser;
+  user: typeof users.$inferSelect;
   forceClose?: boolean;
   className?: string;
-  pathname: string;
 }
 
-export function AppSidebar({ user, forceClose = false, className, pathname }: AppSidebarProps) {
+export function AppSidebar({ user, forceClose = false, className }: AppSidebarProps) {
   const organizationName = "Tutly";
 
-  const sidebarItems = getDefaultSidebarItems(user.role);
+  const pathname = usePathname();
+
+  console.log(user.role);
+
+  const sidebarItems = getDefaultSidebarItems(user.role as Role);
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("sidebarOpen");
@@ -62,99 +70,115 @@ export function AppSidebar({ user, forceClose = false, className, pathname }: Ap
   const isMobile = useIsMobile();
 
   return (
-    <SidebarProvider onOpenChange={handleOpenChange} open={isOpen}>
-      {isMobile && (
-        <div className="fixed left-2 top-4 flex items-center gap-2">
-          <SidebarTrigger className="hover:bg-accent" />
-        </div>
-      )}
-      <Sidebar collapsible="icon" className={cn("bg-background", className)}>
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <div
-                className={cn(
-                  "flex  w-full items-center gap-2 justify-between",
-                  isOpen ? "flex-row" : "flex-col"
-                )}
-              >
-                <SidebarMenuButton size="lg" className="mx-auto">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <img src="/logo-with-bg.png" alt="Logo" className="size-8 rounded-md" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{organizationName}</span>
-                    <span className="truncate text-xs">{user.role}</span>
-                  </div>
-                </SidebarMenuButton>
-                {!forceClose && <SidebarTrigger />}
-              </div>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
+    <div className="flex h-full shrink-0">
+      <SidebarProvider onOpenChange={handleOpenChange} open={isOpen}>
+        {isMobile && (
+          <div className="fixed left-2 top-4 flex items-center gap-2">
+            <SidebarTrigger className="hover:bg-accent" />
+          </div>
+        )}
+        <Sidebar 
+          collapsible="icon" 
+          className={cn(
+            "bg-background",
+            className
+          )}
+        >
+          <SidebarHeader>
             <SidebarMenu>
-              {sidebarItems.map((item) => {
-                const ItemIcon = item.icon;
-                const isSubItemActive =
-                  item.items?.some((subItem) => pathname === subItem.url) || false;
-                return (
-                  <Collapsible
-                    key={item.title}
-                    asChild
-                    defaultOpen={item.isActive || pathname.startsWith(item.url) || isSubItemActive}
-                    className={`group/collapsible ${item.className || ""}`}
-                  >
-                    <SidebarMenuItem>
-                      {item.items ? (
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton
-                            tooltip={item.title}
-                            className={`${pathname === item.url ? "bg-primary text-primary-foreground" : ""} hover:bg-primary/90 hover:text-primary-foreground m-auto flex cursor-pointer items-center gap-4 rounded px-5 py-5 text-base`}
-                          >
-                            <ItemIcon className="size-6" />
-                            <span>{item.title}</span>
-                            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                      ) : (
-                        <a href={item.url}>
-                          <SidebarMenuButton
-                            tooltip={item.title}
-                            className={`${pathname === item.url ? "bg-primary text-primary-foreground" : ""} hover:bg-primary/90 hover:text-primary-foreground m-auto flex cursor-pointer items-center gap-4 rounded px-5 py-5 text-base`}
-                          >
-                            <ItemIcon className="size-6" />
-                            <span>{item.title}</span>
-                          </SidebarMenuButton>
-                        </a>
-                      )}
-                      {item.items && (
-                        <CollapsibleContent>
-                          <SidebarMenuSub>
-                            {item.items.map((subItem: SidebarItem) => (
-                              <SidebarMenuSubItem key={subItem.title}>
-                                <SidebarMenuSubButton
-                                  asChild
-                                  className={`${pathname === subItem.url ? "bg-primary text-primary-foreground" : ""} hover:bg-primary/90 hover:text-primary-foreground m-auto flex cursor-pointer items-center gap-4 rounded px-5 py-5 text-base ${subItem.className || ""}`}
-                                >
-                                  <a href={subItem.url}>
-                                    <span>{subItem.title}</span>
-                                  </a>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
-                      )}
-                    </SidebarMenuItem>
-                  </Collapsible>
-                );
-              })}
+              <SidebarMenuItem>
+                <div
+                  className={cn(
+                    "flex  w-full items-center gap-2 justify-between",
+                    isOpen ? "flex-row" : "flex-col"
+                  )}
+                >
+                  <SidebarMenuButton size="lg" className="mx-auto">
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                      <Image
+                        src="/logo-with-bg.png"
+                        alt="Logo"
+                        className="size-8 rounded-md"
+                        width={32}
+                        height={32}
+                      />
+                    </div>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">{organizationName}</span>
+                      <span className="truncate text-xs">{user.role}</span>
+                    </div>
+                  </SidebarMenuButton>
+                  {!forceClose && <SidebarTrigger />}
+                </div>
+              </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
-    </SidebarProvider>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarMenu>
+                {sidebarItems.map((item) => {
+                  const ItemIcon = item.icon;
+                  const isSubItemActive =
+                    item.items?.some((subItem) => pathname === subItem.url) ?? false;
+                  return (
+                    <Collapsible
+                      key={item.title}
+                      asChild
+                      defaultOpen={
+                        item.isActive ?? pathname.startsWith(item.url) ?? isSubItemActive
+                      }
+                      className={`group/collapsible ${item.className ?? ""}`}
+                    >
+                      <SidebarMenuItem>
+                        {item.items ? (
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton
+                              tooltip={item.title}
+                              className={`${pathname === item.url ? "bg-primary text-primary-foreground" : ""} hover:bg-primary/90 hover:text-primary-foreground m-auto flex cursor-pointer items-center gap-4 rounded px-5 py-5 text-base`}
+                            >
+                              <ItemIcon className="size-6" />
+                              <span>{item.title}</span>
+                              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                        ) : (
+                          <a href={item.url}>
+                            <SidebarMenuButton
+                              tooltip={item.title}
+                              className={`${pathname === item.url ? "bg-primary text-primary-foreground" : ""} hover:bg-primary/90 hover:text-primary-foreground m-auto flex cursor-pointer items-center gap-4 rounded px-5 py-5 text-base`}
+                            >
+                              <ItemIcon className="size-6" />
+                              <span>{item.title}</span>
+                            </SidebarMenuButton>
+                          </a>
+                        )}
+                        {item.items && (
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.items.map((subItem: SidebarItem) => (
+                                <SidebarMenuSubItem key={subItem.title}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    className={`${pathname === subItem.url ? "bg-primary text-primary-foreground" : ""} hover:bg-primary/90 hover:text-primary-foreground m-auto flex cursor-pointer items-center gap-4 rounded px-5 py-5 text-base ${subItem.className ?? ""}`}
+                                  >
+                                    <a href={subItem.url}>
+                                      <span>{subItem.title}</span>
+                                    </a>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        )}
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+      </SidebarProvider>
+    </div>
   );
 }

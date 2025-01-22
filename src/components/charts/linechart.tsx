@@ -1,13 +1,13 @@
 // @ts-nocheck
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "~/components/ui/chart";
 
 const chartData = [
   { class: "class-1", attendees: 186, absentees: 80 },
@@ -53,7 +53,7 @@ export function Linechart({ data }: { data: any }) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              //   tickFormatter={(value) => value.slice(0, 3)}
+            //   tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <defs>

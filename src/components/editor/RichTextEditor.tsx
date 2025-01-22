@@ -21,7 +21,7 @@ import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { FileType } from "@prisma/client";
 import { $createTextNode, LexicalNode, TextNode } from "lexical";
 
-import { cn } from "@/lib/utils";
+import { cn } from "~/lib/utils";
 
 import { EditorErrorBoundary } from "./ErrorBoundary";
 import { $createImageNode, ImageNode } from "./nodes/ImageNode";

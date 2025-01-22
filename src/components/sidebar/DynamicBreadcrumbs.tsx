@@ -7,7 +7,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "~/components/ui/breadcrumb";
 
 export interface DynamicBreadcrumbsProps {
   pathname: string;
