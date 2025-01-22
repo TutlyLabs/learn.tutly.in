@@ -10,7 +10,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "dev": "next dev --turbo",
+    "db:seed": "tsx src/server/db/seed.ts",
+    "db:start": "bash start-database.sh",
+    "db:stop": "docker stop tutly-postgres",
+    "dev": "pnpm db:start && next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "lint": "next lint",
@@ -91,6 +94,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.4.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/eslint": "^8.56.10",
     "@types/node": "^20.14.10",
@@ -106,6 +110,7 @@
     "prettier": "^3.3.2",
     "prettier-plugin-tailwindcss": "^0.6.5",
     "tailwindcss": "^3.4.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.5.3"
   },
   "ct3aMetadata": {
