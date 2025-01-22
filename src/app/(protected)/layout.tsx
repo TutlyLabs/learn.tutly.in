@@ -12,6 +12,8 @@ export default async function ProtectedLayout({
     return redirect("/signin");
   }
 
+  console.log(session.user);
+
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar user={session.user} />

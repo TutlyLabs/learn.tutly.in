@@ -23,6 +23,7 @@ import { getDefaultSidebarItems } from "~/config/sidebar";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
 import type { users } from "~/server/db/schema";
+import { Role } from "~/server/db/types";
 
 export interface SidebarItem {
   title: string;
@@ -44,7 +45,9 @@ export function AppSidebar({ user, forceClose = false, className }: AppSidebarPr
 
   const pathname = usePathname();
 
-  const sidebarItems = getDefaultSidebarItems(user.role);
+  console.log(user.role);
+
+  const sidebarItems = getDefaultSidebarItems(user.role as Role);
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("sidebarOpen");

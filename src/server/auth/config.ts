@@ -41,6 +41,9 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+  session: {
+    strategy: "jwt",
+  },
   providers: [
     GoogleProvider({
       clientId: env.AUTH_GOOGLE_ID,
@@ -98,83 +101,95 @@ export const authConfig = {
     verificationTokensTable: verificationTokens,
   }),
   callbacks: {
-    async signIn({ user, account }) {
-      try {
-        const email = user.email;
-        if (typeof email !== "string") {
-          console.error("No email provided by authentication provider");
-          return false;
-        }
+    // async signIn({ user, account }) {
+    //   try {
+    //     const email = user.email;
+    //     if (typeof email !== "string") {
+    //       console.error("No email provided by authentication provider");
+    //       return false;
+    //     }
 
-        if (account?.provider === "google") {
-          const username = email.split("@")[0]?.toUpperCase();
-          if (!username) {
-            console.error("Could not generate username from email");
-            return false;
-          }
+    //     if (account?.provider === "google") {
+    //       const username = email.split("@")[0]?.toUpperCase();
+    //       if (!username) {
+    //         console.error("Could not generate username from email");
+    //         return false;
+    //       }
 
-          const existingUser = await db.transaction(async (tx) => {
-            // First try to find by email for account linking
-            let userRecord = await tx.query.users.findFirst({
-              where: (users) => eq(users.email, email.toLowerCase()),
-            });
+    //       const existingUser = await db.transaction(async (tx) => {
+    //         // First try to find by email for account linking
+    //         let userRecord = await tx.query.users.findFirst({
+    //           where: (users) => eq(users.email, email.toLowerCase()),
+    //         });
 
-            // If no user found by email, try username
-            if (!userRecord) {
-              userRecord = await tx.query.users.findFirst({
-                where: (users) => eq(users.username, username),
-              });
-            }
+    //         // If no user found by email, try username
+    //         if (!userRecord) {
+    //           userRecord = await tx.query.users.findFirst({
+    //             where: (users) => eq(users.username, username),
+    //           });
+    //         }
 
-            if (userRecord) {
-              // Update existing user's details
-              await tx
-                .update(users)
-                .set({
-                  email: email.toLowerCase(),
-                  image: user.image ?? userRecord.image, // Preserve existing one
-                  name: user.name ?? userRecord.name,
-                  emailVerified: new Date(),
-                })
-                .where(eq(users.id, userRecord.id));
+    //         if (userRecord) {
+    //           // Update existing user's details
+    //           await tx
+    //             .update(users)
+    //             .set({
+    //               email: email.toLowerCase(),
+    //               image: user.image ?? userRecord.image, // Preserve existing one
+    //               name: user.name ?? userRecord.name,
+    //               emailVerified: new Date(),
+    //             })
+    //             .where(eq(users.id, userRecord.id));
 
-              return userRecord;
-            }
+    //           return userRecord;
+    //         }
 
-            // Create new user if doesn't exist
-            const newUser = await tx
-              .insert(users)
-              .values({
-                id: crypto.randomUUID(),
-                username,
-                email: email.toLowerCase(),
-                name: user.name ?? username, // Fallback to username if name not provided
-                image: user.image ?? null,
-                emailVerified: new Date(),
-                role: "STUDENT",
-                organizationId: "58918943-51f2-4bc4-9c2a-cbea796c2577",
-              })
-              .returning();
+    //         // Create new user if doesn't exist
+    //         const newUser = await tx
+    //           .insert(users)
+    //           .values({
+    //             id: crypto.randomUUID(),
+    //             username,
+    //             email: email.toLowerCase(),
+    //             name: user.name ?? username, // Fallback to username if name not provided
+    //             image: user.image ?? null,
+    //             emailVerified: new Date(),
+    //             role: "STUDENT",
+    //             organizationId: "58918943-51f2-4bc4-9c2a-cbea796c2577",
+    //           })
+    //           .returning();
 
-            return newUser[0];
-          });
+    //         return newUser[0];
+    //       });
 
-          return !!existingUser;
-        }
-        return true;
-      } catch (error) {
-        console.error("Error in signIn callback:", error);
-        return false;
+    //       return !!existingUser;
+    //     }
+    //     return true;
+    //   } catch (error) {
+    //     console.error("Error in signIn callback:", error);
+    //     return false;
+    //   }
+    // },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        // @ts-ignore
+        token.organizationId = user.organizationId;
+        token.role = user.role;
       }
+      return token;
     },
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-        organizationId: session.user.organizationId,
-        role: session.user.role,
-      },
-    }),
+    
+    async session({ session, token }) {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.id as string,
+          organizationId: token.organizationId as string,
+          role: token.role as (typeof roleEnum.enumValues)[number],
+        },
+      };
+    }
   },
 } satisfies NextAuthConfig;
