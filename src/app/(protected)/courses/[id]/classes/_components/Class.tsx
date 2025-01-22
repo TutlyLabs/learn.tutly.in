@@ -325,7 +325,6 @@ export default function Class({
                     </ScrollArea>
                   </DialogContent>
                 </Dialog>
-
               </div>
             )}
 

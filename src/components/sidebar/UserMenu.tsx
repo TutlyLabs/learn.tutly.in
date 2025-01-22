@@ -2,7 +2,6 @@ import { Bell, Download, ExternalLink, LogOut, UserIcon } from "lucide-react";
 // import {  Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaCaretDown } from "react-icons/fa";
-import { GrCertificate } from "react-icons/gr";
 
 import {
   AlertDialog,
@@ -174,14 +173,15 @@ export function UserMenu({ user }: UserMenuProps) {
                 Profile
               </DropdownMenuItem>
             </a>
-            {user.role === "STUDENT" && (
+            {/* {user.role === "STUDENT" && (
               <a href="/certificate">
                 <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
                   <GrCertificate className="h-5 w-5" />
                   Certificate
                 </DropdownMenuItem>
               </a>
-            )}
+            )} */}
+
             {/* <a href="/sessions">
               <DropdownMenuItem
                 className="flex items-center gap-2 cursor-pointer"

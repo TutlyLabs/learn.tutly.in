@@ -1,5 +1,6 @@
 import { defineAction } from "astro:actions";
 import { z } from "zod";
+
 import db from "@/lib/db";
 
 export const addHoliday = defineAction({
@@ -50,7 +51,6 @@ export const deleteHoliday = defineAction({
   },
 });
 
-
 export const getAllHolidays = defineAction({
   async handler({}, { locals }) {
     const currentUser = locals.user;
@@ -66,7 +66,7 @@ export const getAllHolidays = defineAction({
   },
 });
 
-export const editHolidays=defineAction({
+export const editHolidays = defineAction({
   input: z.object({
     id: z.string(),
     reason: z.string(),
