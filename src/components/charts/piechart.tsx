@@ -44,9 +44,9 @@ const chartConfig = {
 
 export function Piechart({ data }: { data: any }) {
   // realtime data
-  // chartData.forEach((item, index) => {
-  //     item.visitors = data[index]
-  // })
+  chartData.forEach((item, index) => {
+    item.visitors = data[index];
+  });
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="items-center pb-0">

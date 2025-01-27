@@ -40,8 +40,8 @@ export function Linechart({ data }: { data: any }) {
         <ChartContainer config={chartConfig} className="h-[190px] w-full">
           <AreaChart
             accessibilityLayer
-            // data={data}         // realtime data
-            data={chartData} // fake data
+            data={data}         // realtime data
+            // data={chartData} // fake data
             margin={{
               left: 12,
               right: 12,
@@ -67,14 +67,14 @@ export function Linechart({ data }: { data: any }) {
               </linearGradient>
             </defs>
             {/* absent chart */}
-            <Area
+            {/* <Area
               dataKey="absentees"
               type="natural"
               fill="url(#fillMobile)"
               fillOpacity={0.4}
               stroke="var(--color-absentees)"
               stackId="a"
-            />
+            /> */}
             {/* present chart */}
             <Area
               dataKey="attendees"

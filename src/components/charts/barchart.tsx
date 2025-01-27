@@ -42,8 +42,8 @@ export function Barchart({ data }: { data: any }) {
         <ChartContainer config={chartConfig} className="h-[190px] w-full">
           <BarChart
             accessibilityLayer
-            // data={data}    // realtime data
-            data={chartData} // fake data
+            data={data}    // realtime data
+            // data={chartData} // fake data
             margin={{
               top: 20,
             }}

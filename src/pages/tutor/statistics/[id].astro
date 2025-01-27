@@ -6,11 +6,13 @@ import { Linechart } from "@/components/charts/linechart";
 import { Piechart } from "@/components/charts/piechart";
 import Header from "./_components/header";
 import { Card } from "@/components/ui/card";
+import StudentStats from "@/components/studentStats";
 
 const currentUser = Astro.locals.user;
 const call = Astro.callAction;
 const courseId = Astro.params.id!;
 const mentorUsername = Astro.url.searchParams.get("mentor");
+const studentUsername = Astro.url.searchParams.get("student");
 const [piechart, barchart, _mentees, mentors, linechart, courses]: any = await Promise.all([
   call(actions.statistics_getPiechartData, { courseId, mentorUsername }),
   call(actions.statistics_getBarchartData, { courseId, mentorUsername }),
@@ -35,6 +37,9 @@ if (piechart.data && Array.isArray(piechart.data)) {
   const total = (piechart.data[0] || 0) + (piechart.data[1] || 0);
   loaderValue = total > 0 ? `${Math.round((completed * 100) / total)}%` : "0%";
 }
+
+const { data: studentData } = await call(actions.statistics_studentBarchartData, { courseId,studentUsername });
+const { data: attendanceData } = await call(actions.statistics_studentHeatmapData, { courseId,studentUsername });
 ---
 
 <RootLayout title="Statistics">
@@ -46,6 +51,9 @@ if (piechart.data && Array.isArray(piechart.data)) {
     data={data}
     courseId={courseId}
   />
+  {studentUsername?
+    <StudentStats client:load studentData={studentData} attendanceData={attendanceData} />
+  :
   <div class="m-4 flex flex-col gap-4 md:mx-8 md:gap-6 mt-6">
     <div class="flex flex-col gap-4 md:gap-6 lg:flex-row">
       <div class="w-full rounded-xl shadow-xl shadow-blue-500/5 lg:w-1/4">
@@ -98,4 +106,5 @@ if (piechart.data && Array.isArray(piechart.data)) {
       </Card>
     </div>
   </div>
+}
 </RootLayout>
