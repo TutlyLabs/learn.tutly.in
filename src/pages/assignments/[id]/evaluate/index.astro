@@ -8,6 +8,10 @@ const submissionId = Astro.url.searchParams.get("submissionId");
 const username = Astro.url.searchParams.get("username");
 const user = Astro.locals.user;
 
+if (user?.role === "STUDENT") {
+  return Astro.redirect(`/assignments/${assignmentId}`);
+}
+
 const assignment = await db.attachment.findUnique({
   where: {
     id: assignmentId,
