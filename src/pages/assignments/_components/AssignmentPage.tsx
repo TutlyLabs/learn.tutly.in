@@ -523,9 +523,9 @@ const AdminAssignmentTable = ({
           <Button
             onClick={() => {
               if (username) {
-                router.push(`/assignments/${assignmentId}}/evaluate?username=${username}`);
+                router.push(`/assignments/${assignmentId}/evaluate?username=${username}`);
               } else {
-                router.push(`/assignments/${assignmentId}}/evaluate`);
+                router.push(`/assignments/${assignmentId}/evaluate`);
               }
             }}
             className="bg-primary-600 text-white hover:bg-primary-700"

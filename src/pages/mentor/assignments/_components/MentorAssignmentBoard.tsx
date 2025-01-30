@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FaSearch } from "react-icons/fa";
 
 import NoDataFound from "@/components/NoDataFound";
+import { Input } from "@/components/ui/input";
 import { useRouter } from "@/hooks/use-router";
 
 function MentorAssignmentBoard({ courses, students, role }: any) {
@@ -56,21 +57,20 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
           ))}
         </div>
         <div className="flex items-center justify-end gap-2 px-2">
-          <a
+          {/* <a
             href={"/assignments/evaluate"}
             className="inline rounded bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white"
           >
             Evaluate
-          </a>
+          </a> */}
           <div className="m-auto flex items-center rounded border bg-secondary-200 text-black md:m-0">
-            <input
+            <Input
               title="input"
-              className="rounded-l border-r border-black bg-secondary-200 p-2 text-sm font-medium outline-none"
               placeholder="Search here"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <FaSearch className="m-2 h-5 w-5" />
+            <FaSearch className="m-2 h-5 w-5 text-white/80" />
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
 import db from "@/lib/db";
-import { ResizablePanelLayout } from "@/pages/assignments/_components/ResizablePanelLayout";
+import ResizablePanelLayout from "@/pages/assignments/_components/ResizablePanelLayout";
 
 const assignmentId = Astro.params.id!;
 const submissionId = Astro.url.searchParams.get("submissionId");
@@ -101,12 +101,12 @@ const submission = filteredSubmissions.find((submission: any) => submission?.id 
 
 <RootLayout title="Evaluate">
   <ResizablePanelLayout
-    client:load
     assignmentId={assignmentId}
     assignment={assignment}
     submissions={filteredSubmissions}
     submissionId={submissionId}
     username={username}
     submission={submission}
+    client:only
   />
 </RootLayout>

@@ -12,14 +12,14 @@ interface ResizablePanelLayoutProps {
   submission: any;
 }
 
-export function ResizablePanelLayout({
+const ResizablePanelLayout = ({
   assignmentId,
   assignment,
   submissions,
   submissionId,
   username,
   submission,
-}: ResizablePanelLayoutProps) {
+}: ResizablePanelLayoutProps) => {
   return (
     <ResizablePanelGroup direction="horizontal" className="max-h-[95vh] w-full">
       <ResizablePanel defaultSize={20}>
@@ -37,4 +37,6 @@ export function ResizablePanelLayout({
       </ResizablePanel>
     </ResizablePanelGroup>
   );
-}
+};
+
+export default ResizablePanelLayout;
