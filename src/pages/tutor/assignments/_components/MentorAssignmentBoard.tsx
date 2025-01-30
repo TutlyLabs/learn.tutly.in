@@ -150,8 +150,8 @@ const MentorAssignmentBoard = ({
                       router.push(
                         `${
                           role === "INSTRUCTOR"
-                            ? `/admin/assignments/${student.username}`
-                            : `/admin/assignments/${student.username}`
+                            ? `/tutor/assignments/${student.username}`
+                            : `/tutor/assignments/${student.username}`
                         }`
                       )
                     }

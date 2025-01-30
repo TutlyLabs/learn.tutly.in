@@ -26,7 +26,7 @@ const AssignmentDashboard = ({
           <div className="flex justify-end">
             {currentUser.role === "INSTRUCTOR" && (
               <a
-                href={"/admin/assignments/getByAssignment"}
+                href={"/tutor/assignments/getByAssignment"}
                 className="cursor-pointer font-bold italic text-gray-500"
               >
                 Get by assignment?
