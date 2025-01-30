@@ -1,48 +1,124 @@
 ---
-import LeaderBoard from "@/components/leaderBoard.tsx";
 import RootLayout from "@/layouts/RootLayout.astro";
-import { actions } from "astro:actions";
+import LeaderBoard from "@/components/leaderBoard.tsx";
 import db from "@/lib/db";
-const currentUser = Astro.locals.user!;
-const call = Astro.callAction;
 
+const currentUser = Astro.locals.user;
 if (!currentUser) return null;
-const { data } = await call(actions.leaderboard_getInstructorLeaderboardData, {});
-if (!data) return null;
 
-const { sortedSubmissions, enrolledCourses } = data;
+const searchParams = Astro.url.searchParams;
+const selectedCourse = searchParams.get("course");
+const selectedMentor = searchParams.get("mentor");
 
-const mentors =
-  enrolledCourses?.data &&
-  (await db.user.findMany({
-    where: {
-      role: "MENTOR",
-      organizationId: currentUser.organizationId,
-      enrolledUsers: {
-        some: {
-          courseId: enrolledCourses?.data[0]?.id!,
-        },
+const courses = await db.course.findMany({
+  where: {
+    enrolledUsers: {
+      some: {
+        username: currentUser.username,
       },
     },
-    include: {
-      enrolledUsers: true,
-    },
+  },
+  select: {
+    id: true,
+    title: true,
+    isPublished: true,
+  },
+});
+
+const mentors =
+  currentUser.role === "INSTRUCTOR"
+    ? await db.user.findMany({
+        where: {
+          role: "MENTOR",
+          organizationId: currentUser.organizationId,
+          enrolledUsers: {
+            some: {
+              courseId: {
+                in: courses.map((course) => course.id),
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+          username: true,
+        },
+      })
+    : [];
+
+const submissions = selectedCourse
+  ? await db.submission.findMany({
+      where: {
+        enrolledUser: {
+          course: {
+            id: selectedCourse,
+          },
+        },
+      },
+      select: {
+        id: true,
+        points: true,
+        enrolledUser: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                image: true,
+              },
+            },
+            mentor: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        assignment: {
+          select: {
+            class: {
+              select: {
+                course: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+  : [];
+
+const totalPoints = submissions.map((submission) => {
+  const totalPoints = submission.points.reduce(
+    (acc: number, curr: { score: number | null }) => acc + (curr.score ?? 0),
+    0
+  );
+  return { ...submission, totalPoints };
+});
+
+const sortedSubmissions = totalPoints
+  .sort((a, b) => b.totalPoints - a.totalPoints)
+  .map((submission, index) => ({
+    ...submission,
+    rank: index + 1,
   }));
+
+const publishedCourses = courses.filter((course) => course.isPublished);
+const enrolledCourses = currentUser.role === "INSTRUCTOR" ? courses : publishedCourses;
 ---
 
 <RootLayout title="Leaderboard">
-  {
-    sortedSubmissions && enrolledCourses ? (
-      // @ts-ignore
-      <LeaderBoard
-        submissions={sortedSubmissions}
-        courses={enrolledCourses.data}
-        currentUser={currentUser}
-        mentors={mentors}
-        client:load
-      />
-    ) : (
-      <div class="mt-8 text-center text-3xl font-semibold">Unauthorized</div>
-    )
-  }
+  <LeaderBoard
+    submissions={sortedSubmissions}
+    courses={enrolledCourses}
+    currentUser={currentUser}
+    mentors={mentors}
+    selectedCourse={selectedCourse}
+    selectedMentor={selectedMentor}
+    client:load
+  />
 </RootLayout>
