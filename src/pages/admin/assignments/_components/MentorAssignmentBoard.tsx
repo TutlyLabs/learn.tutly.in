@@ -7,7 +7,17 @@ import NoDataFound from "@/components/NoDataFound";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "@/hooks/use-router";
 
-function MentorAssignmentBoard({ courses, students, role }: any) {
+const MentorAssignmentBoard = ({
+  courses,
+  students,
+  role,
+  currentUser,
+}: {
+  courses: any;
+  students: any;
+  role: string;
+  currentUser: { username: string };
+}) => {
   const [currentCourse, setCurrentCourse] = useState<string>(courses[0]?.id);
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -16,7 +26,17 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
 
   const router = useRouter();
 
-  const sortedStudents = students
+  // Filter students based on role
+  const filteredStudents = students.filter((student: any) => {
+    if (role === "INSTRUCTOR") {
+      return true;
+    } else if (role === "MENTOR") {
+      return student.enrolledUsers?.some((x: any) => x.mentorUsername === currentUser.username);
+    }
+    return false;
+  });
+
+  const sortedStudents = filteredStudents
     .filter(
       (student: any) =>
         student.enrolledUsers?.some((x: any) => x.courseId === currentCourse) &&
@@ -130,8 +150,8 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
                       router.push(
                         `${
                           role === "INSTRUCTOR"
-                            ? `/instructor/assignments/${student.username}`
-                            : `/mentor/assignments/${student.username}`
+                            ? `/admin/assignments/${student.username}`
+                            : `/admin/assignments/${student.username}`
                         }`
                       )
                     }
@@ -148,6 +168,6 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
       )}
     </div>
   );
-}
+};
 
 export default MentorAssignmentBoard;

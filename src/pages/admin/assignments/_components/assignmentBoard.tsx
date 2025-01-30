@@ -22,6 +22,9 @@ type Assignment = {
         points: {
           id: string;
         }[];
+        student?: {
+          mentorUsername: string;
+        };
       }[];
       createdAt?: string;
     }[];
@@ -32,9 +35,13 @@ type Assignment = {
 const SingleAssignmentBoard = ({
   courses,
   assignments,
+  role,
+  currentUser,
 }: {
   courses: Course[];
   assignments: Assignment[];
+  role: string;
+  currentUser: { username: string };
 }) => {
   const [currentCourse, setCurrentCourse] = useState<string>(courses[0]?.id || "");
   const [isMounted, setIsMounted] = useState(false);
@@ -48,7 +55,21 @@ const SingleAssignmentBoard = ({
     return null;
   }
 
-  assignments.forEach((course) => {
+  const filteredAssignments = assignments.filter((assignment) => {
+    if (role === "INSTRUCTOR") {
+      return true; // Instructors can see all assignments
+    } else if (role === "MENTOR") {
+      // Filter assignments where mentor has assigned students
+      return assignment.classes.some((cls) =>
+        cls.attachments.some((attach) =>
+          attach.submissions.some((sub) => sub.student?.mentorUsername === currentUser.username)
+        )
+      );
+    }
+    return false;
+  });
+
+  filteredAssignments.forEach((course) => {
     course.classes.sort((a, b) => {
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
@@ -77,7 +98,7 @@ const SingleAssignmentBoard = ({
           ))}
         </div>
       </div>
-      {assignments.map((course) => {
+      {filteredAssignments.map((course) => {
         if (course.id !== currentCourse) return null;
         return course.classes.map((cls) =>
           cls.attachments.map((assignment) => {

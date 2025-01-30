@@ -2,7 +2,7 @@
 import RootLayout from "@/layouts/RootLayout.astro";
 import NoDataFound from "@/components/NoDataFound";
 import db from "@/lib/db";
-import SingleAssignmentBoard from "@/pages/mentor/getByAssignment/_components/assignmentBoard";
+import SingleAssignmentBoard from "../_components/assignmentBoard";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
@@ -94,6 +94,8 @@ const sortedAssignments = coursesWithAssignments.map((course) => ({
             <SingleAssignmentBoard
               courses={courses}
               assignments={sortedAssignments as any}
+              role={currentUser.role}
+              currentUser={currentUser}
               client:load
             />
           </>

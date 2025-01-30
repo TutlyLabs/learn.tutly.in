@@ -52,6 +52,10 @@ export const auth = defineMiddleware(async ({ cookies, locals, url, redirect }, 
     return redirect("/sign-in");
   }
 
+  if (pathname.startsWith("/admin") && locals.user?.role === "STUDENT") {
+    return new Response("Not Found", { status: 404 });
+  }
+
   if (pathname.startsWith("/instructor") && locals.user?.role !== "INSTRUCTOR") {
     return new Response("Not Found", { status: 404 });
   }

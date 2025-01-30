@@ -1,14 +1,25 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
 import db from "@/lib/db";
-import { InstructorAssignments } from "./_components/InstructorAssignments.tsx";
+import AssignmentDashboard from "./_components/AssignmentDashboard";
 
 const currentUser = Astro.locals.user!;
+
+if (currentUser.role === "STUDENT") {
+  return Astro.redirect("/assignments");
+}
 
 const students = await db.user.findMany({
   where: {
     role: "STUDENT",
     organizationId: currentUser.organizationId,
+    ...(currentUser.role === "MENTOR" && {
+      enrolledUsers: {
+        some: {
+          mentorUsername: currentUser.username,
+        },
+      },
+    }),
   },
   include: {
     course: true,
@@ -16,13 +27,23 @@ const students = await db.user.findMany({
   },
 });
 
-let courses = await db.course.findMany({
+const courses = await db.course.findMany({
   where: {
-    enrolledUsers: {
-      some: {
-        username: currentUser.username,
-      },
-    },
+    ...(currentUser.role === "MENTOR"
+      ? {
+          enrolledUsers: {
+            some: {
+              mentorUsername: currentUser.username,
+            },
+          },
+        }
+      : {
+          enrolledUsers: {
+            some: {
+              username: currentUser.username,
+            },
+          },
+        }),
   },
   include: {
     classes: true,
@@ -63,14 +84,10 @@ courses.forEach((course) => {
     return Number(a.createdAt) - Number(b.createdAt);
   });
 });
-
-if (currentUser.role !== "INSTRUCTOR") {
-  courses = [];
-}
 ---
 
 <RootLayout title="Assignments">
-  <InstructorAssignments
+  <AssignmentDashboard
     students={students}
     courses={courses}
     currentUser={currentUser}

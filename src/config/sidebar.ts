@@ -47,7 +47,7 @@ const InstructorItems = [
     items: [
       {
         title: "Assignments",
-        url: "/instructor/assignments",
+        url: "/admin/assignments",
       },
       {
         title: "Leaderboard",
@@ -144,7 +144,7 @@ const MentorItems = [
     items: [
       {
         title: "Assignments",
-        url: "/mentor/assignments",
+        url: "/admin/assignments",
       },
       {
         title: "Leaderboard",

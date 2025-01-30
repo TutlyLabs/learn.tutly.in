@@ -578,7 +578,10 @@ const AdminAssignmentTable = ({
                 <TableHead className="text-foreground">Total</TableHead>
                 <TableHead className="text-foreground">Feedback</TableHead>
                 {currentUser.role !== "STUDENT" && (
-                  <TableHead className="text-foreground">Actions</TableHead>
+                  <>
+                    <TableHead className="text-foreground">Actions</TableHead>
+                    <TableHead className="text-foreground">Evaluate</TableHead>
+                  </>
                 )}
               </TableRow>
             </TableHeader>
@@ -690,60 +693,71 @@ const AdminAssignmentTable = ({
                       )}
                     </TableCell>
                     {currentUser.role !== "STUDENT" && (
-                      <TableCell>
-                        {editingIndex === index ? (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => {
-                                handleSave(index);
-                                handleFeedback(submission.id);
-                              }}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setEditingIndex(-1)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" asChild>
-                              <a
-                                href={
-                                  assignment.submissionMode === "HTML_CSS_JS"
-                                    ? `/playgrounds/html-css-js?submissionId=${submission.id}`
-                                    : submission.submissionLink
-                                }
-                                target="_blank"
+                      <>
+                        <TableCell>
+                          {editingIndex === index ? (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  handleSave(index);
+                                  handleFeedback(submission.id);
+                                }}
                               >
-                                <FaEye className="h-4 w-4 text-white" />
-                              </a>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                handleEdit(index, submission.id);
-                              }}
+                                Save
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setEditingIndex(-1)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="icon" asChild>
+                                <a
+                                  href={
+                                    assignment.submissionMode === "HTML_CSS_JS"
+                                      ? `/playgrounds/html-css-js?submissionId=${submission.id}`
+                                      : submission.submissionLink
+                                  }
+                                  target="_blank"
+                                >
+                                  <FaEye className="h-4 w-4 text-white" />
+                                </a>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  handleEdit(index, submission.id);
+                                }}
+                              >
+                                <FiEdit className="h-4 w-4 text-white" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(submission.id)}
+                              >
+                                <MdOutlineDelete className="h-4 w-4 text-white" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="link" asChild>
+                            <a
+                              href={`/assignments/${assignmentId}/evaluate?submissionId=${submission.id}`}
                             >
-                              <FiEdit className="h-4 w-4 text-white" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(submission.id)}
-                            >
-                              <MdOutlineDelete className="h-4 w-4 text-white" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
+                              Evaluate
+                            </a>
+                          </Button>
+                        </TableCell>
+                      </>
                     )}
                   </TableRow>
                 );

@@ -194,9 +194,30 @@ const assignment = await (async (): Promise<AssignmentWithSubmissions | null> =>
           ...baseInclude,
           submissions: {
             where: {
-              enrolledUser: {
-                mentorUsername: currentUser.username,
-              },
+              AND: [
+                {
+                  enrolledUser: {
+                    mentorUsername: currentUser.username,
+                  },
+                },
+                username
+                  ? {
+                      enrolledUser: {
+                        username: username,
+                      },
+                    }
+                  : {},
+                searchQuery
+                  ? {
+                      enrolledUser: {
+                        username: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                    }
+                  : {},
+              ],
             },
             take: limit,
             skip,
@@ -237,9 +258,30 @@ const assignment = await (async (): Promise<AssignmentWithSubmissions | null> =>
       db.submission.count({
         where: {
           attachmentId: Astro.params.id!,
-          enrolledUser: {
-            mentorUsername: currentUser.username,
-          },
+          AND: [
+            {
+              enrolledUser: {
+                mentorUsername: currentUser.username,
+              },
+            },
+            username
+              ? {
+                  enrolledUser: {
+                    username: username,
+                  },
+                }
+              : {},
+            searchQuery
+              ? {
+                  enrolledUser: {
+                    username: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                }
+              : {},
+          ],
         },
       }),
     ]);
