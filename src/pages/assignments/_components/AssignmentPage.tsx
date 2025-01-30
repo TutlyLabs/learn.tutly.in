@@ -9,6 +9,7 @@ import { MdOutlineDelete } from "react-icons/md";
 import { RiWhatsappLine } from "react-icons/ri";
 
 import MarkdownPreview from "@/components/MarkdownPreview";
+import { Pagination } from "@/components/table/Pagination";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -30,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useRouter } from "@/hooks/use-router";
+import { useSearchParams } from "@/hooks/use-search-params";
 import NewAttachmentPage from "@/pages/courses/[id]/classes/_components/NewAssignments";
 
 interface Props {
@@ -39,6 +48,12 @@ interface Props {
   notSubmittedMentees: any;
   isCourseAdmin: boolean;
   username: string;
+  mentors: string[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    pageSize: number;
+  };
 }
 
 export default function AssignmentPage({
@@ -48,8 +63,27 @@ export default function AssignmentPage({
   notSubmittedMentees,
   isCourseAdmin = false,
   username,
+  mentors,
+  pagination,
 }: Props) {
   const haveAdminAccess = currentUser && (currentUser.role === "INSTRUCTOR" || isCourseAdmin);
+
+  const [_, setSearchParams] = useSearchParams();
+
+  const handlePageChange = (page: number) => {
+    setSearchParams((prev) => {
+      prev.set("page", page.toString());
+      return prev;
+    });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setSearchParams((prev) => {
+      prev.set("limit", size.toString());
+      prev.set("page", "1");
+      return prev;
+    });
+  };
 
   return (
     <div className="relative mx-2 my-2 md:mx-10">
@@ -133,9 +167,18 @@ export default function AssignmentPage({
             currentUser={currentUser}
             username={username}
             assignment={assignment}
+            mentors={mentors}
           />
         )}
       </div>
+
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        pageSize={pagination.pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   );
 }
@@ -290,6 +333,16 @@ const StudentAssignmentSubmission = ({
   );
 };
 
+type AdminTableProps = {
+  assignmentId: string;
+  assignments: any[];
+  notSubmittedMentees: any[];
+  currentUser: any;
+  username: string;
+  assignment: any;
+  mentors: string[];
+};
+
 const AdminAssignmentTable = ({
   assignmentId,
   assignments,
@@ -297,14 +350,8 @@ const AdminAssignmentTable = ({
   currentUser,
   username,
   assignment,
-}: {
-  assignmentId: string;
-  assignments: any;
-  notSubmittedMentees: any;
-  currentUser: any;
-  username: string;
-  assignment: any;
-}) => {
+  mentors,
+}: AdminTableProps) => {
   const [editingIndex, setEditingIndex] = useState(-1);
   const [editedScores, setEditedScores] = useState({
     responsiveness: 0,
@@ -315,6 +362,8 @@ const AdminAssignmentTable = ({
   const [feedback, setFeedback] = useState("");
   const [modal, setModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedMentor = searchParams.get("mentor") || "all";
 
   const messages = [
     "Hi, how are you?",
@@ -328,16 +377,18 @@ const AdminAssignmentTable = ({
 
   const router = useRouter();
 
-  const filteredAssignments = assignments?.filter((assignment: any) => {
-    const usernameMatch = assignment.enrolledUser.username
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return username ? assignment.enrolledUser.username === username : usernameMatch;
-  });
-
-  const filteredNonSubmittedMentees = notSubmittedMentees?.filter((mentee: any) =>
-    mentee.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setSearchParams((prev) => {
+      if (value) {
+        prev.set("search", value);
+      } else {
+        prev.delete("search");
+      }
+      prev.set("page", "1");
+      return prev;
+    });
+  };
 
   const handleWhatsAppClick = (phone: string) => {
     setPhoneNumber(phone);
@@ -363,7 +414,7 @@ const AdminAssignmentTable = ({
 
   const handleEdit = (index: number, submissionId: string) => {
     setEditingIndex(index);
-    const submission = filteredAssignments.find((x: any) => x.id === submissionId);
+    const submission = assignments.find((x: any) => x.id === submissionId);
 
     const getScore = (category: string) => {
       return submission?.points.find((point: any) => point.category === category)?.score || 0;
@@ -388,7 +439,7 @@ const AdminAssignmentTable = ({
         }));
 
       await actions.points_addPoints({
-        submissionId: filteredAssignments[index].id,
+        submissionId: assignments[index].id,
         marks,
       });
 
@@ -418,43 +469,69 @@ const AdminAssignmentTable = ({
   };
 
   const [nonSubmissions, setNonSubmissions] = useState<boolean>(false);
+
+  const handleMentorChange = (value: string) => {
+    setSearchParams((prev) => {
+      if (value === "all") {
+        prev.delete("mentor");
+      } else {
+        prev.set("mentor", value);
+      }
+      return prev;
+    });
+  };
+
   return (
     <div>
-      <div className="mt-8 flex justify-between">
-        <div className="mt-7 block text-foreground max-sm:me-2 max-sm:w-full max-sm:text-sm">
-          Submissions : 👇
-        </div>
-        <div className="gap-4 max-sm:w-full max-sm:justify-between max-sm:space-y-3 sm:flex sm:items-center">
-          <div className="gap-4 max-sm:flex max-sm:w-full max-sm:justify-between">
-            <Button
-              onClick={() => setNonSubmissions(!nonSubmissions)}
-              variant="link"
-              className="me-5 italic text-muted-foreground hover:text-foreground max-sm:text-sm"
-            >
-              {!nonSubmissions ? "Not received from?" : "Received from?"}
-            </Button>
-            <Button
-              onClick={() => {
-                if (username) {
-                  router.push(`/assignments/${assignmentId}}/evaluate?username=${username}`);
-                } else {
-                  router.push(`/assignments/${assignmentId}}/evaluate`);
-                }
-              }}
-              className="bg-primary-600 text-white hover:bg-primary-700"
-            >
-              Evaluate
-            </Button>
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between  mb-2">
+        <div className="flex items-center gap-6">
+          <div className="rounded-md bg-blue-600 px-3 py-2 text-sm text-white">
+            Submissions : 👇
           </div>
+          <Select value={selectedMentor} onValueChange={handleMentorChange}>
+            <SelectTrigger className="w-[180px] text-white">
+              <SelectValue placeholder="Filter by mentor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Mentors</SelectItem>
+              {mentors.map((mentor) => (
+                <SelectItem key={mentor} value={mentor}>
+                  {mentor}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={() => setNonSubmissions(!nonSubmissions)}
+            variant="link"
+            className="italic text-muted-foreground hover:text-foreground"
+          >
+            {!nonSubmissions ? "Not received from?" : "Received from?"}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-4">
           <div className="relative">
             <Input
               className="pl-8"
               placeholder="Search username"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
             />
             <FaSearch className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
+          <Button
+            onClick={() => {
+              if (username) {
+                router.push(`/assignments/${assignmentId}}/evaluate?username=${username}`);
+              } else {
+                router.push(`/assignments/${assignmentId}}/evaluate`);
+              }
+            }}
+            className="bg-primary-600 text-white hover:bg-primary-700"
+          >
+            Evaluate
+          </Button>
         </div>
       </div>
 
@@ -470,7 +547,7 @@ const AdminAssignmentTable = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredNonSubmittedMentees?.map((user: any, index: any) => (
+              {notSubmittedMentees?.map((user: any, index: any) => (
                 <TableRow key={index}>
                   <TableCell className="text-foreground">{index + 1}</TableCell>
                   <TableCell className="text-foreground">{user.username}</TableCell>
@@ -506,7 +583,7 @@ const AdminAssignmentTable = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAssignments?.map((submission: any, index: any) => {
+              {assignments?.map((submission: any, index: any) => {
                 const rValue = submission.points.find(
                   (point: any) => point.category === "RESPOSIVENESS"
                 );
