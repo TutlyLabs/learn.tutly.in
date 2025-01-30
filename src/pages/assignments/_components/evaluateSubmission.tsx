@@ -1,4 +1,4 @@
-import axios from "axios";
+import { actions } from "astro:actions";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -24,9 +24,9 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
   const handleFeedback = async (submissionId: string) => {
     try {
       if (!feedback) return;
-      await axios.post("/api/feedback", {
-        submissionId: submissionId,
-        feedback: feedback,
+      await actions.submissions_addOverallFeedback({
+        submissionId,
+        feedback,
       });
       toast.success("Feedback saved successfully");
     } catch (e: any) {
@@ -50,31 +50,22 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
     try {
       toast.loading("Updating Scores...");
 
-      const marks = [];
-      if (editedScores.responsiveness > 0) {
-        marks.push({
-          category: "RESPOSIVENESS",
-          score: editedScores.responsiveness,
-        });
-      }
-      if (editedScores.styling > 0) {
-        marks.push({
-          category: "STYLING",
-          score: editedScores.styling,
-        });
-      }
-      if (editedScores.other > 0) {
-        marks.push({
-          category: "OTHER",
-          score: editedScores.other,
-        });
+      const marks = Object.entries(editedScores)
+        .filter(([_, score]) => score > 0)
+        .map(([category, score]) => ({
+          category: category.toUpperCase(),
+          score,
+        }));
+
+      await actions.points_addPoints({
+        submissionId: submission.id,
+        marks,
+      });
+
+      if (feedback) {
+        await handleFeedback(submission.id);
       }
 
-      await axios.post("/api/points", {
-        submissionId: submission.id,
-        marks: marks,
-      });
-      handleFeedback(submission.id);
       setIsEditing(false);
       toast.dismiss();
       toast.success("Scores saved successfully");
@@ -82,18 +73,18 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
     } catch (e: any) {
       toast.dismiss();
       toast.error("Failed to save scores");
-    } finally {
-      setIsEditing(false);
-      window.location.reload();
     }
   };
 
   const handleDelete = async () => {
     const response = confirm("Are you sure you want to delete this submission?");
     if (!response) return;
+
     try {
       toast.loading("Deleting Submission...");
-      await axios.delete(`/api/submissions/${submission.id}`);
+      await actions.submissions_deleteSubmission({
+        submissionId: submission.id,
+      });
       toast.dismiss();
       toast.success("Submission deleted successfully");
       window.location.reload();
@@ -104,9 +95,9 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
   };
 
   return (
-    <div className="overflow-x-scroll">
-      <table className="w-full text-center text-black">
-        <thead className="sticky top-0 bg-secondary-300 text-secondary-700">
+    <div className="overflow-x-scroll rounded-lg">
+      <table className="w-full text-center text-black bg-white border-b">
+        <thead className="sticky top-0 bg-secondary-300 text-secondary-700 border-b">
           <tr>
             <th className="sticky left-0 z-10 bg-secondary-300 px-2 py-1 text-xs font-medium uppercase text-secondary-700">
               username

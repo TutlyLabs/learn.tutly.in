@@ -4,9 +4,20 @@ import { useEffect, useState } from "react";
 import { FaSearch } from "react-icons/fa";
 
 import NoDataFound from "@/components/NoDataFound";
+import { Input } from "@/components/ui/input";
 import { useRouter } from "@/hooks/use-router";
 
-function MentorAssignmentBoard({ courses, students, role }: any) {
+const MentorAssignmentBoard = ({
+  courses,
+  students,
+  role,
+  currentUser,
+}: {
+  courses: any;
+  students: any;
+  role: string;
+  currentUser: { username: string };
+}) => {
   const [currentCourse, setCurrentCourse] = useState<string>(courses[0]?.id);
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -15,7 +26,17 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
 
   const router = useRouter();
 
-  const sortedStudents = students
+  // Filter students based on role
+  const filteredStudents = students.filter((student: any) => {
+    if (role === "INSTRUCTOR") {
+      return true;
+    } else if (role === "MENTOR") {
+      return student.enrolledUsers?.some((x: any) => x.mentorUsername === currentUser.username);
+    }
+    return false;
+  });
+
+  const sortedStudents = filteredStudents
     .filter(
       (student: any) =>
         student.enrolledUsers?.some((x: any) => x.courseId === currentCourse) &&
@@ -56,21 +77,20 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
           ))}
         </div>
         <div className="flex items-center justify-end gap-2 px-2">
-          <a
+          {/* <a
             href={"/assignments/evaluate"}
             className="inline rounded bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white"
           >
             Evaluate
-          </a>
+          </a> */}
           <div className="m-auto flex items-center rounded border bg-secondary-200 text-black md:m-0">
-            <input
+            <Input
               title="input"
-              className="rounded-l border-r border-black bg-secondary-200 p-2 text-sm font-medium outline-none"
               placeholder="Search here"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <FaSearch className="m-2 h-5 w-5" />
+            <FaSearch className="m-2 h-5 w-5 text-white/80" />
           </div>
         </div>
       </div>
@@ -130,8 +150,8 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
                       router.push(
                         `${
                           role === "INSTRUCTOR"
-                            ? `/instructor/assignments/${student.username}`
-                            : `/mentor/assignments/${student.username}`
+                            ? `/tutor/assignments/${student.username}`
+                            : `/tutor/assignments/${student.username}`
                         }`
                       )
                     }
@@ -148,6 +168,6 @@ function MentorAssignmentBoard({ courses, students, role }: any) {
       )}
     </div>
   );
-}
+};
 
 export default MentorAssignmentBoard;

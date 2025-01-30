@@ -279,7 +279,7 @@ export const Calendar = ({ events, holidays, isAuthorized = false }: CalendarPro
                                     handleEditSubmit(editingHoliday);
                                   }}
                                 >
-                                  <ScrollArea className="h-[400px] overflow-auto">
+                                  <ScrollArea className="h-full overflow-auto">
                                     <div className="p-3">
                                       <label htmlFor="reason">Reason</label>
                                       <Input

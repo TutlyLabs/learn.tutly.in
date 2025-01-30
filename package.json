@@ -1,7 +1,7 @@
 {
   "name": "tutly",
   "type": "module",
-  "version": "2.2.1.beta.002",
+  "version": "2.2.1.beta.003",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",

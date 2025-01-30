@@ -2,29 +2,48 @@ import { useEffect, useState } from "react";
 
 import { useRouter } from "@/hooks/use-router";
 
-export default function SingleAssignmentBoard({
+type Course = {
+  id: string;
+  title: string;
+};
+
+type Assignment = {
+  id: string;
+  classes: {
+    id: string;
+    attachments: {
+      id: string;
+      title: string;
+      class?: {
+        title: string;
+      };
+      submissions: {
+        id: string;
+        points: {
+          id: string;
+        }[];
+        student?: {
+          mentorUsername: string;
+        };
+      }[];
+      createdAt?: string;
+    }[];
+    createdAt: string;
+  }[];
+};
+
+const SingleAssignmentBoard = ({
   courses,
   assignments,
+  role,
+  currentUser,
 }: {
-  courses: any;
-  assignments: {
-    id: string;
-    classes: {
-      id: string;
-      attachments: {
-        id: string;
-        title: string;
-        submissions: {
-          id: string;
-          points: string;
-        }[];
-        createdAt: string;
-      }[];
-      createdAt: string;
-    }[];
-  }[];
-}) {
-  const [currentCourse, setCurrentCourse] = useState<string>(courses[0]?.id);
+  courses: Course[];
+  assignments: Assignment[];
+  role: string;
+  currentUser: { username: string };
+}) => {
+  const [currentCourse, setCurrentCourse] = useState<string>(courses[0]?.id || "");
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
@@ -36,41 +55,54 @@ export default function SingleAssignmentBoard({
     return null;
   }
 
-  assignments.forEach((course: any) => {
-    course.classes.sort((a: any, b: any) => {
+  const filteredAssignments = assignments.filter((assignment) => {
+    if (role === "INSTRUCTOR") {
+      return true; // Instructors can see all assignments
+    } else if (role === "MENTOR") {
+      // Filter assignments where mentor has assigned students
+      return assignment.classes.some((cls) =>
+        cls.attachments.some((attach) =>
+          attach.submissions.some((sub) => sub.student?.mentorUsername === currentUser.username)
+        )
+      );
+    }
+    return false;
+  });
+
+  filteredAssignments.forEach((course) => {
+    course.classes.sort((a, b) => {
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
 
-    course.classes.forEach((cls: any) => {
-      cls.attachments.sort((a: any, b: any) => {
+    course.classes.forEach((cls) => {
+      cls.attachments.sort((a, b) => {
         return a.title.localeCompare(b.title);
       });
     });
   });
 
-  // return <pre>{JSON.stringify(assignments, null, 2)}</pre>
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          {courses?.map((course: any) => (
+          {courses?.map((course) => (
             <button
-              onClick={() => setCurrentCourse(course.id)}
-              className={`rounded p-2 sm:w-auto ${currentCourse === course.id && "rounded border"}`}
               key={course.id}
+              onClick={() => setCurrentCourse(course.id)}
+              className={`rounded p-2 sm:w-auto ${
+                currentCourse === course.id ? "rounded border" : ""
+              }`}
             >
               <h1 className="max-w-xs truncate text-sm font-medium">{course.title}</h1>
             </button>
           ))}
         </div>
       </div>
-      {assignments.map((course: any) => {
+      {filteredAssignments.map((course) => {
         if (course.id !== currentCourse) return null;
-        return course.classes.map((cls: any) =>
-          cls.attachments.map((assignment: any) => {
-            const assignmentsEvaluated = assignment.submissions.filter(
-              (x: any) => x.points.length > 0
-            );
+        return course.classes.map((cls) =>
+          cls.attachments.map((assignment) => {
+            const assignmentsEvaluated = assignment.submissions.filter((x) => x.points.length > 0);
             return (
               <div key={assignment.id} className="rounded-lg border p-1 md:p-3">
                 <div className="flex flex-wrap items-center justify-around p-2 md:justify-between md:p-0 md:px-4">
@@ -112,4 +144,6 @@ export default function SingleAssignmentBoard({
       })}
     </div>
   );
-}
+};
+
+export default SingleAssignmentBoard;

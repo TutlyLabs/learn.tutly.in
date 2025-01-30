@@ -2,167 +2,385 @@
 import RootLayout from "@layouts/RootLayout.astro";
 import AssignmentPage from "../_components/AssignmentPage";
 import db from "@/lib/db";
+import type { Attachment, submission as Submission } from "@prisma/client";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
 
-const userId = (Astro.url.searchParams.get("userId") as string) || currentUser.id;
 const username = Astro.url.searchParams.get("username");
-const assignment1 = await db.attachment.findUnique({
-  where: {
-    id: Astro.params.id!,
-  },
-  include: {
-    class: {
-      include: {
-        course: {
-          include: {
-            classes: true,
-          },
-        },
-      },
-    },
-    course: true,
-    submissions: {
-      where: {
-        enrolledUser: {
-          user: {
-            id: userId,
-          },
-        },
-      },
-      include: {
-        enrolledUser: {
-          include: {
-            submission: true,
-          },
-        },
-        points: true,
-      },
-    },
-  },
-});
-let sortedAssignments, notSubmittedMentees, isCourseAdmin;
-if (currentUser.role == "INSTRUCTOR") {
-  const assignment = await db.attachment.findUnique({
-    where: {
-      id: Astro.params.id!,
-    },
-    include: {
-      class: {
-        include: {
-          course: {
-            where: {
-              createdById: currentUser.id,
-            },
-          },
-        },
-      },
-      submissions: {
-        include: {
-          enrolledUser: {
-            include: {
-              submission: true,
-            },
-          },
-          points: true,
-        },
-      },
-    },
-  });
-  const allStudents = await db.enrolledUsers.findMany({
-    where: {
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+const limit = parseInt(Astro.url.searchParams.get("limit") || "10");
+const selectedMentor = Astro.url.searchParams.get("mentor");
+const searchQuery = Astro.url.searchParams.get("search") || "";
+const skip = (page - 1) * limit;
+
+type EnrolledUserType = {
+  username: string;
+  mentorUsername: string | null;
+};
+
+type SubmissionWithDetails = Submission & {
+  enrolledUser: EnrolledUserType;
+  points: Array<{
+    category: string;
+    score: number;
+  }>;
+};
+
+type CourseWithEnrolled = {
+  id: string;
+  title: string;
+  createdById: string;
+  enrolledUsers: EnrolledUserType[];
+};
+
+type AssignmentWithSubmissions = Attachment & {
+  submissions: SubmissionWithDetails[];
+  course: CourseWithEnrolled | null;
+  class: {
+    id: string;
+    course: {
+      id: string;
+      title: string;
+      createdById: string;
+    } | null;
+  } | null;
+  totalCount?: number;
+};
+
+const baseInclude = {
+  class: {
+    select: {
+      id: true,
       course: {
-        createdById: currentUser.id,
-      },
-      user: {
-        organizationId: currentUser.organizationId,
+        select: {
+          id: true,
+          title: true,
+          createdById: true,
+        },
       },
     },
-  });
-  notSubmittedMentees = allStudents.filter((student) => {
-    return !assignment?.submissions.some(
-      (submission) => submission.enrolledUser.username === student.username
-    );
-  });
+  },
+  course: {
+    select: {
+      id: true,
+      title: true,
+      createdById: true,
+    },
+  },
+};
 
-  sortedAssignments = assignment?.submissions.sort((a, b) => {
-    if (b.enrolledUser.username > a.enrolledUser.username) {
-      return -1;
-    } else if (b.enrolledUser.username < a.enrolledUser.username) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-  isCourseAdmin = currentUser.id === assignment1?.course?.createdById;
-} else if (currentUser.role == "MENTOR") {
-  const assignment = await db.attachment.findUnique({
-    where: {
-      id: Astro.params.id!,
-    },
-    include: {
-      class: {
+const assignment = await (async (): Promise<AssignmentWithSubmissions | null> => {
+  if (currentUser.role === "INSTRUCTOR") {
+    const [rawAssignmentData, totalCount] = await Promise.all([
+      db.attachment.findUnique({
+        where: { id: Astro.params.id! },
         include: {
-          course: true,
-        },
-      },
-      submissions: {
-        where: {
-          enrolledUser: {
-            mentorUsername: currentUser.username,
-          },
-        },
-        include: {
-          enrolledUser: {
+          ...baseInclude,
+          submissions: {
+            where: {
+              AND: [
+                selectedMentor && selectedMentor !== "all"
+                  ? {
+                      enrolledUser: {
+                        mentorUsername: selectedMentor,
+                      },
+                    }
+                  : {},
+                searchQuery
+                  ? {
+                      enrolledUser: {
+                        username: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                    }
+                  : {},
+                username
+                  ? {
+                      enrolledUser: {
+                        username: username,
+                      },
+                    }
+                  : {},
+              ],
+            },
+            take: limit,
+            skip,
+            orderBy: { submissionDate: "desc" },
             include: {
-              submission: true,
+              enrolledUser: {
+                select: {
+                  username: true,
+                  mentorUsername: true,
+                },
+              },
+              points: {
+                select: {
+                  category: true,
+                  score: true,
+                },
+              },
             },
           },
-          points: true,
+          course: {
+            select: {
+              id: true,
+              title: true,
+              createdById: true,
+              enrolledUsers: {
+                where: {
+                  user: {
+                    organizationId: currentUser.organizationId,
+                  },
+                },
+                select: {
+                  username: true,
+                  mentorUsername: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      db.submission.count({
+        where: {
+          attachmentId: Astro.params.id!,
+          AND: [
+            selectedMentor && selectedMentor !== "all"
+              ? {
+                  enrolledUser: {
+                    mentorUsername: selectedMentor,
+                  },
+                }
+              : {},
+            searchQuery
+              ? {
+                  enrolledUser: {
+                    username: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                }
+              : {},
+            username
+              ? {
+                  enrolledUser: {
+                    username: username,
+                  },
+                }
+              : {},
+          ],
+        },
+      }),
+    ]);
+
+    if (!rawAssignmentData) return null;
+
+    const assignmentData = rawAssignmentData as unknown as AssignmentWithSubmissions;
+    return {
+      ...assignmentData,
+      totalCount,
+      submissions: assignmentData.submissions || [],
+      course: assignmentData.course || null,
+    };
+  } else if (currentUser.role === "MENTOR") {
+    const [rawAssignmentData, totalCount] = await Promise.all([
+      db.attachment.findUnique({
+        where: { id: Astro.params.id! },
+        include: {
+          ...baseInclude,
+          submissions: {
+            where: {
+              AND: [
+                {
+                  enrolledUser: {
+                    mentorUsername: currentUser.username,
+                  },
+                },
+                username
+                  ? {
+                      enrolledUser: {
+                        username: username,
+                      },
+                    }
+                  : {},
+                searchQuery
+                  ? {
+                      enrolledUser: {
+                        username: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                    }
+                  : {},
+              ],
+            },
+            take: limit,
+            skip,
+            orderBy: { submissionDate: "desc" },
+            include: {
+              enrolledUser: {
+                select: {
+                  username: true,
+                  mentorUsername: true,
+                },
+              },
+              points: {
+                select: {
+                  category: true,
+                  score: true,
+                },
+              },
+            },
+          },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              createdById: true,
+              enrolledUsers: {
+                where: {
+                  mentorUsername: currentUser.username,
+                },
+                select: {
+                  username: true,
+                  mentorUsername: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      db.submission.count({
+        where: {
+          attachmentId: Astro.params.id!,
+          AND: [
+            {
+              enrolledUser: {
+                mentorUsername: currentUser.username,
+              },
+            },
+            username
+              ? {
+                  enrolledUser: {
+                    username: username,
+                  },
+                }
+              : {},
+            searchQuery
+              ? {
+                  enrolledUser: {
+                    username: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                }
+              : {},
+          ],
+        },
+      }),
+    ]);
+
+    if (!rawAssignmentData) return null;
+
+    const assignmentData = rawAssignmentData as unknown as AssignmentWithSubmissions;
+    return {
+      ...assignmentData,
+      totalCount,
+      submissions: assignmentData.submissions || [],
+      course: assignmentData.course || null,
+    };
+  } else {
+    const rawAssignmentData = await db.attachment.findUnique({
+      where: { id: Astro.params.id! },
+      include: {
+        ...baseInclude,
+        submissions: {
+          where: {
+            enrolledUser: {
+              user: {
+                id: currentUser.id,
+              },
+            },
+          },
+          include: {
+            enrolledUser: {
+              select: {
+                username: true,
+                mentorUsername: true,
+              },
+            },
+            points: {
+              select: {
+                category: true,
+                score: true,
+              },
+            },
+          },
         },
       },
-    },
-  });
-  const mentees = await db.user.findMany({
-    where: {
-      enrolledUsers: {
-        some: {
-          mentorUsername: currentUser.username,
-        },
-      },
-      organizationId: currentUser.organizationId,
-    },
-  });
-  notSubmittedMentees = mentees.filter((mentee) => {
-    return !assignment?.submissions.some(
-      (submission) => submission.enrolledUser.username === mentee.username
-    );
-  });
+    });
 
-  sortedAssignments = assignment?.submissions.sort((a, b) => {
-    if (b.enrolledUser.username > a.enrolledUser.username) {
-      return -1;
-    } else if (b.enrolledUser.username < a.enrolledUser.username) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
+    if (!rawAssignmentData) return null;
 
-  isCourseAdmin =
-    currentUser?.adminForCourses?.some((course) => course.id === assignment1?.courseId) ?? false;
+    const assignmentData = rawAssignmentData as unknown as AssignmentWithSubmissions;
+    return {
+      ...assignmentData,
+      submissions: assignmentData.submissions || [],
+      course: assignmentData.course || null,
+    };
+  }
+})();
+
+if (!assignment) {
+  return Astro.redirect("/assignments");
 }
+
+const notSubmittedMentees =
+  assignment.course?.enrolledUsers?.filter(
+    (enrolled: EnrolledUserType) =>
+      !assignment.submissions?.some(
+        (submission) => submission.enrolledUser.username === enrolled.username
+      )
+  ) ?? [];
+
+const sortedAssignments = [...(assignment.submissions ?? [])].sort((a, b) =>
+  a.enrolledUser.username.localeCompare(b.enrolledUser.username)
+);
+
+const isCourseAdmin =
+  currentUser.role === "INSTRUCTOR"
+    ? currentUser.id === assignment.course?.createdById
+    : (currentUser?.adminForCourses?.some((course) => course.id === assignment.courseId) ?? false);
+
+const totalPages = Math.ceil((assignment.totalCount ?? 0) / limit);
+
+const mentors = assignment?.course?.enrolledUsers
+  ? Array.from(
+      new Set(assignment.course.enrolledUsers.map((user) => user.mentorUsername).filter(Boolean))
+    )
+  : [];
 ---
 
 <RootLayout title="Assignments">
   <AssignmentPage
     currentUser={currentUser}
-    assignment={assignment1}
+    assignment={assignment}
     assignments={sortedAssignments}
     notSubmittedMentees={notSubmittedMentees}
-    isCourseAdmin={isCourseAdmin ?? false}
+    isCourseAdmin={isCourseAdmin}
     username={username ?? ""}
+    mentors={mentors as string[]}
+    pagination={{
+      currentPage: page,
+      totalPages,
+      pageSize: limit,
+    }}
     client:only
   />
 </RootLayout>

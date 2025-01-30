@@ -1,36 +1,44 @@
-import { useRouter } from "@/hooks/use-router";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSearchParams } from "@/hooks/use-search-params";
 
-const SortBy = ({
-  assignmentId,
-  searchParams,
-}: {
-  assignmentId: string;
-  searchParams?: Record<string, string | string[] | undefined>;
-}) => {
-  const router = useRouter();
+const SortBy = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const handleValueChange = (value: string) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev.toString());
+      newParams.set("sortBy", value);
+      return newParams;
+    });
+  };
+
   return (
-    <>
-      <div className="flex border-b p-1 sm:p-2">
-        <p className="text-nowrap text-sm font-semibold max-sm:hidden">Sort by</p>
-        <select
-          className="sm:ml-2"
-          onChange={(e) => {
-            const sortBy = e.target.value;
-            const newSearchParams = { ...searchParams, sortBy };
-            router.push(
-              `/assignments/${assignmentId}/evaluate?${new URLSearchParams(newSearchParams).toString()}`
-            );
-          }}
-          value={searchParams?.sortBy || "username"}
+    <div className="flex items-center border-b p-1 sm:p-2">
+      <p className="text-nowrap text-sm font-semibold max-sm:hidden">Sort by</p>
+      <div className="sm:ml-2">
+        <Select
+          defaultValue={searchParams.get("sortBy") || "username"}
+          onValueChange={handleValueChange}
         >
-          <option value="username">Username</option>
-          <option value="submissionDate">Submission Date</option>
-          <option value="points">Points</option>
-          <option value="submissionIndex">Submission Index</option>
-          <option value="submissionCount">Submission Count</option>
-        </select>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="Select sorting option" />
+          </SelectTrigger>
+          <SelectContent className="text-xs">
+            <SelectItem value="username">Username</SelectItem>
+            <SelectItem value="submissionDate">Submission Date</SelectItem>
+            <SelectItem value="points">Points</SelectItem>
+            <SelectItem value="submissionIndex">Submission Index</SelectItem>
+            <SelectItem value="submissionCount">Submission Count</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
-    </>
+    </div>
   );
 };
 

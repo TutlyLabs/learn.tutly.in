@@ -31,9 +31,11 @@ export const SubmissionList = ({
 
   return (
     <div className="max-h-[90vh] overflow-y-scroll">
-      <SortBy assignmentId={assignmentId} searchParams={searchParams} />
+      <SortBy />
       <div className="border-b p-2">
-        <p className="text-sm font-semibold">Submissions (max:{assignment?.maxSubmissions} )</p>
+        <p className="text-sm font-semibold">
+          Submissions {assignment && `(max:${assignment?.maxSubmissions})`}
+        </p>
         <p className="text-xs text-slate-600">
           {submissions.filter((submission: any) => submission?.points.length == 0).length}{" "}
           un-evaluated / {submissions.length} total
@@ -60,7 +62,9 @@ export const SubmissionList = ({
             return (
               <a key={index} href={hrefLink}>
                 <div
-                  className={`cursor-pointer border-b p-2 hover:bg-gray-100 hover:text-blue-500 ${singleSubmission.id == searchParams?.submissionId && "bg-gray-100 text-blue-500"} ${singleSubmission.points.length > 0 && "text-green-500"} `}
+                  className={`cursor-pointer border-b p-2 hover:bg-gray-100 hover:text-blue-500 ${
+                    singleSubmission.id == searchParams?.submissionId && "bg-gray-100 text-blue-500"
+                  } ${singleSubmission.points.length > 0 && "text-green-500"}`}
                 >
                   <p className="text-sm">
                     {singleSubmission.enrolledUser.username}
@@ -70,6 +74,9 @@ export const SubmissionList = ({
                   <p className="text-xs text-slate-600">
                     {singleSubmission.enrolledUser.user.name}
                   </p>
+                  {!assignment && (
+                    <p className="text-xs text-slate-600">{singleSubmission?.assignment?.title}</p>
+                  )}
                 </div>
               </a>
             );

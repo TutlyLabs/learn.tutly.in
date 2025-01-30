@@ -79,45 +79,45 @@ if (role === Role.STUDENT) {
     currentUser,
   };
 } else if (role === Role.MENTOR) {
-  const mentorCourses = await db.enrolledUsers.findMany({
+  const mentorCourses = await db.course.findMany({
     where: {
-      mentorUsername: currentUser.username,
-      user: {
-        organizationId: currentUser.organizationId,
+      enrolledUsers: {
+        some: {
+          mentorUsername: currentUser.username,
+          user: {
+            organizationId: currentUser.organizationId,
+          },
+        },
       },
     },
     select: {
-      course: {
+      id: true,
+      title: true,
+      attachments: {
+        where: {
+          attachmentType: "ASSIGNMENT",
+        },
         select: {
           id: true,
           title: true,
-          attachments: {
-            where: {
-              attachmentType: "ASSIGNMENT",
-            },
+        },
+      },
+      enrolledUsers: {
+        where: {
+          mentorUsername: currentUser.username,
+        },
+        select: {
+          user: {
             select: {
-              id: true,
-              title: true,
+              username: true,
             },
           },
-          enrolledUsers: {
-            where: {
-              mentorUsername: currentUser.username,
-            },
+          submission: {
             select: {
-              user: {
+              id: true,
+              points: {
                 select: {
-                  username: true,
-                },
-              },
-              submission: {
-                select: {
-                  id: true,
-                  points: {
-                    select: {
-                      score: true,
-                    },
-                  },
+                  score: true,
                 },
               },
             },
@@ -132,14 +132,14 @@ if (role === Role.STUDENT) {
 
   dashboardData = {
     courses: mentorCourses.map((mentorCourse) => {
-      const courseEnrollments = mentorCourse.course?.enrolledUsers || [];
+      const courseEnrollments = mentorCourse.enrolledUsers || [];
       const submissions = courseEnrollments.flatMap((e) => e.submission);
       const evaluatedSubmissions = submissions.filter((s) => s.points.some((p) => p.score > 0));
 
       return {
-        courseId: mentorCourse.course?.id,
-        courseTitle: mentorCourse.course?.title,
-        assignments: mentorCourse.course?.attachments || [],
+        courseId: mentorCourse.id,
+        courseTitle: mentorCourse.title,
+        assignments: mentorCourse.attachments || [],
         menteeCount: courseEnrollments.length,
         evaluatedAssignments: evaluatedSubmissions.length,
         totalSubmissions: submissions.length,

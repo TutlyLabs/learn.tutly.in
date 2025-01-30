@@ -3,8 +3,6 @@ import { defineAction } from "astro:actions";
 
 import db from "@/lib/db";
 
-import { getEnrolledCourses } from "./courses";
-
 interface LeaderboardSubmission extends Partial<submission> {
   totalPoints: number;
   enrolledUser: {
@@ -129,79 +127,6 @@ export const getLeaderboardDataForStudent = defineAction({
       );
 
     return { success: true, data: totalPoints };
-  },
-});
-
-export const getInstructorLeaderboardData = defineAction({
-  async handler() {
-    try {
-      const { data: enrolledCourses } = await getEnrolledCourses();
-      if (!enrolledCourses) {
-        return { error: "Failed to get enrolled courses" };
-      }
-
-      const submissions = await db.submission.findMany({
-        where: {
-          enrolledUser: {
-            course: {
-              id: {
-                in: enrolledCourses?.data?.map((course: Course) => course.id) ?? [],
-              },
-            },
-          },
-        },
-        select: {
-          id: true,
-          points: true,
-          assignment: {
-            select: {
-              class: {
-                select: {
-                  course: {
-                    select: {
-                      id: true,
-                      title: true,
-                      startDate: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          enrolledUser: {
-            select: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  username: true,
-                  image: true,
-                },
-              },
-              mentor: {
-                select: {
-                  username: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      const totalPoints = submissions.map((submission) => {
-        const totalPoints = submission.points.reduce(
-          (acc: number, curr: { score: number | null }) => acc + (curr.score ?? 0),
-          0
-        );
-        return { ...submission, totalPoints };
-      });
-
-      const sortedSubmissions = totalPoints.sort((a, b) => b.totalPoints - a.totalPoints);
-
-      return { sortedSubmissions, enrolledCourses };
-    } catch {
-      return { error: "Failed to get instructor leaderboard data" };
-    }
   },
 });
 
