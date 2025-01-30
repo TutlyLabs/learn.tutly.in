@@ -1,11 +1,25 @@
-// @ts-nocheck
 import { actions } from "astro:actions";
+import { LayoutGrid, List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import AttendanceHeader from "./AttendanceHeader";
-import OverallAttendanceTable from "./AttendanceTable";
+import OverallAttendanceTable from "./OverallAttendanceTable";
 
 interface Student {
   Name: string;
@@ -18,15 +32,25 @@ interface Student {
   InWaitingRoom: string;
 }
 
+interface PastPresentStudent {
+  username: string;
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  data: any[];
+  classId: string;
+  attendedDuration: number | null;
+  attended: boolean;
+}
+
 const AttendanceClient = ({ courses, role, attendance }: any) => {
   const [fileData, setFileData] = useState<any>([]);
   const [selectedFile, setSelectedFile] = useState<any>();
   const [currentCourse, setCurrentCourse] = useState<any>(null);
   const [currentClass, setCurrentClass] = useState<any>(null);
-  const [openCourses, setOpenCourses] = useState<boolean>(false);
-  const [openClasses, setOpenClasses] = useState<boolean>(false);
   const [users, setUsers] = useState<any>([]);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [showOverallAttendance, setShowOverallAttendance] = useState(false);
 
   useEffect(() => {
     if (!currentCourse) {
@@ -53,10 +77,6 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
 
   const handleStudentClick = (student: any) => {
     setSelectedStudent(student);
-  };
-
-  const handleClosePopup = () => {
-    setSelectedStudent(null);
   };
 
   const onSelectFile = (file: Blob) => {
@@ -197,7 +217,6 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
 
   const [maxInstructionDuration, setMaxInstructionDuration] = useState(0);
 
-  // upload attendance to db
   const handleUpload = async () => {
     toast.loading("uploading attendance...");
 
@@ -214,40 +233,8 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
       toast.error("Attendance already uploaded!");
     }
   };
-  const [pastpresentStudents, setPastPresentStudents] = useState<
-    Array<{
-      username: string;
-      id: string;
-      createdAt: Date;
-      updatedAt: Date;
-      data: any[];
-      classId: string;
-      attendedDuration: number | null;
-      attended: boolean;
-    }>
-  >([]);
+  const [pastpresentStudents, setPastPresentStudents] = useState<PastPresentStudent[]>([]);
   const [present, setPresent] = useState(0);
-
-  // todo : fix this
-  const [_studentsAttendance, setStudentsAttendance] = useState([]);
-  const [_loading, setLoading] = useState(false);
-
-  const fetchStudentsAttendance = async () => {
-    try {
-      setLoading(true);
-      const { data: res } = await actions.attendances_getAttendanceOfAllStudents();
-
-      setStudentsAttendance(res.data);
-    } catch (e) {
-      console.log("Error at fetching students attendance at Attendance tab : ", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStudentsAttendance();
-  }, []);
 
   useEffect(() => {
     const viewAttendance = async () => {
@@ -257,8 +244,8 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
         });
 
         if (!res) return;
-        setPastPresentStudents(res.data?.attendance);
-        setPresent(res.data.present);
+        setPastPresentStudents(res.data?.attendance || []);
+        setPresent(res.data?.present || 0);
         const Totaldata: any = [];
 
         res.data?.attendance.forEach((student: any) => {
@@ -293,94 +280,118 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
         {" "}
         ~ Mark and Monitor Students Attendance
       </h1>
-      <AttendanceHeader
-        role={role}
-        pastpresentStudents={pastpresentStudents}
-        courses={courses}
-        currentCourse={currentCourse}
-        setCurrentCourse={setCurrentCourse}
-        currentClass={currentClass}
-        setCurrentClass={setCurrentClass}
-        openClasses={openClasses}
-        openCourses={openCourses}
-        setOpenClasses={setOpenClasses}
-        setOpenCourses={setOpenCourses}
-        onSelectFile={onSelectFile}
-        fileData={fileData}
-        selectedFile={selectedFile}
-        handleBulkUpload={handleBulkUpload}
-        handleUpload={handleUpload}
-        count={[present, users?.length - present, pastpresentStudents?.length - present]}
-        maxInstructionDuration={maxInstructionDuration}
-        setMaxInstructionDuration={setMaxInstructionDuration}
-      />
+      <div className="mb-4 flex items-center justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowOverallAttendance(!showOverallAttendance)}
+          className="gap-2"
+        >
+          {showOverallAttendance ? (
+            <>
+              <List className="h-4 w-4" />
+              Show Class Attendance
+            </>
+          ) : (
+            <>
+              <LayoutGrid className="h-4 w-4" />
+              Show Overall Attendance
+            </>
+          )}
+        </Button>
+      </div>
 
-      {/* Table */}
-      {fileData && selectedFile && pastpresentStudents.length == 0 && (
-        <AttendanceTable
-          presentStudents={presentStudents}
-          users={users}
-          absentStudents={absentStudents}
-          handleStudentClick={handleStudentClick}
-          openEditName={openEditName}
-          setOpenEditName={setOpenEditName}
-          username={username}
-          setUsername={setUsername}
-          handleEditUsername={handleEditUsername}
-        />
+      {!showOverallAttendance ? (
+        <>
+          <AttendanceHeader
+            role={role}
+            pastpresentStudents={pastpresentStudents}
+            courses={courses}
+            currentCourse={currentCourse}
+            setCurrentCourse={setCurrentCourse}
+            currentClass={currentClass}
+            setCurrentClass={setCurrentClass}
+            onSelectFile={onSelectFile}
+            fileData={fileData}
+            selectedFile={selectedFile}
+            handleBulkUpload={handleBulkUpload}
+            handleUpload={handleUpload}
+            count={[present, users?.length - present, pastpresentStudents?.length - present]}
+            maxInstructionDuration={maxInstructionDuration}
+            setMaxInstructionDuration={setMaxInstructionDuration}
+          />
+
+          {/* Table */}
+          {fileData && selectedFile && pastpresentStudents.length == 0 && (
+            <AttendanceTable
+              presentStudents={presentStudents}
+              users={users}
+              absentStudents={absentStudents}
+              handleStudentClick={handleStudentClick}
+              openEditName={openEditName}
+              setOpenEditName={setOpenEditName}
+              username={username}
+              setUsername={setUsername}
+              handleEditUsername={handleEditUsername}
+            />
+          )}
+
+          {pastpresentStudents.length > 0 && (
+            <AttendanceTable
+              presentStudents={presentStudents}
+              users={users}
+              absentStudents={absentStudents}
+              handleStudentClick={handleStudentClick}
+              openEditName={openEditName}
+              setOpenEditName={setOpenEditName}
+              username={username}
+              setUsername={setUsername}
+              handleEditUsername={handleEditUsername}
+            />
+          )}
+        </>
+      ) : (
+        <OverallAttendanceTable studentsAttendance={attendance} />
       )}
 
-      {pastpresentStudents.length > 0 && (
-        <AttendanceTable
-          presentStudents={presentStudents}
-          users={users}
-          absentStudents={absentStudents}
-          handleStudentClick={handleStudentClick}
-          openEditName={openEditName}
-          setOpenEditName={setOpenEditName}
-          username={username}
-          setUsername={setUsername}
-          handleEditUsername={handleEditUsername}
-        />
-      )}
+      <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-medium">
+              Attendance Details for {selectedStudent?.Name}
+            </DialogTitle>
+          </DialogHeader>
 
-      {!currentClass && <OverallAttendanceTable studentsAttendance={attendance} />}
-
-      {selectedStudent && (
-        <div className="fixed left-0 top-0 flex h-full w-full items-center justify-center bg-gray-800 bg-opacity-50">
-          <div className="w-3/5 rounded-md bg-white p-4 text-gray-700">
-            <h2 className="mb-2 text-lg font-semibold">
-              Attendance Details for {String(selectedStudent?.Name)}
-            </h2>
+          <div className="w-full text-sm">
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="border px-4 py-2">Actual Name</th>
-                  <th className="border px-4 py-2">Join Time</th>
-                  <th className="border px-4 py-2">Leave Time</th>
-                  <th className="border px-4 py-2">Duration</th>
+                  <th className="border bg-muted/30 px-3 py-1.5">Actual Name</th>
+                  <th className="border bg-muted/30 px-3 py-1.5">Join Time</th>
+                  <th className="border bg-muted/30 px-3 py-1.5">Leave Time</th>
+                  <th className="border bg-muted/30 px-3 py-1.5">Duration</th>
                 </tr>
               </thead>
               <tbody>
-                {selectedStudent.Joins?.map((join: any, index: number) => (
+                {selectedStudent?.Joins?.map((join: any, index: number) => (
                   <tr key={index}>
-                    <td className="border px-4 py-2">{join.ActualName}</td>
-                    <td className="border px-4 py-2">{join.JoinTime}</td>
-                    <td className="border px-4 py-2">{join.LeaveTime}</td>
-                    <td className="border px-4 py-2">{join.Duration}</td>
+                    <td className="border px-3 py-1.5">{join.ActualName}</td>
+                    <td className="border px-3 py-1.5">{join.JoinTime}</td>
+                    <td className="border px-3 py-1.5">{join.LeaveTime}</td>
+                    <td className="border px-3 py-1.5">{join.Duration}</td>
                   </tr>
                 ))}
+                <tr className="bg-muted/30">
+                  <td className="border px-3 py-1.5">Total Duration</td>
+                  <td className="border px-3 py-1.5"></td>
+                  <td className="border px-3 py-1.5"></td>
+                  <td className="border px-3 py-1.5">{selectedStudent?.Duration}</td>
+                </tr>
               </tbody>
             </table>
-            <button
-              className="mt-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-              onClick={handleClosePopup}
-            >
-              Close
-            </button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -398,173 +409,187 @@ const AttendanceTable = ({
   setUsername,
   handleEditUsername,
 }: any) => {
-  let k = 0;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+
+  // Combine all students
+  const allStudents = [
+    ...presentStudents,
+    ...users
+      .filter((user: any) => !presentStudents.find((p: any) => p.username === user.username))
+      .map((user: any) => ({
+        ...user,
+        ActualName: user.name,
+        Duration: 0,
+        Joins: [],
+        isAbsent: true,
+      })),
+    ...absentStudents.map((student: any) => ({ ...student, isUnknown: true })),
+  ];
+
+  const filteredStudents = allStudents.filter((student: any) => {
+    const matchesSearch = Object.values(student).some((value) =>
+      String(value).toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (!matchesSearch) return false;
+
+    switch (activeTab) {
+      case "present":
+        return !student.isUnknown && !student.isAbsent;
+      case "absent":
+        return student.isAbsent || student.isUnknown;
+      case "short":
+        return student.Duration > 0 && student.Duration < 60;
+      default:
+        return true;
+    }
+  });
 
   return (
-    <>
-      <table className="m-auto mt-10 w-4/5 border">
-        <thead>
-          <tr className="border-b bg-blue-600">
-            <th>S.No</th>
-            <th className="border-x py-2 pl-10 text-start">Name</th>
-            <th className="border-x">Username</th>
-            <th className="border-x">Duration</th>
-            <th className="border-x">Date</th>
-            <th className="border-x">Times Joined</th>
-            <th className="border-x">View</th>
-          </tr>
-        </thead>
-        <tbody>
-          {presentStudents.map((student: any, index: number) => {
-            return (
-              <tr key={index} className="cursor-pointer border-b hover:bg-primary-800">
-                <td className="border-x">{index + 1}</td>
-                <td className="border-x py-2 pl-10 text-start">{student.ActualName}</td>
-                <td className="border-x">{student.username}</td>
-                <td className="border-x">
-                  <p
-                    className={`m-auto w-10 rounded p-1 ${
+    <div className="mx-auto mt-8 w-[95%] space-y-4">
+      <div className="flex items-center justify-between">
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="all" className="gap-2">
+              All
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                {allStudents.length}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="present" className="gap-2">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              Present
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                {presentStudents.length}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="absent" className="gap-2">
+              <div className="h-2 w-2 rounded-full bg-red-500" />
+              Absent
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                {absentStudents.length +
+                  users.filter(
+                    (u: any) => !presentStudents.find((p: any) => p.username === u.username)
+                  ).length}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="short" className="gap-2">
+              <div className="h-2 w-2 rounded-full bg-yellow-500" />
+              {"<"}60min
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                {allStudents.filter((s) => s.Duration > 0 && s.Duration < 60).length}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search students..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/50 hover:bg-muted/50">
+            <TableHead className="w-16">S.No</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Username</TableHead>
+            <TableHead>Duration</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Times Joined</TableHead>
+            <TableHead className="w-16">View</TableHead>
+            {absentStudents.length > 0 && <TableHead className="w-16">Edit</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredStudents.map((student: any, index: number) => (
+            <TableRow
+              key={index}
+              className={`hover:bg-muted/50 ${
+                student.isUnknown ? "bg-red-500/10" : student.isAbsent ? "bg-muted/30" : ""
+              }`}
+            >
+              <TableCell>{index + 1}</TableCell>
+              <TableCell className="font-medium">
+                {student.isUnknown ? student.Joins[0]?.ActualName : student.ActualName}
+              </TableCell>
+              <TableCell>
+                {student.isUnknown && openEditName === index + 1 ? (
+                  <Input
+                    type="text"
+                    onChange={(e) => setUsername(e.target.value)}
+                    defaultValue={student.username}
+                  />
+                ) : (
+                  student.username
+                )}
+              </TableCell>
+              <TableCell>
+                {student.Duration > 0 ? (
+                  <Badge
+                    variant="outline"
+                    className={`${
                       student.Duration < 30
-                        ? "bg-red-500"
+                        ? "bg-red-500/10 text-red-400 hover:bg-red-500/10"
                         : student.Duration < 90
-                          ? "bg-blue-500"
-                          : "bg-green-500"
+                          ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/10"
+                          : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
                     }`}
                   >
                     {student.Duration}
-                  </p>
-                </td>
-                <td className="border-x">{student.Joins[0].JoinTime.split(" ")[0]}</td>
-                <td className="border-x">{student.Joins.length}</td>
-                <td className="cursor-pointer border-x" onClick={() => handleStudentClick(student)}>
-                  view
-                </td>
-              </tr>
-            );
-          })}
-          {users.map((student: any, index: number) => {
-            const userInPresentStudents = presentStudents.find(
-              (x: any) => x.username === student.username
-            );
-            if (!userInPresentStudents) {
-              k += 1;
-              return (
-                <tr key={index} className="hover:bg-primary-800">
-                  <td>{k + presentStudents.length}</td>
-                  <td className="py-2 pl-10 text-start">{student.name}</td>
-                  <td>{student.username}</td>
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-                  <td className="cursor-pointer" onClick={() => handleStudentClick(student)}>
-                    view
-                  </td>
-                  {/* <td>
-                        <select>
-                          <option value="absent">A</option>
-                          <option value="present">P</option>
-                        </select>
-                      </td> */}
-                </tr>
-              );
-            }
-            return null;
-          })}
-        </tbody>
-      </table>
-
-      {/* Absent Students Table */}
-      {absentStudents.length > 0 && (
-        <table className="m-auto mt-10 w-4/5">
-          <thead>
-            <tr className="border-b">
-              <th>index</th>
-              <th className="max-w-52 text-pretty py-2 pl-10 text-start">Joined Name</th>
-              <th className="py-2">username</th>
-              <th>Duration</th>
-              <th>Date</th>
-              <th>Times Joined</th>
-              <th>view</th>
-              <th>Edit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {absentStudents.map(
-              (
-                student: {
-                  Name: string;
-                  Joins: {
-                    ActualName: string;
-                    JoinTime: string;
-                    Duration: number;
-                  }[];
-                  Duration: number;
-                  username: string;
-                },
-                index: number
-              ) => (
-                <tr key={index} className="hover:bg-primary-800">
-                  <td>{index + 1}</td>
-                  <td className="ps-8 text-start">{student.Joins[0]?.ActualName}</td>
-                  {openEditName === Number(index + 1) ? (
-                    <td className="max-w-52 py-2 pl-10 text-start">
-                      <input
-                        title="username"
-                        className="block"
-                        onChange={(e) => setUsername(e.target.value)}
-                        defaultValue={student.username}
-                      />
-                    </td>
-                  ) : (
-                    <td className="max-w-52 py-2 pl-10 text-start">{student.username}</td>
+                  </Badge>
+                ) : (
+                  "-"
+                )}
+              </TableCell>
+              <TableCell>
+                {student.Joins?.[0]?.JoinTime ? student.Joins[0].JoinTime.split(" ")[0] : "-"}
+              </TableCell>
+              <TableCell>{student.Joins?.length || "-"}</TableCell>
+              <TableCell>
+                <Button variant="ghost" size="sm" onClick={() => handleStudentClick(student)}>
+                  View
+                </Button>
+              </TableCell>
+              {absentStudents.length > 0 && (
+                <TableCell>
+                  {student.isUnknown && (
+                    <>
+                      {openEditName !== index + 1 ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setOpenEditName(index + 1)}
+                        >
+                          Edit
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setOpenEditName(0);
+                            handleEditUsername(student.username, username);
+                          }}
+                        >
+                          Save
+                        </Button>
+                      )}
+                    </>
                   )}
-                  <td>
-                    <p
-                      className={`m-auto w-10 rounded p-1 ${
-                        student.Duration < 30
-                          ? "bg-red-500"
-                          : student.Duration < 90
-                            ? "bg-blue-500"
-                            : "bg-green-500"
-                      }`}
-                    >
-                      {student.Duration}
-                    </p>
-                  </td>
-                  <td>{String(student.Joins[0]?.JoinTime).split(" ")[0]}</td>
-                  <td>{student.Joins.length}</td>
-
-                  <td className="cursor-pointer" onClick={() => handleStudentClick(student)}>
-                    view
-                  </td>
-                  {openEditName !== index + 1 ? (
-                    <td
-                      className="cursor-pointer hover:bg-red-400"
-                      onClick={
-                        openEditName === 0
-                          ? () => setOpenEditName(index + 1)
-                          : () => setOpenEditName(0)
-                      }
-                    >
-                      edit
-                    </td>
-                  ) : (
-                    <td
-                      onClick={() => {
-                        setOpenEditName(0);
-                        handleEditUsername(student.username, username);
-                      }}
-                      className="cursor-pointer hover:bg-red-400"
-                    >
-                      save
-                    </td>
-                  )}
-                </tr>
-              )
-            )}
-          </tbody>
-        </table>
-      )}
-    </>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
