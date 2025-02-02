@@ -2,6 +2,9 @@
   "name": "tutly",
   "type": "module",
   "version": "2.2.1.beta.005",
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "scripts": {
     "dev": "pnpm with-env astro dev",
     "start": "pnpm with-env astro dev",
