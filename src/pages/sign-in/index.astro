@@ -1,9 +1,8 @@
 ---
-import { SignIn } from "@/components/auth/Signin";
-
+import SignInPage from "./page";
 import AuthLayout from "@layouts/AuthLayout.astro";
 ---
 
 <AuthLayout title="Sign in">
-  <SignIn client:load />
+  <SignInPage client:load />
 </AuthLayout>

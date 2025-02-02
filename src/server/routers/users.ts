@@ -543,4 +543,21 @@ export const usersRouter = createTRPCRouter({
         message: "Password reset successfully",
       };
     }),
+
+    getUserSessions: protectedProcedure.query(async ({ ctx }) => {
+      const sessions = await ctx.db.session.findMany({
+        where: { userId: ctx.user.id },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return sessions;  
+    })
+,
+    getAccounts: protectedProcedure.query(async ({ ctx }) => {
+      const accounts = await ctx.db.account.findMany({
+        where: { userId: ctx.user.id },
+      });
+
+      return accounts
+    })
 });
