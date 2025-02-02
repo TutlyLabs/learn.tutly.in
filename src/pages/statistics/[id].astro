@@ -7,11 +7,16 @@ const courseId = Astro.params.id!;
 const caller = await createServerCaller(Astro.request);
 if (!courseId) return null;
 
-const  data = await caller.courses.getAllCourses();
+const data = await caller.courses.getAllCourses();
 const studentData = await caller.statistics.studentHeatmapData({ courseId });
 const attendanceData = await caller.statistics.studentHeatmapData({ courseId });
 ---
 
 <RootLayout title="Statistics">
-    <Stats courseId={courseId} data={data} studentData={studentData} attendanceData={attendanceData} />
+  <Stats
+    courseId={courseId}
+    data={data}
+    studentData={studentData}
+    attendanceData={attendanceData}
+  />
 </RootLayout>

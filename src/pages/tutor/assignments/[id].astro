@@ -9,11 +9,11 @@ type Props = {
 
 const caller = await createServerCaller(Astro.request);
 const { id } = Astro.params;
-const data = await caller.assignments.getAllAssignedAssignmentsByUserId({id:id || ""});
+const data = await caller.assignments.getAllAssignedAssignmentsByUserId({ id: id || "" });
 
 const { courses, coursesWithAssignments } = data || {};
 ---
 
 <RootLayout title={`${id} Assignment`}>
-   <AssignmentsPage courses={courses} coursesWithAssignments={coursesWithAssignments} id={id}/>
+  <AssignmentsPage courses={courses} coursesWithAssignments={coursesWithAssignments} id={id} />
 </RootLayout>

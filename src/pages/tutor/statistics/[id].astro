@@ -4,7 +4,7 @@ import TutorStats from "./page";
 import { createServerCaller } from "@/trpc/server";
 
 const currentUser = Astro.locals.user;
-const caller=await createServerCaller(Astro.request);
+const caller = await createServerCaller(Astro.request);
 const courseId = Astro.params.id!;
 const mentorUsername = Astro.url.searchParams.get("mentor");
 const studentUsername = Astro.url.searchParams.get("student");
@@ -16,12 +16,13 @@ const [piechart, barchart, _mentees, mentors, linechart, courses]: any = await P
   caller.statistics.getBarchartData({ courseId, mentorUsername }),
   caller.statistics.getAllMentees({ courseId, mentorUsername }),
   caller.statistics.getAllMentors({ courseId }),
-  caller.statistics.getLinechartData,({
+  caller.statistics.getLinechartData,
+  {
     courseId,
     mentorUsername,
     // todo: fix this
     menteesCount: 0,
-  }),
+  },
   caller.courses.getAllCourses(),
 ]);
 
@@ -29,13 +30,13 @@ const mentees: any = _mentees;
 const data = courses.data;
 
 let loaderValue = "0%";
-    if (piechart?.data && Array.isArray(piechart?.data)) {
-    const completed = piechart.data[0] || 0;
-    const total = (piechart.data[0] || 0) + (piechart.data[1] || 0);
-    loaderValue = total > 0 ? `${Math.round((completed * 100) / total)}%` : "0%";
-    }
+if (piechart?.data && Array.isArray(piechart?.data)) {
+  const completed = piechart.data[0] || 0;
+  const total = (piechart.data[0] || 0) + (piechart.data[1] || 0);
+  loaderValue = total > 0 ? `${Math.round((completed * 100) / total)}%` : "0%";
+}
 
-const  studentData = await caller.statistics.studentBarchartData({
+const studentData = await caller.statistics.studentBarchartData({
   courseId,
   studentUsername,
 });
@@ -43,11 +44,23 @@ const attendanceData = await caller.statistics.studentHeatmapData({
   courseId,
   studentUsername,
 });
-
 ---
 
 <RootLayout title="Statistics">
-    <TutorStats mentors={mentors},mentees={mentees},data={data},currentUser={currentUser},
-    courseId={courseId},studentUsername={studentUsername},studentData={studentData},
-    attendanceData={attendanceData},piechart={piechart},linechart={linechart},barchart={barchart} loaderValue={loaderValue}/>
+  <TutorStats
+    mentors={mentors}
+    ,mentees={mentees}
+    ,data={data}
+    ,currentUser={currentUser}
+    ,
+    courseId={courseId}
+    ,studentUsername={studentUsername}
+    ,studentData={studentData}
+    ,
+    attendanceData={attendanceData}
+    ,piechart={piechart}
+    ,linechart={linechart}
+    ,barchart={barchart}
+    loaderValue={loaderValue}
+  />
 </RootLayout>

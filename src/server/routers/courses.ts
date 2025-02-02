@@ -789,7 +789,7 @@ export const coursesRouter = createTRPCRouter({
     });
   }),
 
-    getAllAssignmentsInCourse: protectedProcedure
+  getAllAssignmentsInCourse: protectedProcedure
     .input(z.object({ courses: z.array(z.object({ id: z.string() })) }))
     .query(async ({ ctx, input }) => {
       const currentUser = ctx.user;
@@ -857,64 +857,62 @@ export const coursesRouter = createTRPCRouter({
           },
         },
       });
-    }),  
-
-    getAllCoursesOfUser: protectedProcedure.query(async ({ ctx }) => {
-      const currentUser = ctx.user;
-      return ctx.db.course.findMany({
-        where: {
-          ...(currentUser.role === "MENTOR"
-            ? {
-                enrolledUsers: {
-                  some: {
-                    mentorUsername: currentUser.username,
-                  },
-                },
-              }
-            : {
-                enrolledUsers: {
-                  some: {
-                    username: currentUser.username,
-                  },
-                },
-              }),
-        },
-        include: {
-          classes: true,
-          createdBy: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              image: true,
-              email: true,
-              role: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-          _count: {
-            select: {
-              classes: true,
-            },
-          },
-          courseAdmins: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              image: true,
-              email: true,
-              role: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-        },
-      });
     }),
 
-
+  getAllCoursesOfUser: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    return ctx.db.course.findMany({
+      where: {
+        ...(currentUser.role === "MENTOR"
+          ? {
+              enrolledUsers: {
+                some: {
+                  mentorUsername: currentUser.username,
+                },
+              },
+            }
+          : {
+              enrolledUsers: {
+                some: {
+                  username: currentUser.username,
+                },
+              },
+            }),
+      },
+      include: {
+        classes: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        _count: {
+          select: {
+            classes: true,
+          },
+        },
+        courseAdmins: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+  }),
   getAllDoubts: protectedProcedure.query(async ({ ctx }) => {
     const currentUser = ctx.user;
     if (!currentUser) throw new Error("Unauthorized");
@@ -1017,9 +1015,9 @@ export const coursesRouter = createTRPCRouter({
 
     return dashboardData;
   }),
-  getCoursesOfUser: protectedProcedure.query(async({ ctx })=> {
+  getCoursesOfUser: protectedProcedure.query(async ({ ctx }) => {
     const currentUser = ctx.user;
-     return ctx.db.course.findMany({
+    return ctx.db.course.findMany({
       where: {
         enrolledUsers: {
           some: {
