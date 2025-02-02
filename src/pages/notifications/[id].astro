@@ -1,37 +1,27 @@
 ---
-import db from "@/lib/db";
 import { NOTIFICATION_HREF_MAP } from "@/components/Notifications";
 import RootLayout from "@/layouts/RootLayout.astro";
-const id = Astro.params.id;
+import { createServerCaller } from "@/trpc/server";
+import Page from './page'
 
+const id = Astro.params.id;
 if (!id) {
   return Astro.redirect("/notifications");
 }
 
-const notification = await db.notification.findUnique({
-  where: {
-    id: id,
-  },
-});
+
+const caller = await createServerCaller(Astro.request);
+const notification =await caller.notifications.getNotificationById({id});
 
 if (!notification) {
   return Astro.redirect("/notifications");
 }
 
-const notifcationlink = NOTIFICATION_HREF_MAP[notification.eventType];
+const notifcationlink = NOTIFICATION_HREF_MAP[notification.eventType] as unknown as string;
 
 return Astro.redirect(notifcationlink);
 ---
 
 <RootLayout title="Redirecting...">
-  <div class="flex h-screen flex-col items-center justify-center">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold">Redirecting...</h1>
-      <p class="text-xl">
-        If you are not redirected automatically, please click <a href={String(notifcationlink)}
-          >here</a
-        >.
-      </p>
-    </div>
-  </div>
+  <Page notifcationlink={notifcationlink} client:load />
 </RootLayout>

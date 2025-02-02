@@ -1169,4 +1169,57 @@ export const coursesRouter = createTRPCRouter({
       },
     });
   }),
+
+
+  getCoursesForLeaderboard: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    if (!currentUser) {
+      return { error: "Unauthorized" };
+    }
+    const courses = await ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentUser.username,
+          },
+        },
+      },
+      include: {
+        classes: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        _count: {
+          select: {
+            classes: true,
+          },
+        },
+        courseAdmins: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    return courses;
+  }),
 });
+
+

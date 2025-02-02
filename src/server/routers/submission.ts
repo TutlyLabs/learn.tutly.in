@@ -300,12 +300,12 @@ export const submissionRouter = createTRPCRouter({
         submissionId: z.string(),
       })
     )
-    .query(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const user = ctx.user;
       if (!user) {
         return { error: "Unauthorized" };
       }
-
+      
       const submission = await ctx.db.submission.findUnique({
         where: {
           id: input.submissionId,

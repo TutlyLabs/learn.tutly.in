@@ -21,6 +21,7 @@ import { statisticsRouter } from "./routers/statistics";
 import { submissionRouter } from "./routers/submission";
 import { usersRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
+import { profileRouter } from "./routers/profile";
 
 export const appRouter = createTRPCRouter({
   assignments: assignmentsRouter,
@@ -45,6 +46,7 @@ export const appRouter = createTRPCRouter({
   submission: submissionRouter,
   report: reportRouter,
   users: usersRouter,
+  profile: profileRouter,
 });
 
 export type AppRouter = typeof appRouter;

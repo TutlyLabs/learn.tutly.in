@@ -1,36 +1,8 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import { RiReactjsFill } from "react-icons/ri";
-import { IoLogoHtml5 } from "react-icons/io5";
+import Page from './page'
 ---
 
 <RootLayout>
-  <div class="flex flex-wrap gap-10">
-    <a href="/playgrounds/html-css-js">
-      <div
-        class="flex w-[350px] items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black"
-      >
-        <div>
-          <IoLogoHtml5 className="h-20 w-20 rounded-md bg-slate-200 p-2 text-orange-600" />
-        </div>
-        <div>
-          <h1 class="text-lg font-bold">HTML/CSS/JS</h1>
-          <p class="text-sm text-slate-500">Playground for html, css, and js</p>
-        </div>
-      </div>
-    </a>
-    <a href="/playgrounds/react">
-      <div
-        class="flex w-[350px] items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black"
-      >
-        <div>
-          <RiReactjsFill className="h-20 w-20 rounded-md bg-slate-200 p-1.5 text-sky-400" />
-        </div>
-        <div>
-          <h1 class="text-lg font-bold">React.js</h1>
-          <p class="text-sm text-slate-500">Playground for React</p>
-        </div>
-      </div>
-    </a>
-  </div>
+  <Page client:load />
 </RootLayout>

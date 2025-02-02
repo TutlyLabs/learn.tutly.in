@@ -1,135 +1,35 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import Leaderboard from "./_components/leaderboard";
-import db from "@/lib/db";
+import { createServerCaller } from "@/trpc/server";
+import Page from './page'
+
 
 const currentUser = Astro.locals.user;
-if (!currentUser) return null;
-const mentor = await db.enrolledUsers.findMany({
-  where: {
-    username: currentUser.username,
-    user: {
-      organizationId: currentUser.organizationId,
-    },
-  },
-  select: {
-    mentorUsername: true,
-  },
-});
+if (!currentUser) return Astro.redirect("/sign-in");
 
-const submissions = await db.submission.findMany({
-  where: {
-    enrolledUser: {
-      mentorUsername: mentor[0]?.mentorUsername ?? null,
-    },
-  },
-  select: {
-    id: true,
-    points: true,
-    assignment: {
-      select: {
-        class: {
-          select: {
-            course: {
-              select: {
-                id: true,
-                title: true,
-                startDate: true,
-              },
-            },
-          },
-        },
-      },
-    },
-    submissionDate: true,
-    enrolledUser: {
-      select: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
-        },
-      },
-    },
-  },
-});
-const submissionsUptoLastSunday = submissions.filter((submission: any) => {
-  const submissionDate = new Date(submission.submissionDate);
-  const currentDate = new Date();
-  const currentDayOfWeek = currentDate.getDay();
-  const daysToLastSunday = currentDayOfWeek === 0 ? 7 : currentDayOfWeek;
-  const lastSunday = new Date(currentDate);
-  lastSunday.setDate(currentDate.getDate() - daysToLastSunday);
-  lastSunday.setHours(12, 0, 0, 0);
-  return submissionDate < lastSunday;
-});
+const caller = await createServerCaller(Astro.request);
+const {data} = await caller.leaderboard.getLeaderboardData();
+if (!data) {
+  throw new Error("Failed to fetch leaderboard data");
+}
 
-const totalPoints: any = submissionsUptoLastSunday.map((submission: any) => {
-  const totalPoints = submission.points.reduce(
-    (acc: number, curr: { score: number | null }) => acc + (curr.score ?? 0),
-    0
-  );
-  return {
-    id: submission.id,
-    totalPoints,
-    submissionDate: submission.submissionDate,
-    enrolledUser: submission.enrolledUser,
-    assignment: submission.assignment,
-  };
-});
+const {sortedSubmissions} = data;
 
-const sortedSubmissions = totalPoints.sort((a: any, b: any) => b.totalPoints - a.totalPoints);
+const courses = await caller.courses.getCoursesForLeaderboard();
 
-const courses = await db.course.findMany({
-  where: {
-    enrolledUsers: {
-      some: {
-        username: currentUser.username,
-      },
-    },
-  },
-  include: {
-    classes: true,
-    createdBy: {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        image: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    },
-    _count: {
-      select: {
-        classes: true,
-      },
-    },
-    courseAdmins: {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        image: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    },
-  },
-});
+if(!courses) {
+  throw new Error("Failed to fetch courses");
+}
 
-courses.forEach((course) => {
-  course.classes.sort((a, b) => {
-    return Number(a.createdAt) - Number(b.createdAt);
+if (Array.isArray(courses)) {
+  courses.forEach((course) => {
+    course.classes.sort((a, b) => {
+      return Number(a.createdAt) - Number(b.createdAt);
+    });
   });
-});
+} else {
+  throw new Error("Failed to fetch courses");
+}
 
 const publishedCourses = courses.filter((course) => course.isPublished);
 
@@ -137,10 +37,5 @@ const enrolledCourses = currentUser.role === "INSTRUCTOR" ? courses : publishedC
 ---
 
 <RootLayout title="Leaderboard">
-  <Leaderboard
-    currentUser={currentUser}
-    submissions={sortedSubmissions}
-    courses={enrolledCourses}
-    client:load
-  />
+  <Page sortedSubmissions={sortedSubmissions} enrolledCourses={enrolledCourses} currentUser={currentUser} client:load />
 </RootLayout>

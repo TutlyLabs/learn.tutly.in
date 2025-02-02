@@ -217,4 +217,18 @@ export const notificationsRouter = createTRPCRouter({
 
       return notifications;
     }),
+
+    getNotificationById: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const notification = await ctx.db.notification.findUnique({
+        where: { id: input.id },
+      });
+
+      return notification;
+    }),
 });
