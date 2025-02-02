@@ -1,5 +1,3 @@
-import PropTypes from "prop-types";
-
 const DriveEmbed = ({ embedId }: { embedId: string }) => (
   <div className="">
     <iframe
@@ -11,9 +9,5 @@ const DriveEmbed = ({ embedId }: { embedId: string }) => (
     />
   </div>
 );
-
-DriveEmbed.propTypes = {
-  embedId: PropTypes.string.isRequired,
-};
 
 export default DriveEmbed;

@@ -16,12 +16,7 @@ const page = ({ courses, assignments }: { courses: Course[]; assignments: Assign
             <NoDataFound message="No Assignments available" />
           </div>
         ) : (
-          <AssignmentBoard
-            reviewed={true}
-            courses={courses}
-            assignments={assignments}
-            client:load
-          />
+          <AssignmentBoard reviewed={true} courses={courses} assignments={assignments} />
         )}
       </div>
     </Providers>

@@ -8,5 +8,5 @@ const { courses, assignments } = await caller.assignments.getAssignmentsPageData
 ---
 
 <RootLayout title="Assignments">
-  <Page courses={courses} assignments={assignments} client:load />
+  <Page courses={courses} assignments={assignments} client:only="react" />
 </RootLayout>

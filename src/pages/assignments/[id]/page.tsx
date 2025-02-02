@@ -7,7 +7,7 @@ import AssignmentPage from "../_components/AssignmentPage";
 
 type User = RouterOutputs["users"]["getUser"];
 
-const page = ({
+const Page = ({
   currentUser,
   assignment,
   sortedAssignments,
@@ -50,4 +50,4 @@ const page = ({
   );
 };
 
-export default page;
+export default Page;

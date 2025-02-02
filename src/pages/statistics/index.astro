@@ -5,15 +5,14 @@ import { createServerCaller } from "@/trpc/server";
 const currentUser = Astro.locals.user!;
 if (!currentUser) return null;
 
-const caller= await createServerCaller(Astro.request);
-const {data}=await caller.courses.getAllCourses();
+const caller = await createServerCaller(Astro.request);
+const { data } = await caller.courses.getAllCourses();
 
 if (!data) return null;
 
 if (data?.data && data?.data?.length > 0) {
   return Astro.redirect(`/statistics/${data?.data[0]?.id}`);
 }
-
 ---
 
 <RootLayout title="Statistics">

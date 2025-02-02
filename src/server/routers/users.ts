@@ -544,20 +544,19 @@ export const usersRouter = createTRPCRouter({
       };
     }),
 
-    getUserSessions: protectedProcedure.query(async ({ ctx }) => {
-      const sessions = await ctx.db.session.findMany({
-        where: { userId: ctx.user.id },
-        orderBy: { createdAt: "desc" },
-      });
+  getUserSessions: protectedProcedure.query(async ({ ctx }) => {
+    const sessions = await ctx.db.session.findMany({
+      where: { userId: ctx.user.id },
+      orderBy: { createdAt: "desc" },
+    });
 
-      return sessions;  
-    })
-,
-    getAccounts: protectedProcedure.query(async ({ ctx }) => {
-      const accounts = await ctx.db.account.findMany({
-        where: { userId: ctx.user.id },
-      });
+    return sessions;
+  }),
+  getAccounts: protectedProcedure.query(async ({ ctx }) => {
+    const accounts = await ctx.db.account.findMany({
+      where: { userId: ctx.user.id },
+    });
 
-      return accounts
-    })
+    return accounts;
+  }),
 });

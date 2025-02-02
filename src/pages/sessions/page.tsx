@@ -1,10 +1,11 @@
-import Sessions from "./_components/Sessions";
-import Providers from "@/utils/providers"
+import Providers from "@/utils/providers";
 
-export default function SessionPage({sessions, accounts, currentSessionId}:any) {
+import Sessions from "./_components/Sessions";
+
+export default function SessionPage({ sessions, accounts, currentSessionId }: any) {
   return (
     <Providers>
-        <Sessions sessions={sessions} accounts={accounts} currentSessionId={currentSessionId}/>
+      <Sessions sessions={sessions} accounts={accounts} currentSessionId={currentSessionId} />
     </Providers>
-  )
+  );
 }

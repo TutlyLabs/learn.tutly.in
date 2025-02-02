@@ -766,27 +766,26 @@ export const coursesRouter = createTRPCRouter({
       });
     }),
 
-    getCourseAttachments: protectedProcedure
-    .query(async ({ ctx }) => {
-      return ctx.db.course.findMany({
-        where: {
-          enrolledUsers: {
-            some: {
-              username: ctx.user.username,
-            },
+  getCourseAttachments: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: ctx.user.username,
           },
         },
-        select: {
-          classes: {
-            select: {
-              attachments: {
-                where: {
-                  attachmentType: "ASSIGNMENT",
-                },
+      },
+      select: {
+        classes: {
+          select: {
+            attachments: {
+              where: {
+                attachmentType: "ASSIGNMENT",
               },
             },
           },
         },
-      });
-    }),
+      },
+    });
+  }),
 });

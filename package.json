@@ -14,7 +14,7 @@
     "lint:fix": "eslint ./src --fix",
     "prisma:generate": "prisma generate",
     "prisma:studio": "pnpm with-env prisma studio  --host localhost",
-     "with-env": "dotenv -e ./.env"
+    "with-env": "dotenv -e ./.env"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
