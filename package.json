@@ -3,16 +3,18 @@
   "type": "module",
   "version": "2.2.1.beta.005",
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro check && prisma generate && astro build",
-    "preview": "astro preview",
+    "dev": "pnpm with-env astro dev",
+    "start": "pnpm with-env astro dev",
+    "build": "pnpm with-env astro check && prisma generate && astro build",
+    "preview": "pnpm with-env astro preview",
     "astro": "astro",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "pnpm with-env prisma studio  --host localhost",
+     "with-env": "dotenv -e ./.env"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -66,6 +68,7 @@
     "cmdk": "1.0.0",
     "date-fns": "^3.0.0",
     "dayjs": "^1.11.13",
+    "dotenv-cli": "^8.0.0",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.2",
