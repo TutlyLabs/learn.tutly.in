@@ -60,15 +60,17 @@ export const notesRouter = createTRPCRouter({
       });
     }),
 
-    getAllNotes: protectedProcedure
-    .input(z.object({
+  getAllNotes: protectedProcedure
+    .input(
+      z.object({
         userId: z.string(),
-    }))
+      })
+    )
     .mutation(async ({ ctx, input }) => {
-        return ctx.db.notes.findMany({
-            where: {
-                userId: input.userId
-            }
-        })
-    })
+      return ctx.db.notes.findMany({
+        where: {
+          userId: input.userId,
+        },
+      });
+    }),
 });

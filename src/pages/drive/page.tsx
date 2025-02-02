@@ -1,9 +1,13 @@
-import Drive from './_components/Drive'
+import Providers from "@/utils/providers";
 
-function Page({uploadedFiles}:any) {
+import Drive from "./_components/Drive";
+
+function Page({ uploadedFiles }: any) {
   return (
-    <div><Drive uploadedFiles={uploadedFiles} /></div>
-  )
+    <Providers>
+      <Drive uploadedFiles={uploadedFiles} />
+    </Providers>
+  );
 }
 
-export default Page
+export default Page;

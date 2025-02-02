@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { Check, Eye, EyeOff, Loader2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { api } from "@/trpc/react";
 
 interface UserPageProps {
   data: Record<string, any>[];
@@ -109,6 +109,8 @@ const UserPage = ({ data, totalItems }: UserPageProps) => {
   const [isResetting, setIsResetting] = useState(false);
   const [showPasswordStrength, setShowPasswordStrength] = useState(false);
 
+  const { mutateAsync: resetUserPassword } = api.users.instructor_resetPassword.useMutation();
+
   const checkStrength = (pass: string) => {
     const requirements = [
       { regex: /.{8,}/, text: "At least 8 characters" },
@@ -154,19 +156,19 @@ const UserPage = ({ data, totalItems }: UserPageProps) => {
 
     setIsResetting(true);
     try {
-      const result = await actions.users_instructor_resetPassword({
+      const result = await resetUserPassword({
         email: selectedUser.email,
         newPassword,
       });
 
-      if (result.data?.success) {
+      if (result.success) {
         toast.success("Password reset successfully");
         setOpen(false);
         setNewPassword("");
         setConfirmPassword("");
         setSelectedUser(null);
       } else {
-        toast.error(result.data?.message || "Failed to reset password");
+        toast.error(result.message || "Failed to reset password");
       }
     } catch (error) {
       toast.error("An error occurred while resetting password");
@@ -185,13 +187,11 @@ const UserPage = ({ data, totalItems }: UserPageProps) => {
         clientSideProcessing={false}
         totalItems={totalItems}
         defaultPageSize={10}
-        onView={async (data: any) => {
-          return (await actions.users_getUser(data)) as any;
-        }}
-        onCreate={actionWrapper(actions.users_createUser)}
-        onEdit={actionWrapper(actions.users_updateUser)}
-        onDelete={actionWrapper(actions.users_deleteUser)}
-        onBulkImport={actionWrapper(actions.users_bulkUpsert)}
+        onView={actionWrapper(api.users.getUser)}
+        onCreate={actionWrapper(api.users.createUser)}
+        onEdit={actionWrapper(api.users.updateUser)}
+        onDelete={actionWrapper(api.users.deleteUser)}
+        onBulkImport={actionWrapper(api.users.bulkUpsert)}
         title="Users Management"
         actions={[
           {

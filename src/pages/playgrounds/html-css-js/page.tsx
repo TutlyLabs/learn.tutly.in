@@ -1,27 +1,30 @@
-'use  client';
-import Playground from "../_components/Playground";
-import type {SandpackFiles} from "@codesandbox/sandpack-react";
+"use  client";
 
+import type { SandpackFiles } from "@codesandbox/sandpack-react";
+
+import Providers from "@/utils/providers";
+
+import Playground from "../_components/Playground";
 
 const page = ({
   currentUser,
   assignmentId,
-  initialFiles
-}:{
-  currentUser: any,
-  assignmentId: string,
-  initialFiles: SandpackFiles
+  initialFiles,
+}: {
+  currentUser: any;
+  assignmentId: string;
+  initialFiles: SandpackFiles;
 }) => {
   return (
-    <div>
+    <Providers>
       <Playground
         currentUser={currentUser}
         assignmentId={assignmentId || ""}
         initialFiles={initialFiles}
         template="static"
       />
-    </div>
-  )
-}
+    </Providers>
+  );
+};
 
-export default page
+export default page;

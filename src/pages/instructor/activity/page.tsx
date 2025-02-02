@@ -1,16 +1,18 @@
-import UserCards from './_components/UserCards'
+import Providers from "@/utils/providers";
 
-function Page({users,totalCount,activeCount,limit}:any) {
+import UserCards from "./_components/UserCards";
+
+function Page({ users, totalCount, activeCount, limit }: any) {
   return (
-    <div>
-        <UserCards
-            users={users}
-            totalItems={totalCount}
-            activeCount={activeCount}
-            defaultPageSize={limit}
-        />
-    </div>
-  )
+    <Providers>
+      <UserCards
+        users={users}
+        totalItems={totalCount}
+        activeCount={activeCount}
+        defaultPageSize={limit}
+      />
+    </Providers>
+  );
 }
 
-export default Page
+export default Page;

@@ -56,10 +56,10 @@ export default function Accordion({
 
   const QA = dbts;
 
-  const { mutate: createDoubt } = api.doubts.createDoubt.useMutation();
-  const { mutate: createResponse } = api.doubts.createResponse.useMutation();
-  const { mutate: deleteDoubt } = api.doubts.deleteDoubt.useMutation();
-  const { mutate: deleteResponse } = api.doubts.deleteResponse.useMutation();
+  const { mutateAsync: createDoubt } = api.doubts.createDoubt.useMutation();
+  const { mutateAsync: createResponse } = api.doubts.createResponse.useMutation();
+  const { mutateAsync: deleteDoubt } = api.doubts.deleteDoubt.useMutation();
+  const { mutateAsync: deleteResponse } = api.doubts.deleteResponse.useMutation();
 
   const handleAddDoubt = async (data: any) => {
     try {

@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-// todo: needs replacement with actions
-import { getEnrolledCourses, getEnrolledCoursesById, getMentorCourses } from "@/actions/courses";
-
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const assignmentsRouter = createTRPCRouter({
@@ -133,7 +130,31 @@ export const assignmentsRouter = createTRPCRouter({
   getAllAssignmentsForMentor: protectedProcedure.query(async ({ ctx }) => {
     try {
       const currentUser = ctx.user!;
-      const courses = await getMentorCourses();
+
+      const courses = await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              mentorUsername: currentUser.username,
+            },
+          },
+        },
+        include: {
+          classes: true,
+          createdBy: true,
+          _count: {
+            select: {
+              classes: true,
+            },
+          },
+        },
+      });
+
+      courses.forEach((course) => {
+        course.classes.sort((a, b) => {
+          return Number(a.createdAt) - Number(b.createdAt);
+        });
+      });
 
       const coursesWithAssignments = await ctx.db.course.findMany({
         where: {
@@ -186,12 +207,35 @@ export const assignmentsRouter = createTRPCRouter({
 
   getAllAssignmentsForInstructor: protectedProcedure.query(async ({ ctx }) => {
     try {
-      const { data: courses } = await getEnrolledCourses();
+      const currentUser = ctx.user!;
+
+      const courses = await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              username: currentUser.username,
+            },
+          },
+        },
+        include: {
+          classes: true,
+          createdBy: true,
+          _count: {
+            select: {
+              classes: true,
+            },
+          },
+          courseAdmins: true,
+        },
+      });
+
+      const publishedCourses = courses.filter((course) => course.isPublished);
+      const filteredCourses = currentUser.role === "INSTRUCTOR" ? courses : publishedCourses;
 
       const coursesWithAssignments = await ctx.db.course.findMany({
         where: {
           id: {
-            in: courses?.data?.map((course) => course.id) ?? [],
+            in: filteredCourses.map((course) => course.id),
           },
         },
         select: {
@@ -219,7 +263,7 @@ export const assignmentsRouter = createTRPCRouter({
         },
       });
 
-      return { courses, coursesWithAssignments };
+      return { courses: filteredCourses, coursesWithAssignments };
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
     }
@@ -230,13 +274,34 @@ export const assignmentsRouter = createTRPCRouter({
       const currentUser = ctx.user;
       if (!currentUser) return null;
 
-      const { data: courses } = await getEnrolledCourses();
+      const courses = await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              username: currentUser.username,
+            },
+          },
+        },
+        include: {
+          classes: true,
+          createdBy: true,
+          _count: {
+            select: {
+              classes: true,
+            },
+          },
+          courseAdmins: true,
+        },
+      });
+
+      const publishedCourses = courses.filter((course) => course.isPublished);
+      const filteredCourses = currentUser.role === "INSTRUCTOR" ? courses : publishedCourses;
 
       return await ctx.db.attachment.findMany({
         where: {
           attachmentType: "ASSIGNMENT",
           courseId: {
-            in: courses?.data?.map((course) => course.id) ?? [],
+            in: filteredCourses.map((course) => course.id),
           },
         },
         include: {
@@ -255,7 +320,26 @@ export const assignmentsRouter = createTRPCRouter({
     try {
       const currentUser = ctx.user!;
 
-      const { data: courses } = await getEnrolledCoursesById({ id: currentUser.id });
+      const courses = await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              user: {
+                id: currentUser.id,
+              },
+            },
+          },
+        },
+        include: {
+          classes: true,
+          createdBy: true,
+          _count: {
+            select: {
+              classes: true,
+            },
+          },
+        },
+      });
 
       const coursesWithAssignments = await ctx.db.course.findMany({
         where: {

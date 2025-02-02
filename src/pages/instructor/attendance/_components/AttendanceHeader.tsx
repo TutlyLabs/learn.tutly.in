@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { api } from "@/trpc/react";
 
 // import { useRouter } from "@/hooks/use-router";
 import BulkImport from "../../../../components/table/BulkImport";
@@ -161,9 +161,8 @@ export default function AttendanceHeader({
 
   const handleDelete = async (x: any) => {
     try {
-      await actions.attendances_deleteClassAttendance({
-        classId: x,
-      });
+      const deleteClassAttendance = api.attendance.deleteClassAttendance.useMutation();
+      await deleteClassAttendance.mutateAsync({ classId: x });
       toast.success("Attendance deleted successfully");
     } catch (e: any) {
       toast.error("Failed to delete attendance");

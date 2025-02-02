@@ -1,16 +1,14 @@
 ---
-import Page from "./page"
+import Page from "./page";
 import AuthLayout from "@layouts/AuthLayout.astro";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return Astro.redirect("/sign-in");
 
-
 const searchParams = Astro.url.searchParams;
 const email = searchParams.get("email") ?? "";
-
 ---
 
 <AuthLayout title="Reset Password">
-  <Page email={email} client:load/>
+  <Page email={email} client:load />
 </AuthLayout>

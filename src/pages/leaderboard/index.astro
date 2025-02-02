@@ -1,23 +1,22 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
 import { createServerCaller } from "@/trpc/server";
-import Page from './page'
-
+import Page from "./page";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return Astro.redirect("/sign-in");
 
 const caller = await createServerCaller(Astro.request);
-const {data} = await caller.leaderboard.getLeaderboardData();
+const { data } = await caller.leaderboard.getLeaderboardData();
 if (!data) {
   throw new Error("Failed to fetch leaderboard data");
 }
 
-const {sortedSubmissions} = data;
+const { sortedSubmissions } = data;
 
 const courses = await caller.courses.getCoursesForLeaderboard();
 
-if(!courses) {
+if (!courses) {
   throw new Error("Failed to fetch courses");
 }
 
@@ -37,5 +36,10 @@ const enrolledCourses = currentUser.role === "INSTRUCTOR" ? courses : publishedC
 ---
 
 <RootLayout title="Leaderboard">
-  <Page sortedSubmissions={sortedSubmissions} enrolledCourses={enrolledCourses} currentUser={currentUser} client:load />
+  <Page
+    sortedSubmissions={sortedSubmissions}
+    enrolledCourses={enrolledCourses}
+    currentUser={currentUser}
+    client:load
+  />
 </RootLayout>

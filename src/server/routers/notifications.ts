@@ -218,7 +218,7 @@ export const notificationsRouter = createTRPCRouter({
       return notifications;
     }),
 
-    getNotificationById: protectedProcedure
+  getNotificationById: protectedProcedure
     .input(
       z.object({
         id: z.string(),

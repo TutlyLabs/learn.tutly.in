@@ -49,18 +49,17 @@ const attendanceData = await caller.statistics.studentHeatmapData({
 <RootLayout title="Statistics">
   <TutorStats
     mentors={mentors}
-    ,mentees={mentees}
-    ,data={data}
-    ,currentUser={currentUser}
-    ,
+    mentees={mentees}
+    data={data}
+    currentUser={currentUser}
     courseId={courseId}
-    ,studentUsername={studentUsername}
-    ,studentData={studentData}
-    ,
+    studentUsername={studentUsername}
+    studentData={studentData}
     attendanceData={attendanceData}
-    ,piechart={piechart}
-    ,linechart={linechart}
-    ,barchart={barchart}
+    piechart={piechart}
+    linechart={linechart}
+    barchart={barchart}
     loaderValue={loaderValue}
+    client:load
   />
 </RootLayout>

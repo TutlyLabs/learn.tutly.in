@@ -1,17 +1,17 @@
-'use client'
-import type { User, Profile } from "@prisma/client";
+"use client";
+
+import type { Profile, User } from "@prisma/client";
+
+import Providers from "@/utils/providers";
+
 import ProfilePage from "./_components/ProfilePage";
 
-const page = ({
-    userProfile
-    }: {
-    userProfile: User & { profile: Profile }
-}) => {
+const page = ({ userProfile }: { userProfile: User & { profile: Profile } }) => {
   return (
-    <div>
-        <ProfilePage userProfile={userProfile as User & { profile: Profile }} />
-    </div>
-  )
-}
+    <Providers>
+      <ProfilePage userProfile={userProfile as User & { profile: Profile }} />
+    </Providers>
+  );
+};
 
-export default page
+export default page;

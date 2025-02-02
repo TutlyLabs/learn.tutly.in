@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import db from "@/lib/db";
-
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const attendanceRouter = createTRPCRouter({

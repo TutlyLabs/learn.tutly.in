@@ -1,17 +1,14 @@
-'use client'
+"use client";
+
 import ManagePassword from "@/pages/profile/_components/ManagePassword";
+import Providers from "@/utils/providers";
 
-
-const page = ({
-    email
-    }: {
-    email: string
-}) => {
+const page = ({ email }: { email: string }) => {
   return (
-    <div>
-        <ManagePassword  initialEmail={email} />
-    </div>
-  )
-}
+    <Providers>
+      <ManagePassword initialEmail={email} />
+    </Providers>
+  );
+};
 
-export default page
+export default page;

@@ -1,17 +1,15 @@
-'use  client';
+"use  client";
+
+import Providers from "@/utils/providers";
+
 import ReactPlayground from "./ReactPlayground";
 
-
-const page = ({
-  currentUser
-}:{
-  currentUser: any
-}) => {
+const page = ({ currentUser }: { currentUser: any }) => {
   return (
-    <div>
-      <ReactPlayground currentUser={currentUser}  />
-    </div>
-  )
-}
+    <Providers>
+      <ReactPlayground currentUser={currentUser} />
+    </Providers>
+  );
+};
 
-export default page
+export default page;

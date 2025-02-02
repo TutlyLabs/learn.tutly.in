@@ -1,25 +1,29 @@
-'use client'
+"use client";
+
 import { Course } from "@prisma/client";
+
+import Providers from "@/utils/providers";
+
 import Leaderboard from "./_components/leaderboard";
 
 const page = ({
   currentUser,
   sortedSubmissions,
-  enrolledCourses
-}:{
-  currentUser: any,
-  sortedSubmissions: any,
-  enrolledCourses: Course[]
+  enrolledCourses,
+}: {
+  currentUser: any;
+  sortedSubmissions: any;
+  enrolledCourses: Course[];
 }) => {
   return (
-    <div>
+    <Providers>
       <Leaderboard
         currentUser={currentUser}
         submissions={sortedSubmissions}
         courses={enrolledCourses}
       />
-    </div>
-  )
-}
+    </Providers>
+  );
+};
 
-export default page
+export default page;

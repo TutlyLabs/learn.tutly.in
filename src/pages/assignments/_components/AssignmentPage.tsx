@@ -191,7 +191,7 @@ const StudentAssignmentSubmission = ({
 }) => {
   const [externalLink, setExternalLink] = useState("");
 
-  const { mutate: submitExternalLink } = api.submission.submitExternalLink.useMutation();
+  const { mutateAsync: submitExternalLink } = api.submission.submitExternalLink.useMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -375,9 +375,9 @@ const AdminAssignmentTable = ({
 
   const router = useRouter();
 
-  const { mutate: addOverallFeedback } = api.submission.addOverallFeedback.useMutation();
-  const { mutate: deleteSubmission } = api.submission.deleteSubmission.useMutation();
-  const { mutate: addPoints } = api.points.addPoints.useMutation();
+  const { mutateAsync: addOverallFeedback } = api.submission.addOverallFeedback.useMutation();
+  const { mutateAsync: deleteSubmission } = api.submission.deleteSubmission.useMutation();
+  const { mutateAsync: addPoints } = api.points.addPoints.useMutation();
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);

@@ -1,5 +1,4 @@
 import { File } from "@prisma/client";
-import { actions } from "astro:actions";
 import { formatDistanceToNow } from "date-fns";
 import { Download, FileText, Plus, Trash2 } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
@@ -10,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFileUpload } from "@/components/useFileUpload";
+import { api } from "@/trpc/react";
 
 const Drive = ({ uploadedFiles }: { uploadedFiles: File[] }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -25,6 +25,9 @@ const Drive = ({ uploadedFiles }: { uploadedFiles: File[] }) => {
     },
   });
 
+  const { data: currentUser } = api.users.getCurrentUser.useQuery();
+  const { mutateAsync: archiveFile } = api.fileUpload.archiveFile.useMutation();
+
   const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     setIsUploading(true);
@@ -32,9 +35,8 @@ const Drive = ({ uploadedFiles }: { uploadedFiles: File[] }) => {
     try {
       const file = e.target.files[0];
       if (!file) return;
-      const user = await actions.users_getCurrentUser();
-      if (!user) return;
-      await uploadFile(file, user.data?.id);
+      if (!currentUser) return;
+      await uploadFile(file, currentUser.id);
     } catch (error) {
       console.error("Error uploading file:", error);
       toast.error("Failed to upload file");
@@ -45,9 +47,9 @@ const Drive = ({ uploadedFiles }: { uploadedFiles: File[] }) => {
 
   const handleDownload = async (fileId: string) => {
     try {
-      const { data: downloadUrl } = await actions.fileupload_getDownloadUrl({
-        fileId,
-      });
+      const { data: downloadUrl } = await api.fileUpload.getDownloadUrl
+        .useQuery({ fileId })
+        .refetch();
       if (downloadUrl) {
         window.open(downloadUrl, "_blank");
       }
@@ -58,7 +60,7 @@ const Drive = ({ uploadedFiles }: { uploadedFiles: File[] }) => {
 
   const handleArchive = async (fileId: string) => {
     try {
-      await actions.fileupload_archiveFile({
+      await archiveFile({
         fileId,
         reason: deleteReason,
       });

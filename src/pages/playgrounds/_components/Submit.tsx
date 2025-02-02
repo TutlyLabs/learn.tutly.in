@@ -1,5 +1,4 @@
 import { useSandpack } from "@codesandbox/sandpack-react";
-import { actions } from "astro:actions";
 import { useState } from "react";
 import Confetti from "react-confetti";
 import toast from "react-hot-toast";
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/hooks/use-router";
+import { api } from "@/trpc/react";
 
 const Submit = ({
   user,
@@ -37,6 +37,8 @@ const Submit = ({
 
   const router = useRouter();
 
+  const { mutateAsync: createSubmission } = api.submission.createSubmission.useMutation();
+
   const handleSubmit = async () => {
     if (!user?.username || !user.email || !assignmentDetails?.title) {
       toast.error("Error submitting assignment");
@@ -52,7 +54,7 @@ const Submit = ({
       setSubmitting(true);
       toast.loading("Submitting assignment");
 
-      await actions.submissions_createSubmission({
+      await createSubmission({
         assignmentDetails,
         mentorDetails,
         files,

@@ -1,18 +1,26 @@
-import LeaderBoard from '@/components/leaderBoard'
+import LeaderBoard from "@/components/leaderBoard";
+import Providers from "@/utils/providers";
 
-function Page({sortedSubmissions,enrolledCourses,currentUser,mentors,selectedCourse,selectedMentor}:any) {
+function Page({
+  sortedSubmissions,
+  enrolledCourses,
+  currentUser,
+  mentors,
+  selectedCourse,
+  selectedMentor,
+}: any) {
   return (
-    <div>
-        <LeaderBoard
-            submissions={sortedSubmissions}
-            courses={enrolledCourses}
-            currentUser={currentUser}
-            mentors={mentors}
-            selectedCourse={selectedCourse}
-            selectedMentor={selectedMentor}
-        />
-    </div>
-  )
+    <Providers>
+      <LeaderBoard
+        submissions={sortedSubmissions}
+        courses={enrolledCourses}
+        currentUser={currentUser}
+        mentors={mentors}
+        selectedCourse={selectedCourse}
+        selectedMentor={selectedMentor}
+      />
+    </Providers>
+  );
 }
 
-export default Page
+export default Page;

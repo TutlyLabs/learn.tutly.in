@@ -556,10 +556,10 @@ export const usersRouter = createTRPCRouter({
       where: { userId: ctx.user.id },
     });
 
-      return accounts
-    }),
+    return accounts;
+  }),
 
-    getActivityData: protectedProcedure
+  getActivityData: protectedProcedure
     .input(
       z.object({
         search: z.string(),
@@ -595,10 +595,10 @@ export const usersRouter = createTRPCRouter({
           ...(input.showOnline ? { lastSeen: { gte: input.onlineCutoff } } : {}),
           ...(input.orderBy?.lastSeen ? { lastSeen: { not: null } } : {}),
         },
-        skip:input.skip,
+        skip: input.skip,
         take: input.limit,
-        orderBy:input.orderBy,
-      })
+        orderBy: input.orderBy,
+      });
       const totalCount = await ctx.db.user.count({
         where: {
           OR: [
@@ -609,7 +609,7 @@ export const usersRouter = createTRPCRouter({
           role: input.role ? { equals: input.role as Role } : { in: ["MENTOR", "STUDENT"] },
           ...(input.showOnline ? { lastSeen: { gte: input.onlineCutoff } } : {}),
         },
-      })
+      });
       const activeCount = await ctx.db.user.count({
         where: {
           OR: [
@@ -620,11 +620,11 @@ export const usersRouter = createTRPCRouter({
           role: input.role ? { equals: input.role as Role } : { in: ["MENTOR", "STUDENT"] },
           lastSeen: { gte: input.onlineCutoff },
         },
-      })
-      return [users, totalCount, activeCount]
+      });
+      return [users, totalCount, activeCount];
     }),
 
-    manageUsers: protectedProcedure
+  manageUsers: protectedProcedure
     .input(
       z.object({
         cond: z.any(),
@@ -635,7 +635,7 @@ export const usersRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const totalItems = await ctx.db.user.count({ where:input.cond });
+      const totalItems = await ctx.db.user.count({ where: input.cond });
 
       const allUsers = await ctx.db.user.findMany({
         where: {
@@ -654,10 +654,9 @@ export const usersRouter = createTRPCRouter({
         skip: (input.page - 1) * input.limit,
         take: input.limit,
       });
-      return [allUsers, totalItems]
+      return [allUsers, totalItems];
     }),
 
-  
   getStudentsOfMentor: protectedProcedure.query(async ({ ctx }) => {
     const currentUser = ctx.user;
     const students = await ctx.db.user.findMany({
@@ -679,5 +678,4 @@ export const usersRouter = createTRPCRouter({
     });
     return students;
   }),
-
 });

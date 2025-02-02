@@ -1,19 +1,16 @@
 ---
 import RootLayout from "@layouts/RootLayout.astro";
 import { createServerCaller } from "@/trpc/server";
-import Page from './page'
-
+import Page from "./page";
 
 const currentUser = Astro.locals.user;
-if(!currentUser) return Astro.redirect("/sign-in");
-
+if (!currentUser) return Astro.redirect("/sign-in");
 
 const caller = await createServerCaller(Astro.request);
 
 const notes = await caller.notes.getAllNotes({ userId: currentUser.id });
-
 ---
 
 <RootLayout title="Notes">
-  <Page  notes={notes} client:load />
+  <Page notes={notes} client:load />
 </RootLayout>

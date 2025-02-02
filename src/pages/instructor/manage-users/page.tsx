@@ -1,11 +1,13 @@
-import UserPage from "./_components/UserPage"
+import Providers from "@/utils/providers";
 
-function Page({allUsers,totalItems}:any) {
+import UserPage from "./_components/UserPage";
+
+function Page({ allUsers, totalItems }: any) {
   return (
-    <div>
-        <UserPage data={allUsers} totalItems={totalItems} />
-    </div>
-  )
+    <Providers>
+      <UserPage data={allUsers} totalItems={totalItems} />
+    </Providers>
+  );
 }
 
-export default Page
+export default Page;

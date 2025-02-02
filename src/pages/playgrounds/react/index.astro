@@ -1,10 +1,10 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import Page from './page'
+import Page from "./page";
 
 const currentUser = Astro.locals.user;
 ---
 
 <RootLayout>
-  <Page currentUser={currentUser} client:load/>
+  <Page currentUser={currentUser} client:load />
 </RootLayout>

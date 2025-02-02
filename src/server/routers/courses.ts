@@ -765,8 +765,8 @@ export const coursesRouter = createTRPCRouter({
         },
       });
     }),
-  
-    studentDashboardData: protectedProcedure
+
+  studentDashboardData: protectedProcedure
     .input(
       z.object({
         username: z.string(),
@@ -812,10 +812,10 @@ export const coursesRouter = createTRPCRouter({
         orderBy: {
           createdAt: "desc",
         },
-      })
+      });
     }),
 
-    mentorDashboardData: protectedProcedure
+  mentorDashboardData: protectedProcedure
     .input(
       z.object({
         username: z.string(),
@@ -868,10 +868,10 @@ export const coursesRouter = createTRPCRouter({
         orderBy: {
           createdAt: "desc",
         },
-      })
+      });
     }),
 
-    instructorDashboardData: protectedProcedure
+  instructorDashboardData: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -901,7 +901,7 @@ export const coursesRouter = createTRPCRouter({
         orderBy: {
           createdAt: "desc",
         },
-      })
+      });
     }),
 
   getCourseAttachments: protectedProcedure.query(async ({ ctx }) => {
@@ -1170,7 +1170,6 @@ export const coursesRouter = createTRPCRouter({
     });
   }),
 
-
   getCoursesForLeaderboard: protectedProcedure.query(async ({ ctx }) => {
     const currentUser = ctx.user;
     if (!currentUser) {
@@ -1221,5 +1220,3 @@ export const coursesRouter = createTRPCRouter({
     return courses;
   }),
 });
-
-

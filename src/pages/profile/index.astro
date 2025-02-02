@@ -1,9 +1,8 @@
 ---
 import RootLayout from "@layouts/RootLayout.astro";
-import Page from './page'
+import Page from "./page";
 import type { User, Profile } from "@prisma/client";
 import { createServerCaller } from "@/trpc/server";
-
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return Astro.redirect("/sign-in");
@@ -14,5 +13,5 @@ const userProfile = await caller.profile.getCurrentUserProfile({ id: currentUser
 ---
 
 <RootLayout title="Profile">
-  <Page userProfile={userProfile as User & { profile: Profile }} client:load />  
+  <Page userProfile={userProfile as User & { profile: Profile }} client:load />
 </RootLayout>

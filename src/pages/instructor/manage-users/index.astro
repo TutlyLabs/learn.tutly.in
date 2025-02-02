@@ -66,12 +66,12 @@ activeFilters.forEach((filter) => {
 const caller = await createServerCaller(Astro.request);
 
 const [allUsers, totalItems] = await caller.users.manageUsers({
-  cond:where,
+  cond: where,
   page,
   limit,
   sortField,
   sortDirection,
-})
+});
 ---
 
 <RootLayout title="Users">

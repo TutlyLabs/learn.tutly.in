@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { File, FileType, type Profile } from "@prisma/client";
-import { actions } from "astro:actions";
 import { type ChangeEvent, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useFileUpload } from "@/components/useFileUpload";
+import { api } from "@/trpc/react";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -252,13 +252,14 @@ export default function BasicDetails({
 const Avatar = ({ avatar }: { avatar: string }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const { data: user } = api.users.getCurrentUser.useQuery();
+  const { mutateAsync: updateAvatar } = api.users.updateUserAvatar.useMutation();
   const { uploadFile } = useFileUpload({
     fileType: FileType.AVATAR,
     onUpload: async (file: File) => {
       if (!file || !file.publicUrl) return;
       try {
-        await actions.users_updateUserAvatar({
+        await updateAvatar({
           avatar: file.publicUrl,
         });
         toast.success("Profile picture updated successfully");
@@ -275,10 +276,8 @@ const Avatar = ({ avatar }: { avatar: string }) => {
 
     try {
       const file = e.target.files[0];
-      if (!file) return;
-      const user = await actions.users_getCurrentUser();
-      if (!user) return;
-      await uploadFile(file, user.data?.id);
+      if (!file || !user?.id) return;
+      await uploadFile(file, user.id);
     } catch (error) {
       console.error("Error uploading avatar:", error);
       toast.error("Failed to upload profile picture");

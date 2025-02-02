@@ -14,6 +14,7 @@ import { notesRouter } from "./routers/notes";
 import { notificationsRouter } from "./routers/notifications";
 // import { resendRouter } from "./routers/resend"
 import { pointsRouter } from "./routers/points";
+import { profileRouter } from "./routers/profile";
 import { reportRouter } from "./routers/report";
 import { resetPasswordRouter } from "./routers/reset-password";
 import { scheduleRouter } from "./routers/schedule";
@@ -21,7 +22,6 @@ import { statisticsRouter } from "./routers/statistics";
 import { submissionRouter } from "./routers/submission";
 import { usersRouter } from "./routers/users";
 import { createTRPCRouter } from "./trpc";
-import { profileRouter } from "./routers/profile";
 
 export const appRouter = createTRPCRouter({
   assignments: assignmentsRouter,

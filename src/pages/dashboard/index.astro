@@ -41,7 +41,7 @@ if (role === Role.STUDENT) {
 } else if (role === Role.MENTOR) {
   const mentorCourses = await caller.courses.mentorDashboardData({
     username: currentUser.username,
-  })
+  });
 
   dashboardData = {
     courses: mentorCourses.map((mentorCourse) => {
@@ -61,8 +61,8 @@ if (role === Role.STUDENT) {
   };
 } else if (role === Role.INSTRUCTOR) {
   const courses = await caller.courses.instructorDashboardData({
-    id: currentUser.id
-  })
+    id: currentUser.id,
+  });
 
   dashboardData = {
     courses: courses.map((course) => ({

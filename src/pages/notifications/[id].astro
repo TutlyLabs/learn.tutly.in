@@ -2,16 +2,15 @@
 import { NOTIFICATION_HREF_MAP } from "@/components/Notifications";
 import RootLayout from "@/layouts/RootLayout.astro";
 import { createServerCaller } from "@/trpc/server";
-import Page from './page'
+import Page from "./page";
 
 const id = Astro.params.id;
 if (!id) {
   return Astro.redirect("/notifications");
 }
 
-
 const caller = await createServerCaller(Astro.request);
-const notification =await caller.notifications.getNotificationById({id});
+const notification = await caller.notifications.getNotificationById({ id });
 
 if (!notification) {
   return Astro.redirect("/notifications");

@@ -4,7 +4,7 @@ import { createServerCaller } from "@/trpc/server";
 import Page from "./page";
 const user = Astro.locals.user;
 const caller = await createServerCaller(Astro.request);
-const uploadedFiles = await caller.fileUpload.uploadedFiles({id: user?.id!});
+const uploadedFiles = await caller.fileUpload.uploadedFiles({ id: user?.id! });
 ---
 
 <RootLayout title="Drive">

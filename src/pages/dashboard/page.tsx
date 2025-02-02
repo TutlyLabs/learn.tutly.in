@@ -1,11 +1,13 @@
-import Dashboard from './_components/dashboard'
+import Providers from "@/utils/providers";
 
-function Page({dashboardData,name,currentUser}:any) {
+import Dashboard from "./_components/dashboard";
+
+function Page({ dashboardData, name, currentUser }: any) {
   return (
-    <div>
-        <Dashboard data={dashboardData} name={name} currentUser={currentUser} />
-    </div>
-  )
+    <Providers>
+      <Dashboard data={dashboardData} name={name} currentUser={currentUser} />
+    </Providers>
+  );
 }
 
-export default Page
+export default Page;

@@ -13,9 +13,9 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
   });
   const [feedback, setFeedback] = useState<string | null>(submission.overallFeedback || null);
 
-  const { mutate: addOverallFeedback } = api.submission.addOverallFeedback.useMutation();
-  const { mutate: deleteSubmission } = api.submission.deleteSubmission.useMutation();
-  const { mutate: addPoints } = api.points.addPoints.useMutation();
+  const { mutateAsync: addOverallFeedback } = api.submission.addOverallFeedback.useMutation();
+  const { mutateAsync: deleteSubmission } = api.submission.deleteSubmission.useMutation();
+  const { mutateAsync: addPoints } = api.points.addPoints.useMutation();
 
   const rValue = submission.points.find((point: any) => point.category === "RESPOSIVENESS");
   const sValue = submission.points.find((point: any) => point.category === "STYLING");

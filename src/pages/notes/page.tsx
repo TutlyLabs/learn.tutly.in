@@ -1,17 +1,17 @@
-'use client'
-import NotesComponent from "./_components/Notes";
+"use client";
+
 import type { Notes } from "@prisma/client";
 
-const page = ({
-    notes
-    }: {
-    notes: Notes[]
-}) => {
-  return (
-    <div>
-        <NotesComponent notes={notes}/>
-    </div>
-  )
-}
+import Providers from "@/utils/providers";
 
-export default page
+import NotesComponent from "./_components/Notes";
+
+const page = ({ notes }: { notes: Notes[] }) => {
+  return (
+    <Providers>
+      <NotesComponent notes={notes} />
+    </Providers>
+  );
+};
+
+export default page;

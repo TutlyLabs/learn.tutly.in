@@ -305,7 +305,7 @@ export const submissionRouter = createTRPCRouter({
       if (!user) {
         return { error: "Unauthorized" };
       }
-      
+
       const submission = await ctx.db.submission.findUnique({
         where: {
           id: input.submissionId,

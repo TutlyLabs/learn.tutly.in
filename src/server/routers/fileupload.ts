@@ -225,7 +225,7 @@ export const fileUploadRouter = createTRPCRouter({
       return file;
     }),
 
-    uploadedFiles: protectedProcedure
+  uploadedFiles: protectedProcedure
     .input(
       z.object({
         id: z.string(),

@@ -1,8 +1,10 @@
+import Providers from "@/utils/providers";
+
 import UserTable from "./_components/UsersTable";
 
 function Page({ allUsers, params, currentUser }: any) {
   return (
-    <div>
+    <Providers>
       {!currentUser || currentUser.role !== "INSTRUCTOR" ? (
         <div className="mt-8 text-center text-3xl font-semibold">Unauthorized</div>
       ) : (
@@ -10,7 +12,7 @@ function Page({ allUsers, params, currentUser }: any) {
           <UserTable users={allUsers || []} params={params} />
         </div>
       )}
-    </div>
+    </Providers>
   );
 }
 

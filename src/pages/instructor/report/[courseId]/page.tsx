@@ -1,16 +1,19 @@
-import { Course } from "@prisma/client"
-import Report, { DataItem } from "./_components/Report"
+import { Course } from "@prisma/client";
 
-function Page({sortedData,courses,courseId}:any) {
+import Providers from "@/utils/providers";
+
+import Report, { DataItem } from "./_components/Report";
+
+function Page({ sortedData, courses, courseId }: any) {
   return (
-    <div>
-        <Report
-            intitialdata={sortedData as DataItem[]}
-            allCourses={courses as Course[]}
-            courseId={courseId}
-        />
-    </div>
-  )
+    <Providers>
+      <Report
+        intitialdata={sortedData as DataItem[]}
+        allCourses={courses as Course[]}
+        courseId={courseId}
+      />
+    </Providers>
+  );
 }
 
-export default Page
+export default Page;

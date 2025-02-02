@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { LayoutGrid, List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -17,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/trpc/react";
 
 import AttendanceHeader from "./AttendanceHeader";
 import OverallAttendanceTable from "./OverallAttendanceTable";
@@ -58,18 +58,17 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
     }
     const fetch = async () => {
       if (role === "MENTOR") {
-        const { data: res } = await actions.courses_getMentorStudents({
+        const { data: mentorStudents } = api.courses.getMentorStudents.useQuery({
           courseId: currentCourse.id,
         });
-
-        setUsers(res);
+        setUsers(mentorStudents);
       }
 
       if (role === "INSTRUCTOR") {
-        const { data: res } = await actions.users_getAllEnrolledUsers({
+        const { data: enrolledUsers } = api.users.getAllEnrolledUsers.useQuery({
           courseId: currentCourse.id,
         });
-        setUsers(res);
+        setUsers(enrolledUsers);
       }
     };
     fetch();
@@ -217,57 +216,58 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
 
   const [maxInstructionDuration, setMaxInstructionDuration] = useState(0);
 
+  const { mutateAsync: postAttendance } = api.attendance.postAttendance.useMutation();
+
   const handleUpload = async () => {
     toast.loading("uploading attendance...");
 
     try {
-      await actions.attendances_postAttendance({
+      await postAttendance({
         classId: currentClass?.id,
         data: presentStudents,
         maxInstructionDuration: Number(maxInstructionDuration),
       });
       toast.dismiss();
-
       toast.success("Attendance uploaded successfully");
     } catch (e) {
       toast.error("Attendance already uploaded!");
     }
   };
+
+  const { data: attendanceData } = api.attendance.viewAttendanceByClassId.useQuery(
+    { classId: currentClass?.id },
+    { enabled: !!currentClass }
+  );
+
   const [pastpresentStudents, setPastPresentStudents] = useState<PastPresentStudent[]>([]);
   const [present, setPresent] = useState(0);
 
   useEffect(() => {
-    const viewAttendance = async () => {
-      if (currentClass) {
-        const { data: res } = await actions.attendances_viewAttendanceByClassId({
-          classId: currentClass.id,
-        });
+    if (currentClass && attendanceData) {
+      const res = attendanceData;
+      if (!res) return;
+      setPastPresentStudents(res.data?.attendance || []);
+      setPresent(res.data?.present || 0);
+      const Totaldata: any = [];
 
-        if (!res) return;
-        setPastPresentStudents(res.data?.attendance || []);
-        setPresent(res.data?.present || 0);
-        const Totaldata: any = [];
-
-        res.data?.attendance.forEach((student: any) => {
-          const { username, data } = student;
-          data.forEach((join: any) => {
-            Totaldata.push({
-              Name: join.ActualName,
-              username: username,
-              JoinTime: join.JoinTime,
-              LeaveTime: join.LeaveTime,
-              Duration: join.Duration,
-              UserEmail: student.UserEmail,
-              RecordingDisclaimerResponse: student.RecordingDisclaimerResponse,
-              InWaitingRoom: student.InWaitingRoom,
-            });
+      res.data?.attendance.forEach((student: any) => {
+        const { username, data } = student;
+        data.forEach((join: any) => {
+          Totaldata.push({
+            Name: join.ActualName,
+            username: username,
+            JoinTime: join.JoinTime,
+            LeaveTime: join.LeaveTime,
+            Duration: join.Duration,
+            UserEmail: student.UserEmail,
+            RecordingDisclaimerResponse: student.RecordingDisclaimerResponse,
+            InWaitingRoom: student.InWaitingRoom,
           });
         });
-        setFileData(Totaldata);
-      }
-    };
-    viewAttendance();
-  }, [currentClass]);
+      });
+      setFileData(Totaldata);
+    }
+  }, [currentClass, attendanceData]);
 
   return (
     <div className="p-4 text-center">

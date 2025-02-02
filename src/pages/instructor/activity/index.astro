@@ -34,21 +34,15 @@ const caller = await createServerCaller(Astro.request);
 
 const [users, totalCount, activeCount] = await caller.users.getActivityData({
   search,
-  role: role || '',
+  role: role || "",
   skip,
   limit,
   orderBy,
   showOnline,
   onlineCutoff,
-})
+});
 ---
 
 <RootLayout title="Users">
-  <Page
-    users={users}
-    totalCount={totalCount}
-    activeCount={activeCount}
-    limit={limit}
-    client:load
-  />
+  <Page users={users} totalCount={totalCount} activeCount={activeCount} limit={limit} client:load />
 </RootLayout>

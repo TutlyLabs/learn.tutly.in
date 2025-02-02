@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Attachment, FileType, attachmentType, submissionMode } from "@prisma/client";
-import { actions } from "astro:actions";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
@@ -83,6 +82,7 @@ const NewAttachmentPage = ({
   const { isSubmitting } = form.formState;
   const { mutateAsync: createAttachment } = api.attachments.createAttachment.useMutation();
   const { mutateAsync: updateAttachment } = api.attachments.updateAttachment.useMutation();
+  const { mutateAsync: updateFileAssociatingId } = api.fileUpload.updateAssociatingId.useMutation();
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const dueDate =
@@ -325,7 +325,7 @@ const NewAttachmentPage = ({
                     associatingId: attachment?.id || "",
                     allowedExtensions: ["jpeg", "jpg", "png", "gif", "svg", "webp"],
                     onUpload: async (file) => {
-                      await actions.fileupload_updateAssociatingId({
+                      await updateFileAssociatingId({
                         fileId: file.id,
                         associatingId: attachment?.id || "",
                       });

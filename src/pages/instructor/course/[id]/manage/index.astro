@@ -12,10 +12,5 @@ const allUsers = await caller.users.getAllUsers({ courseId: id! });
 ---
 
 <RootLayout title="Manage Course">
-  <Page
-    allUsers={allUsers}
-    params={params}
-    currentUser={currentUser}
-    client:load
-  />
+  <Page allUsers={allUsers} params={params} currentUser={currentUser} client:load />
 </RootLayout>
