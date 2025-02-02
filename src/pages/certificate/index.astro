@@ -1,88 +1,12 @@
 ---
 import RootLayout from "@layouts/RootLayout.astro";
-import StudentCertificate from "./_components/StudentCertificate";
-import db from "@/lib/db";
-import { DashboardData } from "@/types/dashboard";
-const currentUser = Astro.locals.user;
-let dashboardData: DashboardData | null = null;
+// import Certificate from "./page";
 
-if (!currentUser) return Astro.redirect("/sign-in");
+// const caller = await createServerCaller(Astro.request);
 
-if (currentUser.role === "STUDENT") {
-  const enrolledCourses = await db.enrolledUsers.findMany({
-    where: {
-      username: currentUser.username,
-      user: {
-        organizationId: currentUser.organizationId,
-      },
-    },
-    select: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-          attachments: {
-            where: {
-              attachmentType: "ASSIGNMENT",
-            },
-            select: {
-              id: true,
-              title: true,
-              submissions: {
-                where: {
-                  enrolledUser: {
-                    username: currentUser.username,
-                  },
-                },
-                select: {
-                  id: true,
-                  points: {
-                    select: {
-                      score: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  dashboardData = {
-    courses: enrolledCourses.map((enrolledCourse) => {
-      const courseAssignments = enrolledCourse.course?.attachments || [];
-      const submissions = courseAssignments.flatMap((a) => a.submissions);
-
-      const totalPoints = submissions.reduce(
-        (acc, curr) => acc + curr.points.reduce((acc, curr) => acc + curr.score, 0),
-        0
-      );
-
-      return {
-        courseId: enrolledCourse.course?.id,
-        courseTitle: enrolledCourse.course?.title,
-        assignments: courseAssignments,
-        assignmentsSubmitted: submissions.length,
-        totalPoints,
-        totalAssignments: courseAssignments.length,
-      };
-    }),
-    currentUser,
-  };
-}
+// const { data:dashboardData } = await caller.courses.getCertificateData();
 ---
 
 <RootLayout title="Certificate">
-  {
-    currentUser.role === "STUDENT" && (
-      <div>
-        <StudentCertificate user={currentUser} data={dashboardData} client:load />
-      </div>
-    )
-  }
+  <!-- <Certificate currentUser={currentUser} dashboardData={dashboardData} /> -->
 </RootLayout>

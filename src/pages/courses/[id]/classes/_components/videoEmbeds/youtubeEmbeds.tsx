@@ -1,5 +1,3 @@
-import PropTypes from "prop-types";
-
 const YoutubeEmbed = ({ embedId }: { embedId: string }) => (
   <div className="">
     <iframe
@@ -11,9 +9,5 @@ const YoutubeEmbed = ({ embedId }: { embedId: string }) => (
     />
   </div>
 );
-
-YoutubeEmbed.propTypes = {
-  embedId: PropTypes.string.isRequired,
-};
 
 export default YoutubeEmbed;

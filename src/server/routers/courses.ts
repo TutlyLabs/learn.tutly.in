@@ -904,27 +904,269 @@ export const coursesRouter = createTRPCRouter({
       })
     }),
 
-    getCourseAttachments: protectedProcedure
-    .query(async ({ ctx }) => {
-      return ctx.db.course.findMany({
-        where: {
-          enrolledUsers: {
-            some: {
-              username: ctx.user.username,
+  getCourseAttachments: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: ctx.user.username,
+          },
+        },
+      },
+      select: {
+        classes: {
+          select: {
+            attachments: {
+              where: {
+                attachmentType: "ASSIGNMENT",
+              },
             },
           },
         },
+      },
+    });
+  }),
+
+  getAllAssignmentsInCourse: protectedProcedure
+    .input(z.object({ courses: z.array(z.object({ id: z.string() })) }))
+    .query(async ({ ctx, input }) => {
+      const currentUser = ctx.user;
+      return ctx.db.course.findMany({
+        where: {
+          id: {
+            in: input.courses.map((course) => course.id),
+          },
+        },
         select: {
+          id: true,
           classes: {
             select: {
+              id: true,
+              createdAt: true,
               attachments: {
                 where: {
                   attachmentType: "ASSIGNMENT",
+                  ...(currentUser.role === "MENTOR" && {
+                    submissions: {
+                      some: {
+                        enrolledUser: {
+                          mentorUsername: currentUser.username,
+                        },
+                      },
+                    },
+                  }),
+                },
+                select: {
+                  id: true,
+                  title: true,
+                  class: {
+                    select: {
+                      title: true,
+                    },
+                  },
+                  submissions: {
+                    where: {
+                      ...(currentUser.role === "MENTOR" && {
+                        enrolledUser: {
+                          mentorUsername: currentUser.username,
+                        },
+                      }),
+                    },
+                    select: {
+                      id: true,
+                      points: {
+                        select: {
+                          id: true,
+                        },
+                      },
+                      enrolledUser: {
+                        select: {
+                          mentorUsername: true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
+            },
+            orderBy: {
+              createdAt: "asc",
             },
           },
         },
       });
     }),
+
+  getAllCoursesOfUser: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    return ctx.db.course.findMany({
+      where: {
+        ...(currentUser.role === "MENTOR"
+          ? {
+              enrolledUsers: {
+                some: {
+                  mentorUsername: currentUser.username,
+                },
+              },
+            }
+          : {
+              enrolledUsers: {
+                some: {
+                  username: currentUser.username,
+                },
+              },
+            }),
+      },
+      include: {
+        classes: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        _count: {
+          select: {
+            classes: true,
+          },
+        },
+        courseAdmins: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+  }),
+  getAllDoubts: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    if (!currentUser) throw new Error("Unauthorized");
+
+    const courses = await ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentUser.username,
+          },
+        },
+      },
+      include: {
+        doubts: {
+          include: {
+            user: true,
+            response: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return courses;
+  }),
+
+  getCertificateData: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    if (!currentUser) throw new Error("Unauthorized");
+    const db = ctx.db;
+
+    const enrolledCourses = await db.enrolledUsers.findMany({
+      where: {
+        username: currentUser.username,
+        user: {
+          organizationId: currentUser.organizationId,
+        },
+      },
+      select: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            attachments: {
+              where: {
+                attachmentType: "ASSIGNMENT",
+              },
+              select: {
+                id: true,
+                title: true,
+                submissions: {
+                  where: {
+                    enrolledUser: {
+                      username: currentUser.username,
+                    },
+                  },
+                  select: {
+                    id: true,
+                    points: {
+                      select: {
+                        score: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    let dashboardData = {
+      courses: enrolledCourses.map((enrolledCourse) => {
+        const courseAssignments = enrolledCourse.course?.attachments || [];
+        const submissions = courseAssignments.flatMap((a) => a.submissions);
+
+        const totalPoints = submissions.reduce(
+          (acc, curr) => acc + curr.points.reduce((acc, curr) => acc + curr.score, 0),
+          0
+        );
+
+        return {
+          courseId: enrolledCourse.course?.id,
+          courseTitle: enrolledCourse.course?.title,
+          assignments: courseAssignments,
+          assignmentsSubmitted: submissions.length,
+          totalPoints,
+          totalAssignments: courseAssignments.length,
+        };
+      }),
+      currentUser,
+    };
+
+    return dashboardData;
+  }),
+  getCoursesOfUser: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    return ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentUser.username,
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+  }),
 });

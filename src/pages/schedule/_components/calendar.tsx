@@ -1,5 +1,5 @@
 "use client";
-import {api} from "@/trpc/react";
+
 import {
   addDays,
   addMonths,
@@ -50,6 +50,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import AddHolidayDialog from "@/pages/dashboard/_components/Holidays";
+import { api } from "@/trpc/react";
 
 import { DayView } from "./day-view";
 import { EventDetails } from "./event-details";

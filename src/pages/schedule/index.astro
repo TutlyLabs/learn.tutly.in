@@ -13,5 +13,5 @@ const isAuthorized = currentUser?.role === "INSTRUCTOR" || currentUser?.role ===
 ---
 
 <RootLayout title="Events">
-   <Schedule courses={courses} holidays={holidays} isAuthorized={isAuthorized} client:load />
+  <Schedule courses={courses} holidays={holidays} isAuthorized={isAuthorized} client:load />
 </RootLayout>

@@ -544,19 +544,18 @@ export const usersRouter = createTRPCRouter({
       };
     }),
 
-    getUserSessions: protectedProcedure.query(async ({ ctx }) => {
-      const sessions = await ctx.db.session.findMany({
-        where: { userId: ctx.user.id },
-        orderBy: { createdAt: "desc" },
-      });
+  getUserSessions: protectedProcedure.query(async ({ ctx }) => {
+    const sessions = await ctx.db.session.findMany({
+      where: { userId: ctx.user.id },
+      orderBy: { createdAt: "desc" },
+    });
 
-      return sessions;  
-    })
-,
-    getAccounts: protectedProcedure.query(async ({ ctx }) => {
-      const accounts = await ctx.db.account.findMany({
-        where: { userId: ctx.user.id },
-      });
+    return sessions;
+  }),
+  getAccounts: protectedProcedure.query(async ({ ctx }) => {
+    const accounts = await ctx.db.account.findMany({
+      where: { userId: ctx.user.id },
+    });
 
       return accounts
     }),
@@ -657,5 +656,29 @@ export const usersRouter = createTRPCRouter({
         take: input.limit,
       });
       return [allUsers, totalItems]
-    })
+    }),
+
+  
+  getStudentsOfMentor: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    const students = await ctx.db.user.findMany({
+      where: {
+        role: "STUDENT",
+        organizationId: currentUser.organizationId,
+        ...(currentUser.role === "MENTOR" && {
+          enrolledUsers: {
+            some: {
+              mentorUsername: currentUser.username,
+            },
+          },
+        }),
+      },
+      include: {
+        course: true,
+        enrolledUsers: true,
+      },
+    });
+    return students;
+  }),
+
 });

@@ -1,20 +1,22 @@
 ---
-
 import SessionPage from "./page.tsx";
 import { createServerCaller } from "@/trpc/server";
 import RootLayout from "@layouts/RootLayout.astro";
 
-
 const currentSessionId = Astro.locals.session?.id!;
-
 
 const caller = await createServerCaller(Astro.request);
 
-const sessions = await caller.users.getUserSessions()
+const sessions = await caller.users.getUserSessions();
 
-const accounts = await caller.users.getAccounts()
+const accounts = await caller.users.getAccounts();
 ---
 
 <RootLayout title="Account Settings">
-  <SessionPage sessions={sessions} accounts={accounts} currentSessionId={currentSessionId} client:only="react"/>
+  <SessionPage
+    sessions={sessions}
+    accounts={accounts}
+    currentSessionId={currentSessionId}
+    client:only="react"
+  />
 </RootLayout>

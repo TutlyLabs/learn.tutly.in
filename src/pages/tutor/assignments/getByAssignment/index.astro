@@ -1,112 +1,17 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import NoDataFound from "@/components/NoDataFound";
-import db from "@/lib/db";
-import SingleAssignmentBoard from "../_components/assignmentBoard";
+import GetByAssignment from "./page.tsx";
+import { createServerCaller } from "@/trpc/server";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
-
+const caller = await createServerCaller(Astro.request);
 if (currentUser.role == "STUDENT") {
   return Astro.redirect("/assignments");
 }
+const courses = await caller.courses.getCoursesOfUser();
 
-let courses = await db.course.findMany({
-  where: {
-    enrolledUsers: {
-      some: {
-        username: currentUser.username,
-      },
-    },
-  },
-  select: {
-    id: true,
-    title: true,
-  },
-});
-
-const coursesWithAssignments = await db.course.findMany({
-  where: {
-    id: {
-      in: courses.map((course) => course.id),
-    },
-    ...(currentUser.role === "MENTOR" && {
-      classes: {
-        some: {
-          attachments: {
-            some: {
-              submissions: {
-                some: {
-                  enrolledUser: {
-                    mentorUsername: currentUser.username,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    }),
-  },
-  select: {
-    id: true,
-    classes: {
-      select: {
-        id: true,
-        createdAt: true,
-        attachments: {
-          where: {
-            attachmentType: "ASSIGNMENT",
-            ...(currentUser.role === "MENTOR" && {
-              submissions: {
-                some: {
-                  enrolledUser: {
-                    mentorUsername: currentUser.username,
-                  },
-                },
-              },
-            }),
-          },
-          select: {
-            id: true,
-            title: true,
-            class: {
-              select: {
-                title: true,
-              },
-            },
-            submissions: {
-              where: {
-                ...(currentUser.role === "MENTOR" && {
-                  enrolledUser: {
-                    mentorUsername: currentUser.username,
-                  },
-                }),
-              },
-              select: {
-                id: true,
-                points: {
-                  select: {
-                    id: true,
-                  },
-                },
-                enrolledUser: {
-                  select: {
-                    mentorUsername: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    },
-  },
-});
-
+const coursesWithAssignments = await caller.courses.getAllAssignmentsInCourse({ courses });
 const sortedAssignments = coursesWithAssignments.map((course) => ({
   ...course,
   classes: course.classes
@@ -119,26 +24,5 @@ const sortedAssignments = coursesWithAssignments.map((course) => ({
 ---
 
 <RootLayout title="Get By Assignments">
-  <div class="flex flex-col gap-4 py-2 md:mx-14 md:px-8">
-    <div>
-      <h1
-        class="m-2 rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 py-2 text-center text-xl font-semibold"
-      >
-        Students
-      </h1>
-      {
-        courses && courses.length > 0 ? (
-          <>
-            <SingleAssignmentBoard
-              courses={courses}
-              assignments={sortedAssignments as any}
-              client:load
-            />
-          </>
-        ) : (
-          <NoDataFound message="No students found!" client:load />
-        )
-      }
-    </div>
-  </div>
+  <GetByAssignment sortedAssignments={sortedAssignments} courses={courses} />
 </RootLayout>

@@ -55,4 +55,12 @@ export const bookmarksRouter = createTRPCRouter({
         },
       });
     }),
+
+  getUserBookmarks: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.bookMarks.findMany({
+      where: {
+        userId: ctx.user?.id!,
+      },
+    });
+  }),
 });
