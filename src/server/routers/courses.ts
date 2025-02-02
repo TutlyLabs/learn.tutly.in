@@ -789,6 +789,132 @@ export const coursesRouter = createTRPCRouter({
     });
   }),
 
+    getAllAssignmentsInCourse: protectedProcedure
+    .input(z.object({ courses: z.array(z.object({ id: z.string() })) }))
+    .query(async ({ ctx, input }) => {
+      const currentUser = ctx.user;
+      return ctx.db.course.findMany({
+        where: {
+          id: {
+            in: input.courses.map((course) => course.id),
+          },
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              id: true,
+              createdAt: true,
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                  ...(currentUser.role === "MENTOR" && {
+                    submissions: {
+                      some: {
+                        enrolledUser: {
+                          mentorUsername: currentUser.username,
+                        },
+                      },
+                    },
+                  }),
+                },
+                select: {
+                  id: true,
+                  title: true,
+                  class: {
+                    select: {
+                      title: true,
+                    },
+                  },
+                  submissions: {
+                    where: {
+                      ...(currentUser.role === "MENTOR" && {
+                        enrolledUser: {
+                          mentorUsername: currentUser.username,
+                        },
+                      }),
+                    },
+                    select: {
+                      id: true,
+                      points: {
+                        select: {
+                          id: true,
+                        },
+                      },
+                      enrolledUser: {
+                        select: {
+                          mentorUsername: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+        },
+      });
+    }),  
+
+    getAllCoursesOfUser: protectedProcedure.query(async ({ ctx }) => {
+      const currentUser = ctx.user;
+      return ctx.db.course.findMany({
+        where: {
+          ...(currentUser.role === "MENTOR"
+            ? {
+                enrolledUsers: {
+                  some: {
+                    mentorUsername: currentUser.username,
+                  },
+                },
+              }
+            : {
+                enrolledUsers: {
+                  some: {
+                    username: currentUser.username,
+                  },
+                },
+              }),
+        },
+        include: {
+          classes: true,
+          createdBy: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              image: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+          _count: {
+            select: {
+              classes: true,
+            },
+          },
+          courseAdmins: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              image: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      });
+    }),
+
+
   getAllDoubts: protectedProcedure.query(async ({ ctx }) => {
     const currentUser = ctx.user;
     if (!currentUser) throw new Error("Unauthorized");
@@ -890,5 +1016,21 @@ export const coursesRouter = createTRPCRouter({
     };
 
     return dashboardData;
+  }),
+  getCoursesOfUser: protectedProcedure.query(async({ ctx })=> {
+    const currentUser = ctx.user;
+     return ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentUser.username,
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
   }),
 });

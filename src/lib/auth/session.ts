@@ -51,4 +51,6 @@ export async function validateSessionToken(token: string): Promise<SessionValida
     console.error("[Session] Error validating session:", error);
     return { session: null, user: null };
   }
+  }
+
 }

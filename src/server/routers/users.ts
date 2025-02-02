@@ -559,4 +559,26 @@ export const usersRouter = createTRPCRouter({
 
     return accounts;
   }),
+
+    getStudentsOfMentor: protectedProcedure.query(async ({ ctx }) => {
+      const currentUser=ctx.user;
+      const students = await ctx.db.user.findMany({
+        where: {
+          role: "STUDENT",
+          organizationId: currentUser.organizationId,
+          ...(currentUser.role === "MENTOR" && {
+            enrolledUsers: {
+              some: {
+                mentorUsername: currentUser.username,
+              },
+            },
+          }),
+        },
+        include: {
+          course: true,
+          enrolledUsers: true,
+        },
+      });
+      return students;
+    }),
 });

@@ -1,34 +1,19 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import { actions } from "astro:actions";
-import StudentWiseAssignments from "@/components/StudentWiseAssignments";
+import { createServerCaller } from "@/trpc/server";
+import AssignmentsPage from "./assignmentsPage.tsx";
 
 type Props = {
   id: string;
 };
-const call = Astro.callAction;
-const { id } = Astro.params;
 
-const { data } = await call(actions.assignments_getAllAssignedAssignmentsByUserId, {
-  id: id || "",
-});
+const caller = await createServerCaller(Astro.request);
+const { id } = Astro.params;
+const data = await caller.assignments.getAllAssignedAssignmentsByUserId({id:id || ""});
+
 const { courses, coursesWithAssignments } = data || {};
 ---
 
 <RootLayout title={`${id} Assignment`}>
-  <div class="mx-2 flex flex-col gap-4 px-2 py-2 md:mx-6 md:px-8">
-    <h1 class="py-2 text-center text-3xl font-semibold">ASSIGNMENTS</h1>
-    {
-      !coursesWithAssignments || coursesWithAssignments.length === 0 ? (
-        <div class="text-center">No Assignments found!</div>
-      ) : (
-        <StudentWiseAssignments
-          courses={courses}
-          assignments={coursesWithAssignments}
-          userId={id}
-          client:load
-        />
-      )
-    }
-  </div>
+   <AssignmentsPage courses={courses} coursesWithAssignments={coursesWithAssignments} id={id}/>
 </RootLayout>

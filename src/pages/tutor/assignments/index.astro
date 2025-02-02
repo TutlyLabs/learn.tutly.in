@@ -1,84 +1,15 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import db from "@/lib/db";
-import AssignmentDashboard from "./_components/AssignmentDashboard";
-
+import { createServerCaller } from "@/trpc/server";
+import Assignment from "./page.tsx";
 const currentUser = Astro.locals.user!;
 
 if (currentUser.role === "STUDENT") {
   return Astro.redirect("/assignments");
 }
-
-const students = await db.user.findMany({
-  where: {
-    role: "STUDENT",
-    organizationId: currentUser.organizationId,
-    ...(currentUser.role === "MENTOR" && {
-      enrolledUsers: {
-        some: {
-          mentorUsername: currentUser.username,
-        },
-      },
-    }),
-  },
-  include: {
-    course: true,
-    enrolledUsers: true,
-  },
-});
-
-const courses = await db.course.findMany({
-  where: {
-    ...(currentUser.role === "MENTOR"
-      ? {
-          enrolledUsers: {
-            some: {
-              mentorUsername: currentUser.username,
-            },
-          },
-        }
-      : {
-          enrolledUsers: {
-            some: {
-              username: currentUser.username,
-            },
-          },
-        }),
-  },
-  include: {
-    classes: true,
-    createdBy: {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        image: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    },
-    _count: {
-      select: {
-        classes: true,
-      },
-    },
-    courseAdmins: {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        image: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    },
-  },
-});
-
+const caller = await createServerCaller(Astro.request);
+const students = await caller.users.getStudentsOfMentor();
+const courses = await caller.courses.getAllCoursesOfUser();
 courses.forEach((course) => {
   course.classes.sort((a, b) => {
     return Number(a.createdAt) - Number(b.createdAt);
@@ -87,10 +18,5 @@ courses.forEach((course) => {
 ---
 
 <RootLayout title="Assignments">
-  <AssignmentDashboard
-    students={students}
-    courses={courses}
-    currentUser={currentUser}
-    client:load
-  />
+  <Assignment students={students} courses={courses} currentUser={currentUser} client:load/>
 </RootLayout>
