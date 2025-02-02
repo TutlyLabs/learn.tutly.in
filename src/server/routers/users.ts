@@ -549,7 +549,6 @@ export const usersRouter = createTRPCRouter({
       where: { userId: ctx.user.id },
       orderBy: { createdAt: "desc" },
     });
-
     return sessions;
   }),
   getAccounts: protectedProcedure.query(async ({ ctx }) => {
