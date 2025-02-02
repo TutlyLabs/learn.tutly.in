@@ -3,6 +3,7 @@ main = "dist/server/entry.mjs"
 compatibility_date = "2024-02-03"
 node_compat = true
 compatibility_flags = ["nodejs_compat"]
+node_version = "18.17.1"
 
 [build]
 command = "pnpm build"
