@@ -1121,4 +1121,569 @@ export const assignmentsRouter = createTRPCRouter({
         throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
+
+  getAssignmentsPageData: protectedProcedure.query(async ({ ctx }) => {
+    const currentuser = ctx.user!;
+    const db = ctx.db;
+    const coursesData = await db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentuser.username,
+          },
+        },
+      },
+      include: {
+        classes: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        _count: {
+          select: {
+            classes: true,
+          },
+        },
+        courseAdmins: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    coursesData.forEach((course) => {
+      course.classes.sort((a, b) => {
+        return Number(a.createdAt) - Number(b.createdAt);
+      });
+    });
+    const publishedCourses = coursesData.filter((course) => course.isPublished);
+    const courses = currentuser.role === "INSTRUCTOR" ? coursesData : publishedCourses;
+
+    const assignments = await db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentuser.username,
+          },
+        },
+      },
+      select: {
+        id: true,
+        classes: {
+          select: {
+            attachments: {
+              where: {
+                attachmentType: "ASSIGNMENT",
+              },
+              include: {
+                class: true,
+                submissions: {
+                  where: {
+                    enrolledUser: {
+                      username: currentuser.username,
+                    },
+                  },
+                  include: {
+                    points: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    });
+    return {
+      courses,
+      assignments,
+    };
+  }),
+
+  getAssignmentDetailsPageData: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        page: z.number(),
+        limit: z.number(),
+        searchQuery: z.string(),
+        selectedMentor: z.string(),
+        username: z.string(),
+        skip: z.number(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const db = ctx.db;
+      const currentUser = ctx.user!;
+      const { page, limit, searchQuery, id, selectedMentor, username, skip } = input;
+      const baseInclude = {
+        class: {
+          select: {
+            id: true,
+            course: {
+              select: {
+                id: true,
+                title: true,
+                createdById: true,
+              },
+            },
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            createdById: true,
+          },
+        },
+      };
+
+      const assignment = await (async () => {
+        if (currentUser.role === "INSTRUCTOR") {
+          const [rawAssignmentData, totalCount] = await Promise.all([
+            db.attachment.findUnique({
+              where: { id: id },
+              include: {
+                ...baseInclude,
+                submissions: {
+                  where: {
+                    AND: [
+                      selectedMentor && selectedMentor !== "all"
+                        ? {
+                            enrolledUser: {
+                              mentorUsername: selectedMentor,
+                            },
+                          }
+                        : {},
+                      searchQuery
+                        ? {
+                            enrolledUser: {
+                              username: {
+                                contains: searchQuery,
+                                mode: "insensitive",
+                              },
+                            },
+                          }
+                        : {},
+                      username
+                        ? {
+                            enrolledUser: {
+                              username: username,
+                            },
+                          }
+                        : {},
+                    ],
+                  },
+                  take: limit,
+                  skip,
+                  orderBy: { submissionDate: "desc" },
+                  include: {
+                    enrolledUser: {
+                      select: {
+                        username: true,
+                        mentorUsername: true,
+                      },
+                    },
+                    points: {
+                      select: {
+                        category: true,
+                        score: true,
+                      },
+                    },
+                  },
+                },
+                course: {
+                  select: {
+                    id: true,
+                    title: true,
+                    createdById: true,
+                    enrolledUsers: {
+                      where: {
+                        user: {
+                          organizationId: currentUser.organizationId,
+                        },
+                      },
+                      select: {
+                        username: true,
+                        mentorUsername: true,
+                      },
+                    },
+                  },
+                },
+              },
+            }),
+            db.submission.count({
+              where: {
+                attachmentId: id,
+                AND: [
+                  selectedMentor && selectedMentor !== "all"
+                    ? {
+                        enrolledUser: {
+                          mentorUsername: selectedMentor,
+                        },
+                      }
+                    : {},
+                  searchQuery
+                    ? {
+                        enrolledUser: {
+                          username: {
+                            contains: searchQuery,
+                            mode: "insensitive",
+                          },
+                        },
+                      }
+                    : {},
+                  username
+                    ? {
+                        enrolledUser: {
+                          username: username,
+                        },
+                      }
+                    : {},
+                ],
+              },
+            }),
+          ]);
+
+          if (!rawAssignmentData) return null;
+
+          const assignmentData = rawAssignmentData;
+          return {
+            ...assignmentData,
+            totalCount,
+            submissions: assignmentData.submissions || [],
+            course: assignmentData.course || null,
+          };
+        } else if (currentUser.role === "MENTOR") {
+          const [rawAssignmentData, totalCount] = await Promise.all([
+            db.attachment.findUnique({
+              where: { id: id },
+              include: {
+                ...baseInclude,
+                submissions: {
+                  where: {
+                    AND: [
+                      {
+                        enrolledUser: {
+                          mentorUsername: currentUser.username,
+                        },
+                      },
+                      username
+                        ? {
+                            enrolledUser: {
+                              username: username,
+                            },
+                          }
+                        : {},
+                      searchQuery
+                        ? {
+                            enrolledUser: {
+                              username: {
+                                contains: searchQuery,
+                                mode: "insensitive",
+                              },
+                            },
+                          }
+                        : {},
+                    ],
+                  },
+                  take: limit,
+                  skip,
+                  orderBy: { submissionDate: "desc" },
+                  include: {
+                    enrolledUser: {
+                      select: {
+                        username: true,
+                        mentorUsername: true,
+                      },
+                    },
+                    points: {
+                      select: {
+                        category: true,
+                        score: true,
+                      },
+                    },
+                  },
+                },
+                course: {
+                  select: {
+                    id: true,
+                    title: true,
+                    createdById: true,
+                    enrolledUsers: {
+                      where: {
+                        mentorUsername: currentUser.username,
+                      },
+                      select: {
+                        username: true,
+                        mentorUsername: true,
+                      },
+                    },
+                  },
+                },
+              },
+            }),
+            db.submission.count({
+              where: {
+                attachmentId: id,
+                AND: [
+                  {
+                    enrolledUser: {
+                      mentorUsername: currentUser.username,
+                    },
+                  },
+                  username
+                    ? {
+                        enrolledUser: {
+                          username: username,
+                        },
+                      }
+                    : {},
+                  searchQuery
+                    ? {
+                        enrolledUser: {
+                          username: {
+                            contains: searchQuery,
+                            mode: "insensitive",
+                          },
+                        },
+                      }
+                    : {},
+                ],
+              },
+            }),
+          ]);
+
+          if (!rawAssignmentData) return null;
+
+          const assignmentData = rawAssignmentData;
+          return {
+            ...assignmentData,
+            totalCount,
+            submissions: assignmentData.submissions || [],
+            course: assignmentData.course || null,
+          };
+        } else {
+          const rawAssignmentData = await db.attachment.findUnique({
+            where: { id: id },
+            include: {
+              ...baseInclude,
+              submissions: {
+                where: {
+                  enrolledUser: {
+                    user: {
+                      id: currentUser.id,
+                    },
+                  },
+                },
+                include: {
+                  enrolledUser: {
+                    select: {
+                      username: true,
+                      mentorUsername: true,
+                    },
+                  },
+                  points: {
+                    select: {
+                      category: true,
+                      score: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
+
+          if (!rawAssignmentData) return null;
+
+          const assignmentData = rawAssignmentData;
+          return {
+            ...assignmentData,
+            submissions: assignmentData.submissions || [],
+            course: assignmentData.course || null,
+          };
+        }
+      })();
+
+      if (!assignment) {
+        return null;
+      }
+
+      // todo: fix this types
+      const notSubmittedMentees =
+        // @ts-ignore
+        assignment.course?.enrolledUsers?.filter(
+          (enrolled: any) =>
+            !assignment.submissions?.some(
+              (submission: any) => submission.enrolledUser.username === enrolled.username
+            )
+        ) ?? [];
+
+      const sortedAssignments = [...(assignment.submissions ?? [])].sort((a, b) =>
+        a.enrolledUser.username.localeCompare(b.enrolledUser.username)
+      );
+
+      const isCourseAdmin =
+        currentUser.role === "INSTRUCTOR"
+          ? currentUser.id === assignment.course?.createdById
+          : (currentUser?.adminForCourses?.some((course) => course.id === assignment.courseId) ??
+            false);
+
+      // @ts-ignore
+      const totalPages = Math.ceil((assignment.totalCount ?? 0) / limit);
+
+      // @ts-ignore
+      const mentors = assignment?.course?.enrolledUsers
+        ? Array.from(
+            new Set(
+              // @ts-ignore
+              assignment.course.enrolledUsers.map((user) => user.mentorUsername).filter(Boolean)
+            )
+          )
+        : [];
+
+      return {
+        assignment,
+        sortedAssignments,
+        notSubmittedMentees,
+        isCourseAdmin,
+        mentors,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          pageSize: limit,
+        },
+      };
+    }),
+
+  getEvaluateData: protectedProcedure
+    .input(
+      z.object({
+        assignmentId: z.string(),
+        username: z.string(),
+        submissionId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { assignmentId, username, submissionId } = input;
+      const db = ctx.db;
+      const user = ctx.user;
+      const assignment = await db.attachment.findUnique({
+        where: {
+          id: assignmentId,
+        },
+        include: {
+          class: {
+            include: {
+              course: true,
+            },
+          },
+        },
+      });
+      const assignmenttemp = await db.attachment.findUnique({
+        where: {
+          id: assignmentId!,
+        },
+      });
+
+      const submissions = await db.submission.findMany({
+        where: {
+          attachmentId: assignmentId!,
+        },
+        include: {
+          enrolledUser: {
+            include: {
+              user: true,
+            },
+          },
+          points: true,
+          assignment: true,
+        },
+        orderBy: {
+          enrolledUser: {
+            username: "asc",
+          },
+        },
+      });
+
+      let filteredSubmissions: any[] = [];
+
+      if (user?.role === "INSTRUCTOR") {
+        filteredSubmissions = submissions;
+      }
+
+      if (user?.role === "MENTOR") {
+        filteredSubmissions = submissions.filter(
+          (submission) => submission.enrolledUser.mentorUsername === user.username
+        );
+      }
+
+      if (assignmenttemp?.maxSubmissions && assignmenttemp.maxSubmissions > 1) {
+        const submissionCount = await db.submission.groupBy({
+          by: ["enrolledUserId"],
+          where: {
+            attachmentId: assignmentId!,
+          },
+          _count: {
+            id: true,
+          },
+        });
+
+        filteredSubmissions.forEach((submission) => {
+          const submissionCountData = submissionCount.find(
+            (data) => data.enrolledUserId === submission.enrolledUserId
+          );
+          if (submissionCountData) {
+            submission.submissionCount = submissionCountData._count.id;
+          }
+        });
+
+        filteredSubmissions.forEach((submission) => {
+          submission.submissionIndex = 1;
+          if (submission.submissionCount && submission.submissionCount > 1) {
+            const submissionIndex =
+              submissions
+                .filter((sub) => sub.enrolledUserId === submission.enrolledUserId)
+                .findIndex((sub) => sub.id === submission.id) || 0;
+            submission.submissionIndex = submissionIndex + 1;
+          }
+        });
+      }
+
+      if (username) {
+        filteredSubmissions =
+          filteredSubmissions &&
+          filteredSubmissions.filter(
+            (submission: any) => submission?.enrolledUser.username == username
+          );
+      }
+
+      const submission = filteredSubmissions.find(
+        (submission: any) => submission?.id == submissionId
+      );
+
+      return {
+        assignment,
+        submission,
+        filteredSubmissions,
+      };
+    }),
 });
