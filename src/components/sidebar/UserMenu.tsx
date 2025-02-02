@@ -138,9 +138,9 @@ export function UserMenu({ user }: UserMenuProps) {
               <AvatarFallback className="rounded-full">
                 {user.name
                   ? user.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
                   : user.username}
               </AvatarFallback>
             </Avatar>

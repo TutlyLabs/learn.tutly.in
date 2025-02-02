@@ -57,7 +57,7 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
         createdAt,
         folderId: selectedFolder != "new" ? selectedFolder : undefined,
         folderName: selectedFolder == "new" ? folderName.trim() : undefined,
-      })
+      });
 
       toast.success("Class added successfully");
       setVideoLink("");

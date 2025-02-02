@@ -1,13 +1,15 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { APIRoute } from "astro";
-import { createTRPCContext } from "@/server/trpc";
-import { appRouter } from "@/server";
+
 import { validateSessionToken } from "@/lib/auth/session";
+import { appRouter } from "@/server";
+import { createTRPCContext } from "@/server/trpc";
 
 export const ALL: APIRoute = async ({ request, cookies }) => {
   try {
-    const sessionToken = cookies.get("app_auth_token")?.value || request.headers.get("app_auth_token");
-    
+    const sessionToken =
+      cookies.get("app_auth_token")?.value || request.headers.get("app_auth_token");
+
     let session = null;
     let user = null;
 

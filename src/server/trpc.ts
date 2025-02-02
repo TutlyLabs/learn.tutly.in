@@ -6,13 +6,13 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import { initTRPC, TRPCError } from "@trpc/server"
-import superjson from "superjson"
-import { ZodError } from "zod"
+import type { Session } from "@prisma/client";
+import { TRPCError, initTRPC } from "@trpc/server";
+import superjson from "superjson";
+import { ZodError } from "zod";
 
-import type { Session } from "@prisma/client"
-import db from "@/lib/db"
-import { SessionUser, validateSessionToken } from "@/lib/auth/session"
+import { SessionUser, validateSessionToken } from "@/lib/auth/session";
+import db from "@/lib/db";
 
 /**
  * Isomorphic Session getter for API requests
@@ -20,18 +20,18 @@ import { SessionUser, validateSessionToken } from "@/lib/auth/session"
  * - Next.js requests will have a session token in cookies
  */
 const isomorphicGetSession = async (headers: Headers) => {
-  const authToken = headers.get("app_auth_token") ?? null
+  const authToken = headers.get("app_auth_token") ?? null;
   if (!authToken) {
-    return { session: null, user: null }
+    return { session: null, user: null };
   }
 
   try {
-    const { session, user } = await validateSessionToken(authToken)
-    return { session, user }
+    const { session, user } = await validateSessionToken(authToken);
+    return { session, user };
   } catch (error) {
-    return { session: null, user: null }
+    return { session: null, user: null };
   }
-}
+};
 
 /**
  * 1. CONTEXT
@@ -46,26 +46,27 @@ const isomorphicGetSession = async (headers: Headers) => {
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: {
-  headers: Headers
-  session: Session | null
-  user: SessionUser | null
+  headers: Headers;
+  session: Session | null;
+  user: SessionUser | null;
 }) => {
-  const authToken = opts.headers.get("app_auth_token") ?? null
+  const authToken = opts.headers.get("app_auth_token") ?? null;
   // Use the passed session/user if available, otherwise try to get from token
-  const { session, user } = opts.session && opts.user 
-    ? { session: opts.session, user: opts.user }
-    : await isomorphicGetSession(opts.headers)
+  const { session, user } =
+    opts.session && opts.user
+      ? { session: opts.session, user: opts.user }
+      : await isomorphicGetSession(opts.headers);
 
-  const source = opts.headers.get("x-trpc-source") ?? "unknown"
-  console.log(">>> tRPC Request from", source, "by", user?.email ?? "anonymous")
+  const source = opts.headers.get("x-trpc-source") ?? "unknown";
+  console.log(">>> tRPC Request from", source, "by", user?.email ?? "anonymous");
 
   return {
     session,
     user,
     db,
     token: authToken,
-  }
-}
+  };
+};
 
 /**
  * 2. INITIALIZATION
@@ -82,13 +83,13 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
     },
   }),
-})
+});
 
 /**
  * Create a server-side caller
  * @see https://trpc.io/docs/server/server-side-calls
  */
-export const createCallerFactory = t.createCallerFactory
+export const createCallerFactory = t.createCallerFactory;
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -101,7 +102,7 @@ export const createCallerFactory = t.createCallerFactory
  * This is how you create new routers and subrouters in your tRPC API
  * @see https://trpc.io/docs/router
  */
-export const createTRPCRouter = t.router
+export const createTRPCRouter = t.router;
 
 /**
  * Middleware for timing procedure execution and adding an articifial delay in development.
@@ -110,21 +111,21 @@ export const createTRPCRouter = t.router
  * network latency that would occur in production but not in local development.
  */
 const timingMiddleware = t.middleware(async ({ next, path }) => {
-  const start = Date.now()
+  const start = Date.now();
 
   if (t._config.isDev) {
     // artificial delay in dev 100-500ms
-    const waitMs = Math.floor(Math.random() * 400) + 100
-    await new Promise((resolve) => setTimeout(resolve, waitMs))
+    const waitMs = Math.floor(Math.random() * 400) + 100;
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
   }
 
-  const result = await next()
+  const result = await next();
 
-  const end = Date.now()
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`)
+  const end = Date.now();
+  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
 
-  return result
-})
+  return result;
+});
 
 /**
  * Public (unauthed) procedure
@@ -133,7 +134,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure.use(timingMiddleware)
+export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -145,7 +146,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware)
  */
 export const protectedProcedure = t.procedure.use(timingMiddleware).use(({ ctx, next }) => {
   if (!ctx.user || !ctx.session) {
-    throw new TRPCError({ code: "UNAUTHORIZED" })
+    throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({
     ctx: {
@@ -153,28 +154,28 @@ export const protectedProcedure = t.procedure.use(timingMiddleware).use(({ ctx, 
       user: ctx.user,
       session: ctx.session,
     } as ProtectedTRPCContext,
-  })
-})
+  });
+});
 
 export const instructorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const user = ctx.user
+  const user = ctx.user;
   if (user.role !== "INSTRUCTOR") {
-    throw new TRPCError({ code: "UNAUTHORIZED" })
+    throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-  return next({ ctx })
-})
+  return next({ ctx });
+});
 
 export const mentorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const user = ctx.user
+  const user = ctx.user;
   if (user.role !== "MENTOR") {
-    throw new TRPCError({ code: "UNAUTHORIZED" })
+    throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-  return next({ ctx })
-})
+  return next({ ctx });
+});
 
-export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>
+export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;
 
 export type ProtectedTRPCContext = TRPCContext & {
-  user: NonNullable<TRPCContext["user"]>
-  session: NonNullable<TRPCContext["session"]>
-}
+  user: NonNullable<TRPCContext["user"]>;
+  session: NonNullable<TRPCContext["session"]>;
+};

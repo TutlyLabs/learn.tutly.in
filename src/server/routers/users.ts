@@ -1,8 +1,8 @@
-import { Role } from "@prisma/client"
-import bcrypt from "bcrypt"
-import { z } from "zod"
+import { Role } from "@prisma/client";
+import bcrypt from "bcrypt";
+import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc"
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const usersRouter = createTRPCRouter({
   getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
@@ -15,9 +15,9 @@ export const usersRouter = createTRPCRouter({
       omit: {
         password: true,
         oneTimePassword: true,
-      }
-    })
-    return user
+      },
+    });
+    return user;
   }),
 
   getAllEnrolledUsers: protectedProcedure
@@ -40,9 +40,9 @@ export const usersRouter = createTRPCRouter({
           name: true,
           email: true,
         },
-      })
+      });
 
-      return enrolledUsers
+      return enrolledUsers;
     }),
 
   getAllUsers: protectedProcedure
@@ -74,8 +74,8 @@ export const usersRouter = createTRPCRouter({
             },
           },
         },
-      })
-      return globalUsers
+      });
+      return globalUsers;
     }),
 
   updateUserProfile: protectedProcedure
@@ -121,7 +121,7 @@ export const usersRouter = createTRPCRouter({
         experiences: [],
         address: {},
         documents: {},
-      }
+      };
 
       const createData = {
         ...defaultValues,
@@ -131,21 +131,21 @@ export const usersRouter = createTRPCRouter({
             value ?? defaultValues[key as keyof typeof defaultValues],
           ])
         ),
-      }
+      };
 
       const updateData = Object.fromEntries(
         Object.entries(input.profile)
           .filter(([_, value]) => value !== undefined)
           .map(([key, value]) => [key, value])
-      )
+      );
 
       const updatedProfile = await ctx.db.profile.upsert({
         where: { userId: ctx.user.id },
         create: createData,
         update: updateData,
-      })
+      });
 
-      return updatedProfile
+      return updatedProfile;
     }),
 
   updateUserAvatar: protectedProcedure
@@ -154,9 +154,9 @@ export const usersRouter = createTRPCRouter({
       const updatedProfile = await ctx.db.user.update({
         where: { id: ctx.user.id },
         data: { image: input.avatar },
-      })
+      });
 
-      return updatedProfile
+      return updatedProfile;
     }),
 
   createUser: protectedProcedure
@@ -171,10 +171,10 @@ export const usersRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user.organizationId) {
-        throw new Error("Organization not found")
+        throw new Error("Organization not found");
       }
 
-      const hashedPassword = await bcrypt.hash(input.password, 10)
+      const hashedPassword = await bcrypt.hash(input.password, 10);
 
       const user = await ctx.db.user.create({
         data: {
@@ -185,9 +185,9 @@ export const usersRouter = createTRPCRouter({
           role: input.role as Role,
           organization: { connect: { id: ctx.user.organizationId } },
         },
-      })
+      });
 
-      return user
+      return user;
     }),
 
   updateUser: protectedProcedure
@@ -202,7 +202,7 @@ export const usersRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.user.organizationId) {
-        throw new Error("Organization not found")
+        throw new Error("Organization not found");
       }
 
       const user = await ctx.db.user.update({
@@ -213,37 +213,35 @@ export const usersRouter = createTRPCRouter({
           email: input.email,
           role: input.role as Role,
         },
-      })
-      return user
+      });
+      return user;
     }),
 
   deleteUser: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.user.delete({ where: { id: input.id } })
-      return { success: true }
+      await ctx.db.user.delete({ where: { id: input.id } });
+      return { success: true };
     }),
 
-  getUser: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: input.id },
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          email: true,
-          role: true,
-        },
-      })
+  getUser: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const user = await ctx.db.user.findUnique({
+      where: { id: input.id },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        role: true,
+      },
+    });
 
-      if (!user) {
-        throw new Error("User not found")
-      }
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-      return user
-    }),
+    return user;
+  }),
 
   bulkUpsert: protectedProcedure
     .input(
@@ -259,7 +257,7 @@ export const usersRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input: users }) => {
       if (!ctx.user.organizationId) {
-        throw new Error("Organization not found")
+        throw new Error("Organization not found");
       }
 
       const results = await Promise.all(
@@ -269,9 +267,9 @@ export const usersRouter = createTRPCRouter({
               email: user.email,
               organizationId: ctx.user.organizationId,
             },
-          })
+          });
 
-          const hashedPassword = user.password ? await bcrypt.hash(user.password, 10) : null
+          const hashedPassword = user.password ? await bcrypt.hash(user.password, 10) : null;
 
           if (existingUser) {
             return ctx.db.user.update({
@@ -282,7 +280,7 @@ export const usersRouter = createTRPCRouter({
                 password: hashedPassword,
                 role: user.role as Role,
               },
-            })
+            });
           }
 
           return ctx.db.user.create({
@@ -294,11 +292,11 @@ export const usersRouter = createTRPCRouter({
               },
               role: user.role as Role,
             },
-          })
+          });
         })
-      )
+      );
 
-      return results
+      return results;
     }),
 
   changePassword: protectedProcedure
@@ -315,34 +313,34 @@ export const usersRouter = createTRPCRouter({
         select: {
           password: true,
         },
-      })
+      });
 
       if (!user) {
-        throw new Error("User not found")
+        throw new Error("User not found");
       }
 
       if (user.password && !input.old_password) {
-        throw new Error("Old password is required")
+        throw new Error("Old password is required");
       }
 
       if (user.password && input.old_password) {
-        const passwordMatch = await bcrypt.compare(input.old_password, user.password)
+        const passwordMatch = await bcrypt.compare(input.old_password, user.password);
 
         if (!passwordMatch) {
-          throw new Error("Old password is incorrect")
+          throw new Error("Old password is incorrect");
         }
       }
 
-      const hashedNewPassword = await bcrypt.hash(input.new_password, 10)
+      const hashedNewPassword = await bcrypt.hash(input.new_password, 10);
 
       await ctx.db.user.update({
         where: { id: input.id },
         data: {
           password: hashedNewPassword,
         },
-      })
+      });
 
-      return { success: true }
+      return { success: true };
     }),
 
   deleteSession: protectedProcedure
@@ -353,14 +351,14 @@ export const usersRouter = createTRPCRouter({
           id: input.sessionId,
           userId: ctx.user.id,
         },
-      })
+      });
 
       if (!session) {
-        throw new Error("Session not found")
+        throw new Error("Session not found");
       }
 
       if (ctx.session?.id === input.sessionId) {
-        throw new Error("Cannot delete current session")
+        throw new Error("Cannot delete current session");
       }
 
       await ctx.db.session.delete({
@@ -368,9 +366,9 @@ export const usersRouter = createTRPCRouter({
           id: input.sessionId,
           userId: ctx.user.id,
         },
-      })
+      });
 
-      return { success: true }
+      return { success: true };
     }),
 
   unlinkAccount: protectedProcedure
@@ -381,20 +379,20 @@ export const usersRouter = createTRPCRouter({
           userId: ctx.user.id,
           provider: input.provider,
         },
-      })
+      });
 
       if (!account) {
-        throw new Error("Account not found")
+        throw new Error("Account not found");
       }
 
       const accountCount = await ctx.db.account.count({
         where: {
           userId: ctx.user.id,
         },
-      })
+      });
 
       if (accountCount <= 1) {
-        throw new Error("Cannot unlink last account")
+        throw new Error("Cannot unlink last account");
       }
 
       await ctx.db.account.delete({
@@ -402,9 +400,9 @@ export const usersRouter = createTRPCRouter({
           userId: ctx.user.id,
           provider: input.provider,
         },
-      })
+      });
 
-      return { success: true }
+      return { success: true };
     }),
 
   resetPassword: protectedProcedure
@@ -412,10 +410,10 @@ export const usersRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
         where: { email: input.email },
-      })
+      });
 
       if (!user) {
-        throw new Error("User not found")
+        throw new Error("User not found");
       }
 
       await ctx.db.user.update({
@@ -423,9 +421,9 @@ export const usersRouter = createTRPCRouter({
         data: {
           password: null,
         },
-      })
+      });
 
-      return user
+      return user;
     }),
 
   updatePassword: protectedProcedure
@@ -449,7 +447,7 @@ export const usersRouter = createTRPCRouter({
           error: {
             message: "Passwords don't match",
           },
-        }
+        };
       }
 
       const userExists = await ctx.db.user.findUnique({
@@ -459,14 +457,14 @@ export const usersRouter = createTRPCRouter({
         select: {
           password: true,
         },
-      })
+      });
 
       if (!userExists) {
         return {
           error: {
             message: "User does not exist",
           },
-        }
+        };
       }
 
       if (userExists.password !== null) {
@@ -475,20 +473,20 @@ export const usersRouter = createTRPCRouter({
             error: {
               message: "Please provide old password",
             },
-          }
+          };
         }
 
-        const isPasswordValid = await bcrypt.compare(input.oldPassword, userExists.password)
+        const isPasswordValid = await bcrypt.compare(input.oldPassword, userExists.password);
         if (!isPasswordValid) {
           return {
             error: {
               message: "Old password is incorrect",
             },
-          }
+          };
         }
       }
 
-      const password = await bcrypt.hash(input.newPassword, 10)
+      const password = await bcrypt.hash(input.newPassword, 10);
 
       await ctx.db.user.update({
         where: {
@@ -497,12 +495,12 @@ export const usersRouter = createTRPCRouter({
         data: {
           password: password,
         },
-      })
+      });
 
       return {
         success: true,
         message: "User updated successfully",
-      }
+      };
     }),
 
   instructor_resetPassword: protectedProcedure
@@ -518,31 +516,31 @@ export const usersRouter = createTRPCRouter({
           error: {
             message: "Unauthorized",
           },
-        }
+        };
       }
 
       const user = await ctx.db.user.findUnique({
         where: { email: input.email },
-      })
+      });
 
       if (!user) {
         return {
           error: {
             message: "User not found",
           },
-        }
+        };
       }
 
-      const hashedPassword = await bcrypt.hash(input.newPassword, 10)
+      const hashedPassword = await bcrypt.hash(input.newPassword, 10);
 
       await ctx.db.user.update({
         where: { id: user.id },
         data: { password: hashedPassword },
-      })
+      });
 
       return {
         success: true,
         message: "Password reset successfully",
-      }
+      };
     }),
-})
+});

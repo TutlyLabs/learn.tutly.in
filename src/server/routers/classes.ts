@@ -1,20 +1,22 @@
-import { z } from "zod"
+import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc"
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const classesRouter = createTRPCRouter({
   createClass: protectedProcedure
-    .input(z.object({
-      classTitle: z.string().trim().min(1, {
-        message: "Title is required",
-      }),
-      videoLink: z.string().nullable(),
-      videoType: z.enum(["DRIVE", "YOUTUBE", "ZOOM"]),
-      courseId: z.string().trim().min(1),
-      createdAt: z.string().optional(),
-      folderId: z.string().optional(),
-      folderName: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        classTitle: z.string().trim().min(1, {
+          message: "Title is required",
+        }),
+        videoLink: z.string().nullable(),
+        videoType: z.enum(["DRIVE", "YOUTUBE", "ZOOM"]),
+        courseId: z.string().trim().min(1),
+        createdAt: z.string().optional(),
+        folderId: z.string().optional(),
+        folderName: z.string().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
         const classData = {
@@ -31,7 +33,7 @@ export const classesRouter = createTRPCRouter({
               id: input.courseId,
             },
           },
-        }
+        };
 
         if (input.folderId) {
           return await ctx.db.class.create({
@@ -43,7 +45,7 @@ export const classesRouter = createTRPCRouter({
                 },
               },
             },
-          })
+          });
         } else if (input.folderName) {
           return await ctx.db.class.create({
             data: {
@@ -55,40 +57,42 @@ export const classesRouter = createTRPCRouter({
                 },
               },
             },
-          })
+          });
         }
 
         return await ctx.db.class.create({
           data: classData,
-        })
+        });
       } catch (error) {
-        throw new Error("Error creating class")
+        throw new Error("Error creating class");
       }
     }),
 
   updateClass: protectedProcedure
-    .input(z.object({
-      classId: z.string(),
-      courseId: z.string(),
-      classTitle: z.string(),
-      videoLink: z.string().nullable(),
-      videoType: z.enum(["DRIVE", "YOUTUBE", "ZOOM"]),
-      folderId: z.string().optional(),
-      folderName: z.string().optional(),
-      createdAt: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        classId: z.string(),
+        courseId: z.string(),
+        classTitle: z.string(),
+        videoLink: z.string().nullable(),
+        videoType: z.enum(["DRIVE", "YOUTUBE", "ZOOM"]),
+        folderId: z.string().optional(),
+        folderName: z.string().optional(),
+        createdAt: z.string().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
-      const currentUser = ctx.user
+      const currentUser = ctx.user;
       const isCourseAdmin = currentUser?.adminForCourses?.some(
         (course: { id: string }) => course.id === input.courseId
-      )
-      const haveAccess = currentUser && (currentUser.role === "INSTRUCTOR" || isCourseAdmin)
+      );
+      const haveAccess = currentUser && (currentUser.role === "INSTRUCTOR" || isCourseAdmin);
 
       if (!haveAccess) {
-        throw new Error("You are not authorized to update this class.")
+        throw new Error("You are not authorized to update this class.");
       }
 
-      let newFolderId: string | undefined = undefined
+      let newFolderId: string | undefined = undefined;
 
       if (input.folderId && input.folderName) {
         await ctx.db.folder.update({
@@ -99,18 +103,18 @@ export const classesRouter = createTRPCRouter({
             title: input.folderName,
             createdAt: new Date(input.createdAt ?? ""),
           },
-        })
-        newFolderId = input.folderId
+        });
+        newFolderId = input.folderId;
       } else if (input.folderName) {
         const res = await ctx.db.folder.create({
           data: {
             title: input.folderName,
             createdAt: new Date(input.createdAt ?? ""),
           },
-        })
-        newFolderId = res.id
+        });
+        newFolderId = res.id;
       } else {
-        newFolderId = input.folderId
+        newFolderId = input.folderId;
       }
 
       try {
@@ -135,62 +139,67 @@ export const classesRouter = createTRPCRouter({
               },
             }),
           },
-        })
+        });
 
-        return myClass
+        return myClass;
       } catch (error) {
-        throw new Error("Failed to update class. Please try again later.")
+        throw new Error("Failed to update class. Please try again later.");
       }
     }),
 
   deleteClass: protectedProcedure
-    .input(z.object({
-      classId: z.string(),
-    }))
+    .input(
+      z.object({
+        classId: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
         await ctx.db.class.delete({
           where: {
             id: input.classId,
           },
-        })
-        return { success: true }
+        });
+        return { success: true };
       } catch (error) {
-        throw new Error("Failed to delete class. Please try again later.")
+        throw new Error("Failed to delete class. Please try again later.");
       }
     }),
 
-  totalNumberOfClasses: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const res = await ctx.db.class.count()
-        return res
-      } catch (error) {
-        throw new Error("Failed to get total number of classes. Please try again later.")
-      }
-    }),
+  totalNumberOfClasses: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const res = await ctx.db.class.count();
+      return res;
+    } catch (error) {
+      throw new Error("Failed to get total number of classes. Please try again later.");
+    }
+  }),
 
   getClassDetails: protectedProcedure
-    .input(z.object({
-      id: z.string()
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       return ctx.db.class.findUnique({
         where: {
-          id: input.id
+          id: input.id,
         },
         include: {
           video: true,
           attachments: true,
-          Folder: true
-        }
-      })
+          Folder: true,
+        },
+      });
     }),
 
   getClassesWithFolders: protectedProcedure
-    .input(z.object({
-      courseId: z.string().trim().min(1),
-    }))
+    .input(
+      z.object({
+        courseId: z.string().trim().min(1),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const classes = await ctx.db.class.findMany({
         where: {
@@ -199,7 +208,7 @@ export const classesRouter = createTRPCRouter({
         include: {
           Folder: true,
         },
-      })
-      return classes
+      });
+      return classes;
     }),
-}) 
+});

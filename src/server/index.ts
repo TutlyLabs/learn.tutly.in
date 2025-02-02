@@ -1,13 +1,13 @@
-import { inferRouterInputs, inferRouterOutputs } from "@trpc/server"
-import { appRouter } from "./root"
-import { createCallerFactory } from "./trpc"
+import { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
-export type { AppRouter } from "./root"
-export { createTRPCContext } from "./trpc"
+import { appRouter } from "./root";
+import { createCallerFactory } from "./trpc";
 
-export const createCaller = createCallerFactory(appRouter)
-export { appRouter }
+export type { AppRouter } from "./root";
+export { createTRPCContext } from "./trpc";
 
+export const createCaller = createCallerFactory(appRouter);
+export { appRouter };
 
-export type RouterOutputs = inferRouterOutputs<typeof appRouter>
-export type RouterInputs = inferRouterInputs<typeof appRouter>
+export type RouterOutputs = inferRouterOutputs<typeof appRouter>;
+export type RouterInputs = inferRouterInputs<typeof appRouter>;

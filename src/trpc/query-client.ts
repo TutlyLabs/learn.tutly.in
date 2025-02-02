@@ -1,5 +1,5 @@
-import { QueryClient } from "@tanstack/react-query"
-import type { DefaultOptions } from "@tanstack/react-query"
+import { QueryClient } from "@tanstack/react-query";
+import type { DefaultOptions } from "@tanstack/react-query";
 
 export const createQueryClient = () =>
   new QueryClient({
@@ -11,4 +11,4 @@ export const createQueryClient = () =>
         cacheTime: 5 * 60 * 1000,
       },
     } as DefaultOptions,
-  })
+  });

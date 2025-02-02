@@ -1,23 +1,25 @@
-"use client"
+"use client";
 
-import type { RouterOutputs } from "@/server"
-import { SessionUser } from "@/lib/auth/session"
-import Providers from "@/utils/providers"
-import ClassSidebar from "./_components/classSidebar"
-import Class from "./_components/Class"
-import { Notes } from "@prisma/client"
+import { Notes } from "@prisma/client";
 
-type ClassesWithFolders = RouterOutputs["classes"]["getClassesWithFolders"][0]
-type ClassDetails = RouterOutputs["classes"]["getClassDetails"]
+import { SessionUser } from "@/lib/auth/session";
+import type { RouterOutputs } from "@/server";
+import Providers from "@/utils/providers";
+
+import Class from "./_components/Class";
+import ClassSidebar from "./_components/classSidebar";
+
+type ClassesWithFolders = RouterOutputs["classes"]["getClassesWithFolders"][0];
+type ClassDetails = RouterOutputs["classes"]["getClassDetails"];
 
 interface PageProps {
-  classesWithFolders: ClassesWithFolders[]
-  currentUser: SessionUser
-  classId: string
-  courseId: string
-  classDetails: ClassDetails
-  isBookmarked: boolean
-  initialNote: Notes | null
+  classesWithFolders: ClassesWithFolders[];
+  currentUser: SessionUser;
+  classId: string;
+  courseId: string;
+  classDetails: ClassDetails;
+  isBookmarked: boolean;
+  initialNote: Notes | null;
 }
 
 const ClassPage = ({
@@ -54,7 +56,7 @@ const ClassPage = ({
         </div>
       </Providers>
     </div>
-  )
-}
+  );
+};
 
-export default ClassPage
+export default ClassPage;

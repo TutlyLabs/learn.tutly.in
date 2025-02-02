@@ -1,17 +1,18 @@
-"use client"
+"use client";
 
-import type { RouterOutputs } from "@/server"
-import Providers from "@/utils/providers"
-import CourseCard from "./_components/CourseCard"
-import AddCourse from "./_components/AddCourse"
-import NoDataFound from "@/components/NoDataFound"
+import NoDataFound from "@/components/NoDataFound";
+import type { RouterOutputs } from "@/server";
+import Providers from "@/utils/providers";
 
-type Course = RouterOutputs["courses"]["getUserCourses"][0]
-type User = RouterOutputs["users"]["getCurrentUser"]
+import AddCourse from "./_components/AddCourse";
+import CourseCard from "./_components/CourseCard";
+
+type Course = RouterOutputs["courses"]["getUserCourses"][0];
+type User = RouterOutputs["users"]["getCurrentUser"];
 
 interface PageProps {
-  coursesFinal: Course[]
-  currentUser: User
+  coursesFinal: Course[];
+  currentUser: User;
 }
 
 const CoursesPage = ({ coursesFinal, currentUser }: PageProps) => {
@@ -32,11 +33,7 @@ const CoursesPage = ({ coursesFinal, currentUser }: PageProps) => {
           {coursesFinal?.length > 0 && (
             <div className="flex flex-wrap">
               {coursesFinal.map((course) => (
-                <CourseCard
-                  currentUser={currentUser}
-                  key={course.id}
-                  course={course}
-                />
+                <CourseCard currentUser={currentUser} key={course.id} course={course} />
               ))}
               {currentUser?.role === "INSTRUCTOR" && <AddCourse />}
             </div>
@@ -44,7 +41,7 @@ const CoursesPage = ({ coursesFinal, currentUser }: PageProps) => {
         </div>
       </div>
     </Providers>
-  )
-}
+  );
+};
 
-export default CoursesPage
+export default CoursesPage;

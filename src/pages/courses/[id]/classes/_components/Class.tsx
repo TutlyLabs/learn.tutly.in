@@ -15,7 +15,6 @@ import {
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useDebounce } from "use-debounce";
-import { api } from "@/trpc/react";
 
 import VideoPlayer from "@/components/VideoPlayer";
 import RichTextEditor from "@/components/editor/RichTextEditor";
@@ -47,6 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { api } from "@/trpc/react";
 
 import NewAttachmentPage from "./NewAssignments";
 
@@ -64,11 +64,11 @@ export default function Class({
   courseId: string;
   currentUser: any;
   details:
-  | (Class & {
-    video: Video | null;
-    attachments: Attachment[];
-  })
-  | null;
+    | (Class & {
+        video: Video | null;
+        attachments: Attachment[];
+      })
+    | null;
   isBookmarked: boolean;
   initialNote?: Notes | null;
 }) {

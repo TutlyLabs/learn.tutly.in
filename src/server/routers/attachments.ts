@@ -1,26 +1,28 @@
-import { attachmentType, submissionMode } from "@prisma/client"
-import { z } from "zod"
+import { attachmentType, submissionMode } from "@prisma/client";
+import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc"
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const attachmentsRouter = createTRPCRouter({
   createAttachment: protectedProcedure
-    .input(z.object({
-      title: z.string(),
-      details: z.string().optional(),
-      link: z.string().optional(),
-      dueDate: z.date().optional(),
-      attachmentType: z.enum(["ASSIGNMENT", "GITHUB", "ZOOM", "OTHERS"] as const),
-      courseId: z.string(),
-      classId: z.string(),
-      maxSubmissions: z.number().optional(),
-      submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK"]),
-    }))
+    .input(
+      z.object({
+        title: z.string(),
+        details: z.string().optional(),
+        link: z.string().optional(),
+        dueDate: z.date().optional(),
+        attachmentType: z.enum(["ASSIGNMENT", "GITHUB", "ZOOM", "OTHERS"] as const),
+        courseId: z.string(),
+        classId: z.string(),
+        maxSubmissions: z.number().optional(),
+        submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK"]),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user
+        const currentUser = ctx.user;
         if (!currentUser || currentUser.role !== "INSTRUCTOR") {
-          return { error: "Unauthorized" }
+          return { error: "Unauthorized" };
         }
 
         const attachment = await ctx.db.attachment.create({
@@ -35,72 +37,78 @@ export const attachmentsRouter = createTRPCRouter({
             courseId: input.courseId,
             maxSubmissions: input.maxSubmissions || null,
           },
-        })
+        });
 
-        return { success: true, data: attachment }
+        return { success: true, data: attachment };
       } catch (error) {
-        return { error: "Failed to create attachment" }
+        return { error: "Failed to create attachment" };
       }
     }),
 
   getAttachmentByID: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const attachment = await ctx.db.attachment.findUnique({
         where: {
           id: input.id,
         },
-      })
+      });
 
       return {
         success: true,
         data: attachment,
-      }
+      };
     }),
 
   deleteAttachment: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
-      const currentUser = ctx.user!
+      const currentUser = ctx.user!;
 
       if (currentUser.role !== "INSTRUCTOR") {
-        return { error: "You must be an instructor to delete an attachment" }
+        return { error: "You must be an instructor to delete an attachment" };
       }
 
       const attachment = await ctx.db.attachment.delete({
         where: {
           id: input.id,
         },
-      })
+      });
 
       return {
         success: true,
         data: attachment,
-      }
+      };
     }),
 
   updateAttachment: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      title: z.string(),
-      details: z.string().optional(),
-      link: z.string().optional(),
-      dueDate: z.date().optional(),
-      attachmentType: z.enum(["ASSIGNMENT", "GITHUB", "ZOOM", "OTHERS"] as const),
-      courseId: z.string(),
-      classId: z.string(),
-      maxSubmissions: z.number().optional(),
-      submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK"]),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        details: z.string().optional(),
+        link: z.string().optional(),
+        dueDate: z.date().optional(),
+        attachmentType: z.enum(["ASSIGNMENT", "GITHUB", "ZOOM", "OTHERS"] as const),
+        courseId: z.string(),
+        classId: z.string(),
+        maxSubmissions: z.number().optional(),
+        submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK"]),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user
+        const currentUser = ctx.user;
         if (!currentUser || currentUser.role !== "INSTRUCTOR") {
-          return { error: "Unauthorized" }
+          return { error: "Unauthorized" };
         }
 
         const attachment = await ctx.db.attachment.update({
@@ -118,11 +126,11 @@ export const attachmentsRouter = createTRPCRouter({
             courseId: input.courseId,
             maxSubmissions: input.maxSubmissions || null,
           },
-        })
+        });
 
-        return { success: true, data: attachment }
+        return { success: true, data: attachment };
       } catch (error) {
-        return { error: "Failed to update attachment" }
+        return { error: "Failed to update attachment" };
       }
     }),
-}) 
+});

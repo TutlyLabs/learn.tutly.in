@@ -7,20 +7,20 @@ const currentUser = Astro.locals.user;
 if (!currentUser) return Astro.redirect("/sign-in");
 
 const caller = await createServerCaller(Astro.request);
-const courseAssignments = await caller.courses.getCourseAssignments({ 
-  courseId: String(Astro.params.id) 
+const courseAssignments = await caller.courses.getCourseAssignments({
+  courseId: String(Astro.params.id),
 });
 
 const classesWithFolders = await caller.classes.getClassesWithFolders({
-  courseId: String(Astro.params.id)
+  courseId: String(Astro.params.id),
 });
 ---
 
 <RootLayout title="Courses" forceClose={true}>
-  <CourseAssignments 
-    courseId={String(Astro.params.id)} 
-    classesWithFolders={classesWithFolders} 
-    currentUser={currentUser} 
+  <CourseAssignments
+    courseId={String(Astro.params.id)}
+    classesWithFolders={classesWithFolders}
+    currentUser={currentUser}
     courseAssignments={courseAssignments}
     client:only="react"
   />

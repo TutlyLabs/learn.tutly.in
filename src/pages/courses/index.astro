@@ -14,5 +14,5 @@ const coursesFinal = currentUser.role === "INSTRUCTOR" ? courses : publishedCour
 ---
 
 <RootLayout title="Courses">
-    <CoursesPage coursesFinal={coursesFinal} currentUser={currentUser} client:only="react" />
+  <CoursesPage coursesFinal={coursesFinal} currentUser={currentUser} client:only="react" />
 </RootLayout>

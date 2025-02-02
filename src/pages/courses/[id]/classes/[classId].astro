@@ -12,21 +12,21 @@ const courseId = Astro.params.id!;
 const caller = await createServerCaller(Astro.request);
 
 const classesWithFolders = await caller.classes.getClassesWithFolders({
-  courseId
+  courseId,
 });
 
 const classDetails = await caller.classes.getClassDetails({
-  id: classId
+  id: classId,
 });
 
 const initialNote = await caller.notes.getNote({
   objectId: classId,
-  userId: currentUser.id
+  userId: currentUser.id,
 });
 
 const bookmark = await caller.bookmarks.getBookmark({
   objectId: classId,
-  userId: currentUser.id
+  userId: currentUser.id,
 });
 
 const isBookmarked = bookmark ? true : false;

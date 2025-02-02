@@ -1,7 +1,7 @@
-import { NoteCategory } from "@prisma/client"
-import { z } from "zod"
+import { NoteCategory } from "@prisma/client";
+import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc"
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notesRouter = createTRPCRouter({
   updateNote: protectedProcedure
@@ -15,7 +15,7 @@ export const notesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { category, description, tags, objectId, causedObjects = {} } = input
+      const { category, description, tags, objectId, causedObjects = {} } = input;
 
       await ctx.db.notes.upsert({
         where: {
@@ -37,24 +37,26 @@ export const notesRouter = createTRPCRouter({
           tags,
           causedObjects: causedObjects,
         },
-      })
+      });
 
-      return { success: true }
+      return { success: true };
     }),
 
   getNote: protectedProcedure
-    .input(z.object({
-      objectId: z.string(),
-      userId: z.string()
-    }))
+    .input(
+      z.object({
+        objectId: z.string(),
+        userId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       return ctx.db.notes.findUnique({
         where: {
           userId_objectId: {
             userId: input.userId,
-            objectId: input.objectId
-          }
-        }
-      })
+            objectId: input.objectId,
+          },
+        },
+      });
     }),
-}) 
+});

@@ -1,61 +1,63 @@
-import { z } from "zod"
+import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc"
 // todo: needs replacement with actions
-import { getEnrolledCourses, getEnrolledCoursesById, getMentorCourses } from "@/actions/courses"
+import { getEnrolledCourses, getEnrolledCoursesById, getMentorCourses } from "@/actions/courses";
+
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const assignmentsRouter = createTRPCRouter({
-  getAllAssignedAssignments: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const currentUser = ctx.user!
+  getAllAssignedAssignments: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const currentUser = ctx.user!;
 
-        return await ctx.db.course.findMany({
-          where: {
-            enrolledUsers: {
-              some: {
-                username: currentUser.username,
-              },
+      return await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              username: currentUser.username,
             },
           },
-          select: {
-            id: true,
-            classes: {
-              select: {
-                attachments: {
-                  where: {
-                    attachmentType: "ASSIGNMENT",
-                  },
-                  include: {
-                    class: true,
-                    submissions: {
-                      where: {
-                        enrolledUser: {
-                          username: currentUser.username,
-                        },
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+                include: {
+                  class: true,
+                  submissions: {
+                    where: {
+                      enrolledUser: {
+                        username: currentUser.username,
                       },
-                      include: {
-                        points: true,
-                      },
+                    },
+                    include: {
+                      points: true,
                     },
                   },
                 },
               },
-              orderBy: {
-                createdAt: "asc",
-              },
+            },
+            orderBy: {
+              createdAt: "asc",
             },
           },
-        })
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
-      }
-    }),
+        },
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  }),
 
   getAllAssignedAssignmentsByUserId: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
         const courses = await ctx.db.course.findMany({
@@ -75,7 +77,7 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
         const coursesWithAssignments = await ctx.db.course.findMany({
           where: {
@@ -117,280 +119,221 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
         return {
           courses: courses || [],
           coursesWithAssignments: coursesWithAssignments || [],
-        }
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
-  getAllAssignmentsForMentor: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const currentUser = ctx.user!
-        const courses = await getMentorCourses()
+  getAllAssignmentsForMentor: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const currentUser = ctx.user!;
+      const courses = await getMentorCourses();
 
-        const coursesWithAssignments = await ctx.db.course.findMany({
-          where: {
-            enrolledUsers: {
-              some: {
-                mentorUsername: currentUser.username,
-              },
-            },
-          },
-          select: {
-            id: true,
-            classes: {
-              select: {
-                attachments: {
-                  where: {
-                    attachmentType: "ASSIGNMENT",
-                    submissions: {
-                      some: {
-                        enrolledUser: {
-                          mentorUsername: currentUser.username,
-                        },
-                      },
-                    },
-                  },
-                  include: {
-                    class: true,
-                    submissions: {
-                      where: {
-                        enrolledUser: {
-                          mentorUsername: currentUser.username,
-                        },
-                      },
-                      include: {
-                        points: true,
-                      },
-                    },
-                  },
-                },
-                createdAt: true,
-              },
-            },
-          },
-        })
-
-        return { courses, coursesWithAssignments }
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
-      }
-    }),
-
-  getAllAssignmentsForInstructor: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const { data: courses } = await getEnrolledCourses()
-
-        const coursesWithAssignments = await ctx.db.course.findMany({
-          where: {
-            id: {
-              in: courses?.data?.map((course) => course.id) ?? [],
-            },
-          },
-          select: {
-            id: true,
-            classes: {
-              select: {
-                attachments: {
-                  where: {
-                    attachmentType: "ASSIGNMENT",
-                  },
-                  include: {
-                    class: true,
-                    submissions: {
-                      include: {
-                        points: true,
-                      },
-                    },
-                  },
-                },
-              },
-              orderBy: {
-                createdAt: "asc",
-              },
-            },
-          },
-        })
-
-        return { courses, coursesWithAssignments }
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
-      }
-    }),
-
-  getAllAssignments: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const currentUser = ctx.user
-        if (!currentUser) return null
-
-        const { data: courses } = await getEnrolledCourses()
-
-        return await ctx.db.attachment.findMany({
-          where: {
-            attachmentType: "ASSIGNMENT",
-            courseId: {
-              in: courses?.data?.map((course) => course.id) ?? [],
-            },
-          },
-          include: {
-            course: true,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        })
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
-      }
-    }),
-
-  getAllAssignedAssignmentsForMentor: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const currentUser = ctx.user!
-
-        const { data: courses } = await getEnrolledCoursesById({ id: currentUser.id })
-
-        const coursesWithAssignments = await ctx.db.course.findMany({
-          where: {
-            enrolledUsers: {
-              some: {
-                mentorUsername: currentUser.username,
-              },
-            },
-          },
-          select: {
-            id: true,
-            classes: {
-              select: {
-                attachments: {
-                  where: {
-                    attachmentType: "ASSIGNMENT",
-                  },
-                  include: {
-                    class: true,
-                    submissions: {
-                      where: {
-                        enrolledUser: {
-                          user: {
-                            id: currentUser.username,
-                          },
-                        },
-                      },
-                      include: {
-                        points: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        })
-
-        return { courses, coursesWithAssignments }
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
-      }
-    }),
-
-  getAllMentorAssignments: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const currentUser = ctx.user!
-
-        const coursesWithAssignments = await ctx.db.course.findMany({
-          where: {
-            enrolledUsers: {
-              some: {
-                mentorUsername: currentUser.username,
-              },
-            },
-          },
-          select: {
-            id: true,
-            classes: {
-              select: {
-                attachments: {
-                  where: {
-                    attachmentType: "ASSIGNMENT",
-                  },
-                  select: {
-                    title: true,
-                    submissions: {
-                      where: {
-                        enrolledUser: {
-                          mentorUsername: currentUser.username,
-                        },
-                      },
-                      select: {
-                        points: true,
-                        enrolledUser: {
-                          include: {
-                            user: true,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        })
-
-        const submissions = await ctx.db.submission.findMany({
-          where: {
-            enrolledUser: {
+      const coursesWithAssignments = await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
               mentorUsername: currentUser.username,
             },
           },
-          select: {
-            points: true,
-            enrolledUser: {
-              include: {
-                user: true,
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                  submissions: {
+                    some: {
+                      enrolledUser: {
+                        mentorUsername: currentUser.username,
+                      },
+                    },
+                  },
+                },
+                include: {
+                  class: true,
+                  submissions: {
+                    where: {
+                      enrolledUser: {
+                        mentorUsername: currentUser.username,
+                      },
+                    },
+                    include: {
+                      points: true,
+                    },
+                  },
+                },
+              },
+              createdAt: true,
+            },
+          },
+        },
+      });
+
+      return { courses, coursesWithAssignments };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  }),
+
+  getAllAssignmentsForInstructor: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const { data: courses } = await getEnrolledCourses();
+
+      const coursesWithAssignments = await ctx.db.course.findMany({
+        where: {
+          id: {
+            in: courses?.data?.map((course) => course.id) ?? [],
+          },
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+                include: {
+                  class: true,
+                  submissions: {
+                    include: {
+                      points: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+        },
+      });
+
+      return { courses, coursesWithAssignments };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  }),
+
+  getAllAssignments: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const currentUser = ctx.user;
+      if (!currentUser) return null;
+
+      const { data: courses } = await getEnrolledCourses();
+
+      return await ctx.db.attachment.findMany({
+        where: {
+          attachmentType: "ASSIGNMENT",
+          courseId: {
+            in: courses?.data?.map((course) => course.id) ?? [],
+          },
+        },
+        include: {
+          course: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  }),
+
+  getAllAssignedAssignmentsForMentor: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const currentUser = ctx.user!;
+
+      const { data: courses } = await getEnrolledCoursesById({ id: currentUser.id });
+
+      const coursesWithAssignments = await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              mentorUsername: currentUser.username,
+            },
+          },
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+                include: {
+                  class: true,
+                  submissions: {
+                    where: {
+                      enrolledUser: {
+                        user: {
+                          id: currentUser.username,
+                        },
+                      },
+                    },
+                    include: {
+                      points: true,
+                    },
+                  },
+                },
               },
             },
           },
-        })
+        },
+      });
 
-        return { coursesWithAssignments, submissions }
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
-      }
-    }),
+      return { courses, coursesWithAssignments };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  }),
 
-  getAllCreatedAssignments: protectedProcedure
-    .query(async ({ ctx }) => {
-      try {
-        const currentUser = ctx.user!
+  getAllMentorAssignments: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const currentUser = ctx.user!;
 
-        return await ctx.db.course.findMany({
-          where: {
-            createdById: currentUser.id,
+      const coursesWithAssignments = await ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              mentorUsername: currentUser.username,
+            },
           },
-          select: {
-            id: true,
-            classes: {
-              select: {
-                attachments: {
-                  where: {
-                    attachmentType: "ASSIGNMENT",
-                  },
-                  include: {
-                    class: true,
-                    submissions: {
-                      where: {
-                        enrolledUserId: currentUser.id,
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+                select: {
+                  title: true,
+                  submissions: {
+                    where: {
+                      enrolledUser: {
+                        mentorUsername: currentUser.username,
+                      },
+                    },
+                    select: {
+                      points: true,
+                      enrolledUser: {
+                        include: {
+                          user: true,
+                        },
                       },
                     },
                   },
@@ -398,17 +341,72 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
-      }
-    }),
+        },
+      });
+
+      const submissions = await ctx.db.submission.findMany({
+        where: {
+          enrolledUser: {
+            mentorUsername: currentUser.username,
+          },
+        },
+        select: {
+          points: true,
+          enrolledUser: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      return { coursesWithAssignments, submissions };
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  }),
+
+  getAllCreatedAssignments: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const currentUser = ctx.user!;
+
+      return await ctx.db.course.findMany({
+        where: {
+          createdById: currentUser.id,
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+                include: {
+                  class: true,
+                  submissions: {
+                    where: {
+                      enrolledUserId: currentUser.id,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+    }
+  }),
 
   getAssignmentDetailsByUserId: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      userId: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        userId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const assignment = await ctx.db.attachment.findUnique({
         where: {
@@ -438,18 +436,20 @@ export const assignmentsRouter = createTRPCRouter({
             },
           },
         },
-      })
+      });
 
-      return assignment
+      return assignment;
     }),
 
   getAllAssignmentDetailsBy: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user!
+        const currentUser = ctx.user!;
 
         const assignment = await ctx.db.attachment.findUnique({
           where: {
@@ -477,7 +477,7 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
         const mentees = await ctx.db.user.findMany({
           where: {
@@ -488,41 +488,44 @@ export const assignmentsRouter = createTRPCRouter({
             },
             organizationId: currentUser.organizationId,
           },
-        })
+        });
 
         const notSubmittedMentees = mentees.filter((mentee) => {
           return !assignment?.submissions.some(
             (submission) => submission.enrolledUser.username === mentee.username
-          )
-        })
+          );
+        });
 
         const sortedAssignments = assignment?.submissions.sort((a, b) => {
           if (b.enrolledUser.username > a.enrolledUser.username) {
-            return -1
+            return -1;
           } else if (b.enrolledUser.username < a.enrolledUser.username) {
-            return 1
+            return 1;
           } else {
-            return 0
+            return 0;
           }
-        })
+        });
 
         const isCourseAdmin =
-          currentUser?.adminForCourses?.some((course) => course.id === assignment?.courseId) ?? false
+          currentUser?.adminForCourses?.some((course) => course.id === assignment?.courseId) ??
+          false;
 
-        return [sortedAssignments, notSubmittedMentees, isCourseAdmin]
+        return [sortedAssignments, notSubmittedMentees, isCourseAdmin];
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getAllAssignmentDetailsForInstructor: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user!
-        if (!currentUser) throw new Error("Unauthorized")
+        const currentUser = ctx.user!;
+        if (!currentUser) throw new Error("Unauthorized");
 
         const assignment = await ctx.db.attachment.findUnique({
           where: {
@@ -549,7 +552,7 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
         const allStudents = await ctx.db.enrolledUsers.findMany({
           where: {
@@ -563,40 +566,43 @@ export const assignmentsRouter = createTRPCRouter({
               organizationId: currentUser.organizationId,
             },
           },
-        })
+        });
 
         const notSubmittedMentees = allStudents.filter((student) => {
           return !assignment?.submissions.some(
             (submission) => submission.enrolledUser.username === student.username
-          )
-        })
+          );
+        });
 
         const sortedAssignments = assignment?.submissions.sort((a, b) => {
           if (b.enrolledUser.username > a.enrolledUser.username) {
-            return -1
+            return -1;
           } else if (b.enrolledUser.username < a.enrolledUser.username) {
-            return 1
+            return 1;
           } else {
-            return 0
+            return 0;
           }
-        })
+        });
 
         const isCourseAdmin =
-          currentUser?.adminForCourses?.some((course) => course.id === assignment?.courseId) ?? false
+          currentUser?.adminForCourses?.some((course) => course.id === assignment?.courseId) ??
+          false;
 
-        return [sortedAssignments, notSubmittedMentees, isCourseAdmin]
+        return [sortedAssignments, notSubmittedMentees, isCourseAdmin];
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getAllAssignmentsByCourseId: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user!
+        const currentUser = ctx.user!;
 
         return await ctx.db.course.findMany({
           where: {
@@ -627,22 +633,24 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getMentorPieChartData: protectedProcedure
-    .input(z.object({
-      courseId: z.string(),
-    }))
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user
+        const currentUser = ctx.user;
 
-        let assignments, noOfTotalMentees
-        if (!currentUser) return null
+        let assignments, noOfTotalMentees;
+        if (!currentUser) return null;
 
         if (currentUser.role === "MENTOR") {
           assignments = await ctx.db.submission.findMany({
@@ -655,13 +663,13 @@ export const assignmentsRouter = createTRPCRouter({
             include: {
               points: true,
             },
-          })
+          });
           noOfTotalMentees = await ctx.db.enrolledUsers.count({
             where: {
               mentorUsername: currentUser.username,
               courseId: input.courseId,
             },
-          })
+          });
         } else {
           assignments = await ctx.db.submission.findMany({
             where: {
@@ -672,45 +680,49 @@ export const assignmentsRouter = createTRPCRouter({
             include: {
               points: true,
             },
-          })
+          });
           noOfTotalMentees = await ctx.db.enrolledUsers.count({
             where: {
               courseId: input.courseId,
             },
-          })
+          });
         }
 
         let assignmentsWithPoints = 0,
-          assignmentsWithoutPoints = 0
+          assignmentsWithoutPoints = 0;
         assignments.forEach((assignment) => {
           if (assignment.points.length > 0) {
-            assignmentsWithPoints += 1
+            assignmentsWithPoints += 1;
           } else {
-            assignmentsWithoutPoints += 1
+            assignmentsWithoutPoints += 1;
           }
-        })
+        });
 
         const noOfTotalAssignments = await ctx.db.attachment.count({
           where: {
             attachmentType: "ASSIGNMENT",
             courseId: input.courseId,
           },
-        })
+        });
 
         const notSubmitted =
-          noOfTotalAssignments * noOfTotalMentees - assignmentsWithPoints - assignmentsWithoutPoints
+          noOfTotalAssignments * noOfTotalMentees -
+          assignmentsWithPoints -
+          assignmentsWithoutPoints;
 
-        return [assignmentsWithPoints, assignmentsWithoutPoints, notSubmitted]
+        return [assignmentsWithPoints, assignmentsWithoutPoints, notSubmitted];
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getMentorPieChartById: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      courseId: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        courseId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
         const assignments = await ctx.db.submission.findMany({
@@ -730,7 +742,7 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
         // @ts-ignore
         const noOfTotalMentees = await ctx.db.enrolledUsers.count({
@@ -738,17 +750,17 @@ export const assignmentsRouter = createTRPCRouter({
             mentorUsername: input.id,
             courseId: input.courseId,
           },
-        })
+        });
 
         let assignmentsWithPoints = 0,
-          assignmentsWithoutPoints = 0
+          assignmentsWithoutPoints = 0;
         assignments.forEach((assignment) => {
           if (assignment.points.length > 0) {
-            assignmentsWithPoints += 1
+            assignmentsWithPoints += 1;
           } else {
-            assignmentsWithoutPoints += 1
+            assignmentsWithoutPoints += 1;
           }
-        })
+        });
 
         const noOfTotalAssignments = await ctx.db.attachment.findMany({
           where: {
@@ -758,14 +770,14 @@ export const assignmentsRouter = createTRPCRouter({
           select: {
             maxSubmissions: true,
           },
-        })
+        });
 
-        let totalAssignments = 0
+        let totalAssignments = 0;
         noOfTotalAssignments.forEach((a) => {
-          totalAssignments += a.maxSubmissions ?? 0
-        })
+          totalAssignments += a.maxSubmissions ?? 0;
+        });
 
-        const notSubmitted = totalAssignments - assignmentsWithPoints - assignmentsWithoutPoints
+        const notSubmitted = totalAssignments - assignmentsWithPoints - assignmentsWithoutPoints;
 
         return {
           evaluated: assignments.length || 0,
@@ -776,17 +788,19 @@ export const assignmentsRouter = createTRPCRouter({
               total + assignment.points.reduce((sum, point) => sum + point.score, 0),
             0
           ),
-        }
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getSubmissionsForMentorByIdLineChart: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      courseId: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        courseId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
         const submissionCount = await ctx.db.attachment.findMany({
@@ -806,24 +820,28 @@ export const assignmentsRouter = createTRPCRouter({
           orderBy: {
             createdAt: "asc",
           },
-        })
+        });
 
         return {
           assignments: submissionCount.map((submission) => submission.title),
-          countForEachAssignment: submissionCount.map((submission) => submission.submissions.length),
-        }
+          countForEachAssignment: submissionCount.map(
+            (submission) => submission.submissions.length
+          ),
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getSubmissionsForMentorLineChart: protectedProcedure
-    .input(z.object({
-      courseId: z.string(),
-    }))
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user!
+        const currentUser = ctx.user!;
 
         const submissionCount = await ctx.db.attachment.findMany({
           where: {
@@ -834,37 +852,41 @@ export const assignmentsRouter = createTRPCRouter({
             submissions:
               currentUser.role === "MENTOR"
                 ? {
-                  where: {
-                    enrolledUser: {
-                      mentorUsername: currentUser.username,
+                    where: {
+                      enrolledUser: {
+                        mentorUsername: currentUser.username,
+                      },
                     },
-                  },
-                }
+                  }
                 : true,
           },
           orderBy: {
             createdAt: "asc",
           },
-        })
+        });
 
         return {
           assignments: submissionCount.map((submission) => submission.title),
-          countForEachAssignment: submissionCount.map((submission) => submission.submissions.length),
-        }
+          countForEachAssignment: submissionCount.map(
+            (submission) => submission.submissions.length
+          ),
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getStudentEvaluatedAssigments: protectedProcedure
-    .input(z.object({
-      courseId: z.string(),
-    }))
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user!
+        const currentUser = ctx.user!;
         if (!currentUser) {
-          throw new Error("Unauthorized")
+          throw new Error("Unauthorized");
         }
 
         const assignments = await ctx.db.submission.findMany({
@@ -879,15 +901,17 @@ export const assignmentsRouter = createTRPCRouter({
           include: {
             points: true,
           },
-        })
+        });
 
-        const evaluatedAssignments = assignments.filter((assignment) => assignment.points.length > 0)
+        const evaluatedAssignments = assignments.filter(
+          (assignment) => assignment.points.length > 0
+        );
 
         const totalPoints = evaluatedAssignments.reduce(
           (total, assignment) =>
             total + assignment.points.reduce((sum, point) => sum + point.score, 0),
           0
-        )
+        );
 
         const noOfTotalAssignments = await ctx.db.attachment.findMany({
           where: {
@@ -897,29 +921,31 @@ export const assignmentsRouter = createTRPCRouter({
           select: {
             maxSubmissions: true,
           },
-        })
+        });
 
         const totalAssignments = noOfTotalAssignments.reduce(
           (total, assignment) => total + (assignment.maxSubmissions ?? 0),
           0
-        )
+        );
 
         return {
           evaluated: evaluatedAssignments.length,
           underReview: assignments.length - evaluatedAssignments.length,
           unsubmitted: totalAssignments - assignments.length,
           totalPoints,
-        }
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getStudentEvaluatedAssigmentsForMentor: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      courseId: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        courseId: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
         const assignments = await ctx.db.submission.findMany({
@@ -939,15 +965,17 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
-        const evaluatedAssignments = assignments.filter((assignment) => assignment.points.length > 0)
+        const evaluatedAssignments = assignments.filter(
+          (assignment) => assignment.points.length > 0
+        );
 
         const totalPoints = evaluatedAssignments.reduce(
           (total, assignment) =>
             total + assignment.points.reduce((sum, point) => sum + point.score, 0),
           0
-        )
+        );
 
         const noOfTotalAssignments = await ctx.db.attachment.findMany({
           where: {
@@ -957,28 +985,30 @@ export const assignmentsRouter = createTRPCRouter({
           select: {
             maxSubmissions: true,
           },
-        })
+        });
 
         const totalAssignments = noOfTotalAssignments.reduce(
           (total, assignment) => total + (assignment.maxSubmissions ?? 0),
           0
-        )
+        );
 
         return {
           evaluated: evaluatedAssignments.length,
           underReview: assignments.length - evaluatedAssignments.length,
           unsubmitted: totalAssignments - assignments.length,
           totalPoints,
-        }
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   getAssignmentDetails: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       try {
         return await ctx.db.attachment.findUnique({
@@ -992,21 +1022,23 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
 
   submitAssignment: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
-        const currentUser = ctx.user!
+        const currentUser = ctx.user!;
         if (!currentUser) {
-          throw new Error("Unauthorized")
+          throw new Error("Unauthorized");
         }
 
         const assignment = await ctx.db.attachment.findUnique({
@@ -1037,13 +1069,13 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
         if (!assignment) {
-          throw new Error("Assignment not Found")
+          throw new Error("Assignment not Found");
         }
 
-        if (!assignment.class?.courseId) throw new Error("Course not found")
+        if (!assignment.class?.courseId) throw new Error("Course not found");
 
         const mentorDetails = await ctx.db.enrolledUsers.findFirst({
           where: {
@@ -1057,7 +1089,7 @@ export const assignmentsRouter = createTRPCRouter({
               },
             },
           },
-        })
+        });
 
         return {
           assignment: {
@@ -1084,9 +1116,9 @@ export const assignmentsRouter = createTRPCRouter({
             email: currentUser.email,
           },
           mentorDetails,
-        }
+        };
       } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Unknown error occurred")
+        throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
       }
     }),
-})    
+});
