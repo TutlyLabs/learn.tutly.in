@@ -57,7 +57,6 @@ export const coursesRouter = createTRPCRouter({
         },
       });
     }
-
     return { success: true, data: courses };
   }),
 
@@ -777,9 +776,6 @@ export const coursesRouter = createTRPCRouter({
       return ctx.db.enrolledUsers.findMany({
         where: {
           username: input.username,
-          user: {
-            organizationId: input.organizationId,
-          },
         },
         select: {
           course: {
@@ -906,5 +902,29 @@ export const coursesRouter = createTRPCRouter({
           createdAt: "desc",
         },
       })
+    }),
+
+    getCourseAttachments: protectedProcedure
+    .query(async ({ ctx }) => {
+      return ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              username: ctx.user.username,
+            },
+          },
+        },
+        select: {
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+              },
+            },
+          },
+        },
+      });
     }),
 });

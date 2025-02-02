@@ -1,6 +1,5 @@
 "use client";
-
-import { actions } from "astro:actions";
+import {api} from "@/trpc/react";
 import {
   addDays,
   addMonths,
@@ -85,6 +84,9 @@ export const Calendar = ({ events, holidays, isAuthorized = false }: CalendarPro
 
   const navigateToday = () => setSelectedDate(new Date());
 
+  const { mutateAsync: deleteHoliday } = api.holidays.delete.useMutation();
+  const { mutateAsync: editHolidays } = api.holidays.edit.useMutation();
+
   const navigate = (direction: "prev" | "next") => {
     if (view === "day") {
       setSelectedDate(direction === "prev" ? subDays(selectedDate, 1) : addDays(selectedDate, 1));
@@ -105,7 +107,7 @@ export const Calendar = ({ events, holidays, isAuthorized = false }: CalendarPro
 
   const handleDelete = async (id: string) => {
     try {
-      await actions.holidays_deleteHoliday({ id });
+      await deleteHoliday({ id });
       window.location.reload();
     } catch (error) {
       console.error("Error deleting holiday", error);
@@ -115,7 +117,7 @@ export const Calendar = ({ events, holidays, isAuthorized = false }: CalendarPro
   const handleEditSubmit = async (holidayData: any) => {
     try {
       const { id, reason, description, startDate, endDate } = holidayData;
-      await actions.holidays_editHolidays({
+      await editHolidays({
         id,
         reason,
         description,
