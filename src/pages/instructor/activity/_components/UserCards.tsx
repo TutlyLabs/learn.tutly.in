@@ -1,5 +1,4 @@
 import type { Role } from "@prisma/client";
-import { actions } from "astro:actions";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -29,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSearchParams } from "@/hooks/use-search-params";
 import day from "@/lib/dayjs";
+import { api } from "@/trpc/react";
 
 type UserData = {
   id: string;
@@ -181,9 +181,11 @@ const UserCards = ({ users, totalItems, activeCount, defaultPageSize }: UserCard
   const pageSize = parseInt(searchParams.get("limit") || defaultPageSize.toString());
   const totalPages = Math.ceil(totalItems / pageSize);
 
+  const { mutateAsync: notifyUser } = api.notifications.notifyUser.useMutation();
+
   const handleSendMessage = async () => {
     try {
-      await actions.notifications_notifyUser({
+      await notifyUser({
         userId: selectedUser?.id!,
         message,
       });

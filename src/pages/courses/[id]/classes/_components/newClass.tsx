@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaPlus } from "react-icons/fa";
@@ -19,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { api } from "@/trpc/react";
 
 const NewClassDialog = ({ courseId }: { courseId: string }) => {
   const [videoLink, setVideoLink] = useState("");
@@ -31,22 +31,15 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
   const [createdAt, setCreatedAt] = useState(new Date().toISOString().split("T")[0]);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchFolders = async () => {
-      try {
-        const { data } = await actions.courses_foldersByCourseId({
-          id: courseId!,
-        });
-        // @ts-ignore
-        setFolders(data ?? []);
-      } catch (error) {
-        console.error("Error fetching folders:", error);
-        toast.error("Failed to fetch folders");
-      }
-    };
+  const { data: foldersData } = api.courses.foldersByCourseId.useQuery({ id: courseId });
+  const { mutateAsync: createClass } = api.classes.createClass.useMutation();
 
-    fetchFolders();
-  }, [courseId]);
+  useEffect(() => {
+    if (foldersData) {
+      // @ts-ignore
+      setFolders(foldersData ?? []);
+    }
+  }, [foldersData]);
 
   const handleCreateClass = async () => {
     if (!classTitle.trim()) {
@@ -56,7 +49,7 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
 
     setTextValue("Creating Class");
     try {
-      const { data, error } = await actions.classes_createClass({
+      const data = await createClass({
         classTitle,
         videoLink,
         videoType: videoType as "DRIVE" | "ZOOM" | "YOUTUBE",
@@ -66,17 +59,13 @@ const NewClassDialog = ({ courseId }: { courseId: string }) => {
         folderName: selectedFolder == "new" ? folderName.trim() : undefined,
       });
 
-      if (error) {
-        toast.error("Failed to add new class");
-      } else {
-        toast.success("Class added successfully");
-        setVideoLink("");
-        setClassTitle("");
-        setSelectedFolder("");
-        setFolderName("");
-        setIsOpen(false);
-        window.location.href = `/courses/${courseId}/classes/${data.id}`;
-      }
+      toast.success("Class added successfully");
+      setVideoLink("");
+      setClassTitle("");
+      setSelectedFolder("");
+      setFolderName("");
+      setIsOpen(false);
+      window.location.href = `/courses/${courseId}/classes/${data.id}`;
     } catch (error) {
       toast.error("Failed to add new class");
     } finally {

@@ -1,5 +1,4 @@
 import type { Notification, NotificationEvent } from "@prisma/client";
-import { actions } from "astro:actions";
 import { navigate } from "astro:transitions/client";
 import {
   Bell,
@@ -34,6 +33,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SessionUser } from "@/lib/auth/session";
 import day from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
+import { api } from "@/trpc/react";
 
 interface NotificationLink {
   href: string;
@@ -178,51 +178,64 @@ export default function Notifications({ user }: { user: SessionUser }) {
   const [activeTab, setActiveTab] = useState("all");
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isRefetchingNotifications, setIsRefetchingNotifications] = useState(false);
 
-  const fetchNotifications = async () => {
-    setIsRefetchingNotifications(true);
-    try {
-      const result = await actions.notifications_getNotifications();
-      if (result.data) {
-        setNotifications(result.data);
-      }
-    } catch {
-      toast.error("Failed to fetch notifications");
-    } finally {
-      setIsRefetchingNotifications(false);
+  const utils = api.useUtils();
+
+  const { isRefetching: isRefetchingNotifications } = api.notifications.getNotifications.useQuery(
+    undefined,
+    {
+      onSuccess: (data) => {
+        setNotifications(data);
+      },
+      onError: () => {
+        toast.error("Failed to fetch notifications");
+      },
     }
+  );
+
+  const toggleReadMutation = api.notifications.toggleReadStatus.useMutation({
+    onSuccess: () => {
+      utils.notifications.getNotifications.invalidate();
+    },
+    onError: () => {
+      toast.error("Failed to update notification");
+    },
+  });
+
+  const markAllReadMutation = api.notifications.markAllAsRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.getNotifications.invalidate();
+    },
+    onError: () => {
+      toast.error("Failed to mark all as read");
+    },
+  });
+
+  const getNotificationConfig = async (userId: string) => {
+    const result = await utils.notifications.getNotificationConfig.fetch({ userId });
+    return result;
   };
 
+  const updateConfigMutation = api.notifications.updateNotificationConfig.useMutation({
+    onError: () => {
+      toast.error("Failed to update notification config");
+    },
+  });
+
   const toggleReadStatus = async (id: string) => {
-    try {
-      await actions.notifications_toggleNotificationAsReadStatus({ id });
-      await fetchNotifications();
-    } catch {
-      toast.error("Failed to update notification");
-    }
+    await toggleReadMutation.mutateAsync({ id });
   };
 
   const markAllAsRead = async () => {
-    try {
-      await actions.notifications_markAllNotificationsAsRead();
-      await fetchNotifications();
-    } catch {
-      toast.error("Failed to mark all as read");
-    }
-  };
-
-  const getNotificationConfig = async (userId: string) => {
-    const result = await actions.notifications_getNotificationConfig({ userId });
-    return result.data;
+    await markAllReadMutation.mutateAsync();
   };
 
   const updateNotificationConfig = async (userId: string, config: PushSubscriptionConfig) => {
-    try {
-      await actions.notifications_updateNotificationConfig({ userId, config });
-    } catch {
-      toast.error("Failed to update notification config");
-    }
+    await updateConfigMutation.mutateAsync({ userId, config });
+  };
+
+  const refetchNotifications = () => {
+    utils.notifications.getNotifications.invalidate();
   };
 
   const intialSubscriptionState = async () => {
@@ -447,7 +460,7 @@ export default function Notifications({ user }: { user: SessionUser }) {
   }, [user?.id]);
 
   useEffect(() => {
-    fetchNotifications();
+    // Remove fetchNotifications call as it's handled by the query
   }, []);
 
   const getSubscriptionButtonText = () => {
@@ -461,8 +474,6 @@ export default function Notifications({ user }: { user: SessionUser }) {
         return "Subscribe";
     }
   };
-
-  const refetchNotifications = fetchNotifications;
 
   const isMobile = useIsMobile();
 

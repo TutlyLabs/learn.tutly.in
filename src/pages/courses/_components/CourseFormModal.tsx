@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -17,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { api } from "@/trpc/react";
 
 interface CourseFormModalProps {
   open: boolean;
@@ -42,27 +42,27 @@ export default function CourseFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
+  const { mutateAsync: createCourse } = api.courses.createCourse.useMutation();
+  const { mutateAsync: updateCourse } = api.courses.updateCourse.useMutation();
+  const { mutateAsync: deleteCourse } = api.courses.deleteCourse.useMutation();
+
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
       if (mode === "add") {
-        const { data, error } = await actions.courses_createCourse({
+        await createCourse({
           title: courseTitle,
           isPublished,
           image: img,
         });
-
-        if (!data || error) throw new Error();
         toast.success("New course added successfully");
       } else {
-        const { data, error } = await actions.courses_updateCourse({
+        await updateCourse({
           id: defaultValues?.id!,
           title: courseTitle,
           isPublished,
           image: img,
         });
-
-        if (!data || error) throw new Error();
         toast.success("Course updated successfully");
       }
 
@@ -77,11 +77,9 @@ export default function CourseFormModal({
 
   const handleDelete = async () => {
     try {
-      const { error } = await actions.courses_deleteCourse({
+      await deleteCourse({
         id: defaultValues?.id!,
       });
-
-      if (error) throw new Error();
 
       toast.success("Course deleted successfully");
       onOpenChange(false);

@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { FaSort, FaSortAlphaDown, FaSortAlphaDownAlt, FaUserPlus } from "react-icons/fa";
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "@/hooks/use-router";
+import { api } from "@/trpc/react";
 
 const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
   const [loading, setLoading] = useState(false);
@@ -29,6 +29,12 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
   const [sortColumn, setSortColumn] = useState<string>("");
   const [notificationMessage, setNotificationMessage] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("");
+
+  const { mutateAsync: notifyBulkUsers } = api.notifications.notifyBulkUsers.useMutation();
+  const { mutateAsync: enrollStudent } = api.courses.enrollStudentToCourse.useMutation();
+  const { mutateAsync: unenrollStudent } = api.courses.unenrollStudentFromCourse.useMutation();
+  const { mutateAsync: updateUserRole } = api.courses.updateRole.useMutation();
+  const { mutateAsync: updateStudentMentor } = api.courses.updateMentor.useMutation();
 
   const filteredUsers = users.filter((user) =>
     user.username.toLowerCase().includes(searchBar.trim().toLowerCase())
@@ -50,26 +56,24 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     try {
       setLoading(true);
 
-      const { error } = await actions.notifications_notifyBulkUsers({
+      const result = await notifyBulkUsers({
         message: notificationMessage,
         courseId: params.id,
         customLink: redirectUrl,
       });
 
-      if (error) {
+      if (!result) {
         toast.dismiss();
-        toast.error(error.message);
-        setLoading(false);
+        toast.error("Failed to send notifications");
         return;
       }
 
       toast.dismiss();
       toast.success("Notifications sent successfully");
-      setLoading(false);
     } catch (err: any) {
+      toast.error(err.message || "Failed to send notifications");
+    } finally {
       setLoading(false);
-      toast.dismiss();
-      toast.error(err.response?.data?.error || "Failed to send notifications");
     }
   };
 
@@ -78,27 +82,18 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     try {
       setLoading(true);
 
-      const { error } = await actions.courses_enrollStudentToCourse({
+      await enrollStudent({
         courseId: params.id,
         username,
       });
 
-      if (error) {
-        toast.dismiss();
-        toast.error(error.message);
-        setLoading(false);
-        return;
-      }
-
       toast.dismiss();
       toast.success(`${username} enrolled successfully`);
       router.push(router.pathname);
-      setLoading(false);
     } catch (err: any) {
-      router.push(router.pathname);
+      toast.error(err.message || "Failed to enroll user");
+    } finally {
       setLoading(false);
-      toast.dismiss();
-      toast.error(err.response.data.error);
     }
   };
 
@@ -107,25 +102,18 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     try {
       setLoading(true);
 
-      const { error } = await actions.courses_unenrollStudentFromCourse({
+      await unenrollStudent({
         courseId: params.id,
         username,
       });
 
-      if (error) {
-        toast.dismiss();
-        toast.error(error.message);
-        setLoading(false);
-        return;
-      }
       toast.dismiss();
       toast.success(`${username} unenrolled successfully`);
-      setLoading(false);
       router.push(router.pathname);
     } catch (err: any) {
+      toast.error(err.message || "Failed to unenroll user");
+    } finally {
       setLoading(false);
-      toast.dismiss();
-      toast.error(err.response.data.error);
     }
   };
 
@@ -134,25 +122,18 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     try {
       setLoading(true);
 
-      const { error } = await actions.courses_updateRole({
+      await updateUserRole({
         username,
         role: role as "STUDENT" | "MENTOR",
       });
 
-      if (error) {
-        toast.dismiss();
-        toast.error(error.message);
-        setLoading(false);
-        return;
-      }
       toast.dismiss();
       toast.success(`User role updated to ${role}`);
-      setLoading(false);
       router.push(router.pathname);
     } catch (err: any) {
+      toast.error(err.message || "Failed to update role");
+    } finally {
       setLoading(false);
-      toast.dismiss();
-      toast.error(err.response.data.error);
     }
   };
 
@@ -161,16 +142,19 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     try {
       setLoading(true);
 
-      await actions.courses_updateMentor({ courseId: params.id, username, mentorUsername });
+      await updateStudentMentor({
+        courseId: params.id,
+        username,
+        mentorUsername,
+      });
 
       toast.dismiss();
       toast.success(`Mentor updated successfully`);
-      setLoading(false);
       router.push(router.pathname);
     } catch (err: any) {
+      toast.error(err.message || "Failed to update mentor");
+    } finally {
       setLoading(false);
-      toast.dismiss();
-      toast.error(err.response.data.error);
     }
   };
 

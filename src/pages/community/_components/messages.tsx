@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaCrown } from "react-icons/fa";
@@ -32,6 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SessionUser } from "@/lib/auth/session";
+import { api } from "@/trpc/react";
 
 export default function Accordion({
   doubts,
@@ -56,69 +56,66 @@ export default function Accordion({
 
   const QA = dbts;
 
-  const handleAddDoubt = async (data: any) => {
-    const { data: res, error } = await actions.doubts_createDoubt({
-      courseId: currentCourseId,
-      title: undefined,
-      description: data.message,
-    });
+  const { mutateAsync: createDoubt } = api.doubts.createDoubt.useMutation();
+  const { mutateAsync: createResponse } = api.doubts.createResponse.useMutation();
+  const { mutateAsync: deleteDoubt } = api.doubts.deleteDoubt.useMutation();
+  const { mutateAsync: deleteResponse } = api.doubts.deleteResponse.useMutation();
 
-    if (error) {
-      toast.error("Failed to add doubt");
-    } else {
+  const handleAddDoubt = async (data: any) => {
+    try {
+      await createDoubt({
+        courseId: currentCourseId,
+        title: undefined,
+        description: data.message,
+      });
+
       toast.success("Doubt added successfully");
-      setDbts([...doubts, res.data]);
+      setDbts([...doubts, data]);
       setMessage("");
-      window.location.reload;
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to add doubt");
     }
   };
 
   const handleReply = async (id: string) => {
     if (!reply) return;
 
-    const { data: res, error } = await actions.doubts_createResponse({
-      doubtId: id,
-      description: reply,
-    });
+    try {
+      await createResponse({
+        doubtId: id,
+        description: reply,
+      });
 
-    if (error) {
-      toast.error("Failed to add reply");
-    } else {
       toast.success("Reply added successfully");
       setReply("");
       setReplyId("");
-      if (!doubts) setDbts([res.data]);
-      else
-        setDbts(
-          doubts?.map((d: any) =>
-            d && d?.id === id ? { ...d, response: [...d.response, res.data] } : d
-          )
-        );
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to add reply");
     }
   };
 
   const handleDeleteDoubt = async (id: string) => {
-    const { error } = await actions.doubts_deleteDoubt({
-      doubtId: id,
-    });
+    try {
+      await deleteDoubt({
+        doubtId: id,
+      });
 
-    if (error) {
-      toast.error("Failed to delete doubt");
-    } else {
       toast.success("Doubt deleted successfully");
       setDbts(doubts.filter((d: any) => d.id !== id));
-      window.location.reload;
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to delete doubt");
     }
   };
 
   const handleDeleteReply = async (replyId: string) => {
-    const { error } = await actions.doubts_deleteResponse({
-      responseId: replyId,
-    });
+    try {
+      await deleteResponse({
+        responseId: replyId,
+      });
 
-    if (error) {
-      toast.error("Failed to delete reply");
-    } else {
       toast.success("Reply deleted successfully");
       setDbts(
         doubts.map((d: any) => ({
@@ -126,8 +123,9 @@ export default function Accordion({
           response: d.response.filter((r: any) => r.id !== replyId),
         }))
       );
-
-      window.location.reload;
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to delete reply");
     }
   };
 

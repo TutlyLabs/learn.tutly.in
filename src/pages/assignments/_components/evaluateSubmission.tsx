@@ -1,8 +1,8 @@
-import { actions } from "astro:actions";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 import day from "@/lib/dayjs";
+import { api } from "@/trpc/react";
 
 const EvaluateSubmission = ({ submission }: { submission: any }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -12,6 +12,10 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
     other: 0,
   });
   const [feedback, setFeedback] = useState<string | null>(submission.overallFeedback || null);
+
+  const { mutateAsync: addOverallFeedback } = api.submission.addOverallFeedback.useMutation();
+  const { mutateAsync: deleteSubmission } = api.submission.deleteSubmission.useMutation();
+  const { mutateAsync: addPoints } = api.points.addPoints.useMutation();
 
   const rValue = submission.points.find((point: any) => point.category === "RESPOSIVENESS");
   const sValue = submission.points.find((point: any) => point.category === "STYLING");
@@ -24,7 +28,7 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
   const handleFeedback = async (submissionId: string) => {
     try {
       if (!feedback) return;
-      await actions.submissions_addOverallFeedback({
+      await addOverallFeedback({
         submissionId,
         feedback,
       });
@@ -57,7 +61,7 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
           score,
         }));
 
-      await actions.points_addPoints({
+      await addPoints({
         submissionId: submission.id,
         marks,
       });
@@ -82,7 +86,7 @@ const EvaluateSubmission = ({ submission }: { submission: any }) => {
 
     try {
       toast.loading("Deleting Submission...");
-      await actions.submissions_deleteSubmission({
+      await deleteSubmission({
         submissionId: submission.id,
       });
       toast.dismiss();

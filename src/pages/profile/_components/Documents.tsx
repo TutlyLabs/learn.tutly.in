@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { File, FileType, type Profile } from "@prisma/client";
-import { actions } from "astro:actions";
 import { Loader2, Upload } from "lucide-react";
 import { ChangeEvent, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useFileUpload } from "@/components/useFileUpload";
+import { api } from "@/trpc/react";
 
 const formSchema = z.object({
   resume: z.string().optional(),
@@ -49,21 +49,18 @@ export default function Documents({ documents, onUpdate }: DocumentsProps) {
     },
   });
 
+  const { data: user } = api.users.getCurrentUser.useQuery();
+
   const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
-    // setIsUploading(true);
 
     try {
       const file = e.target.files[0];
-      if (!file) return;
-      const user = await actions.users_getCurrentUser();
-      if (!user) return;
-      await uploadFile(file, user.data?.id);
+      if (!file || !user?.id) return;
+      await uploadFile(file, user.id);
       toast.success("Resume uploaded successfully");
     } catch (error) {
       toast.error("Failed to upload resume");
-    } finally {
-      // setIsUploading(false);
     }
   };
 

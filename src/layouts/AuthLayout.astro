@@ -174,8 +174,11 @@ const version = getVersion();
       }),
       (e.__SV = 1));
   })(document, window.posthog || []);
-  posthog.init("phc_fkSt1fQ3v4zrEcSB1TWZMHGA5B0Q0hAB70JlZcINrMU", {
-    api_host: "https://us.i.posthog.com",
-    person_profiles: "identified_only",
-  });
+
+  try {
+    posthog.init("phc_fkSt1fQ3v4zrEcSB1TWZMHGA5B0Q0hAB70JlZcINrMU", {
+      api_host: "https://us.i.posthog.com",
+      person_profiles: "identified_only",
+    });
+  } catch (error) {}
 </script>

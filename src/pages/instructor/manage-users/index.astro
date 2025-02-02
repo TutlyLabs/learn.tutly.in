@@ -1,7 +1,7 @@
 ---
-import db from "@/lib/db";
 import RootLayout from "@/layouts/RootLayout.astro";
-import UserPage from "./_components/UserPage";
+import Page from "./page";
+import { createServerCaller } from "@/trpc/server";
 
 const user = Astro.locals.user;
 
@@ -63,29 +63,17 @@ activeFilters.forEach((filter) => {
     }
   }
 });
+const caller = await createServerCaller(Astro.request);
 
-const totalItems = await db.user.count({ where });
-
-const allUsers = await db.user.findMany({
-  where: {
-    ...where,
-    organizationId: user.organizationId,
-  },
-  orderBy: {
-    [sortField]: sortDirection,
-  },
-  select: {
-    id: true,
-    name: true,
-    username: true,
-    email: true,
-    role: true,
-  },
-  skip: (page - 1) * limit,
-  take: limit,
+const [allUsers, totalItems] = await caller.users.manageUsers({
+  cond: where,
+  page,
+  limit,
+  sortField,
+  sortDirection,
 });
 ---
 
 <RootLayout title="Users">
-  <UserPage data={allUsers} totalItems={totalItems} client:load />
+  <Page allUsers={allUsers} totalItems={totalItems} client:load />
 </RootLayout>

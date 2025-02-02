@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { useEffect, useState } from "react";
 import { Cell, Pie, Tooltip } from "recharts";
 import { PieChart as RechartsPieChart, ResponsiveContainer } from "recharts";
@@ -32,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ProfessionalProfiles from "@/pages/profile/_components/ProfessionalProfiles";
+import { api } from "@/trpc/react";
 
 import Component from "./charts";
 
@@ -202,41 +202,25 @@ const PlatformScores = () => {
     };
   }
 
+  const { data: platformScoresData, isLoading } = api.codingPlatforms.getPlatformScores.useQuery();
   const [platformScores, setPlatformScores] = useState<PlatformScores | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchScores = async () => {
-      try {
-        const { data } = await actions.codingPlatforms_getPlatformScoresAction();
-        if (data) {
-          const validatedData: PlatformScores = {
-            totalScore: data.totalScore || 0,
-            percentages: data.percentages || {},
-            codechef: (data.codechef && typeof data.codechef === "object"
-              ? data.codechef
-              : null) as PlatformScore | null,
-            codeforces: (data.codeforces && typeof data.codeforces === "object"
-              ? data.codeforces
-              : null) as PlatformScore | null,
-            hackerrank: (data.hackerrank && typeof data.hackerrank === "object"
-              ? data.hackerrank
-              : null) as PlatformScore | null,
-            interviewbit: (data.interviewbit && typeof data.interviewbit === "object"
-              ? data.interviewbit
-              : null) as PlatformScore | null,
-            leetcode: (data.leetcode && typeof data.leetcode === "object"
-              ? data.leetcode
-              : null) as PlatformScore | null,
-          };
-          setPlatformScores(validatedData);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchScores();
-  }, []);
+    if (platformScoresData) {
+      const validatedData: PlatformScores = {
+        totalScore: platformScoresData.totalScore || 0,
+        percentages: platformScoresData.percentages || {},
+        codechef: platformScoresData.codechef as PlatformScore | null,
+        codeforces: platformScoresData.codeforces as PlatformScore | null,
+        hackerrank: platformScoresData.hackerrank as PlatformScore | null,
+        interviewbit: platformScoresData.interviewbit as PlatformScore | null,
+        leetcode: platformScoresData.leetcode as PlatformScore | null,
+      };
+      setPlatformScores(validatedData);
+    }
+  }, [platformScoresData]);
+
+  const { mutateAsync: updateUserProfile } = api.users.updateUserProfile.useMutation();
 
   const handleUpdateProfile = async (profile: Partial<ProfessionalProfile>) => {
     try {
@@ -249,29 +233,18 @@ const PlatformScores = () => {
         github: profile.professionalProfiles?.github || "",
       };
 
-      // const res = await actions.codingPlatforms_validatePlatformHandlesAction({
-      //   handles
-      // });
-      // console.log(res);
-      // if (!res.data?.valid) {
-      //   toast.error(`Invalid handles: ${res.data?.invalidFields.join(", ")}`);
-      //   return;
-      // }
-
-      const { data, error } = await actions.users_updateUserProfile({
+      const result = await updateUserProfile({
         profile: {
           professionalProfiles: handles,
         },
       });
 
-      if (error) {
+      if (!result) {
         toast.error("Failed to update profile");
         return;
       }
 
-      if (data) {
-        toast.success("Profile updated successfully");
-      }
+      toast.success("Profile updated successfully");
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -403,7 +376,7 @@ const PlatformScores = () => {
     </div>
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col gap-4 animate-pulse">
         <div className="h-48 w-48 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto"></div>

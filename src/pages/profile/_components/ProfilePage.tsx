@@ -1,10 +1,10 @@
 import type { Profile, User } from "@prisma/client";
-import { actions } from "astro:actions";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/trpc/react";
 
 import AcademicDetails from "./AcademicDetails";
 import Address from "./Address";
@@ -18,16 +18,13 @@ import SocialLinks from "./SocialLinks";
 export default function ProfilePage({ userProfile }: { userProfile: User & { profile: Profile } }) {
   const [profile, setProfile] = useState(userProfile.profile);
 
+  const { mutateAsync: updateProfile } = api.users.updateUserProfile.useMutation();
+
   const handleUpdateProfile = async (updatedFields: any) => {
     try {
-      const { data, error } = await actions.users_updateUserProfile({
+      const data = await updateProfile({
         profile: updatedFields,
       });
-
-      if (error) {
-        toast.error("Failed to update profile");
-        return;
-      }
 
       if (data) {
         setProfile(data as Profile);

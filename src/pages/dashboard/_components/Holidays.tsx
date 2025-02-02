@@ -1,6 +1,5 @@
 "use client";
 
-import { actions } from "astro:actions";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
@@ -19,10 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/trpc/react";
 
-export default function AddHolidayDialog() {
+const AddHolidayDialog = () => {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+
+  const { mutateAsync: addHoliday } = api.holidays.add.useMutation();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -34,20 +36,12 @@ export default function AddHolidayDialog() {
     }
 
     try {
-      const result = await actions.holidays_addHoliday({
+      await addHoliday({
         reason: formValues.reason as string,
         description: formValues.description as string,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
       });
-
-      if (result.error) {
-        throw new Error(result.error.message || "An error occurred while adding the holiday");
-      }
-
-      if (!result.data) {
-        throw new Error("No data returned from the server");
-      }
 
       toast.success("Holiday added successfully");
       window.location.reload();
@@ -118,4 +112,6 @@ export default function AddHolidayDialog() {
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default AddHolidayDialog;

@@ -1,22 +1,20 @@
-import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { MdDelete } from "react-icons/md";
 
 import { useRouter } from "@/hooks/use-router";
+import { api } from "@/trpc/react";
 
 const DeleteClass = ({ classId, courseId }: { classId: string; courseId: string }) => {
   const router = useRouter();
   const [clicked, setClicked] = useState(false);
 
+  const { mutateAsync: deleteClass } = api.classes.deleteClass.useMutation();
+
   const handleDeleteClass = async () => {
     setClicked(true);
     try {
-      await axios.delete(`/api/classes/deleteClass/${classId}`, {
-        params: {
-          courseId: courseId,
-        },
-      });
+      await deleteClass({ classId });
       toast.success("Class deleted successfully");
       router.push(`/courses/${courseId}`);
       window.location.reload();

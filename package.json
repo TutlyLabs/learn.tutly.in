@@ -3,16 +3,18 @@
   "type": "module",
   "version": "2.2.1.beta.005",
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro check && prisma generate && astro build",
-    "preview": "astro preview",
+    "dev": "pnpm with-env astro dev",
+    "start": "pnpm with-env astro dev",
+    "build": "pnpm with-env astro check && prisma generate && astro build",
+    "preview": "pnpm with-env astro preview",
     "astro": "astro",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "pnpm with-env prisma studio  --host localhost",
+    "with-env": "dotenv -e ./.env"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -48,7 +50,11 @@
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.1.3",
+    "@tanstack/react-query": "^4.36.1",
     "@tanstack/react-table": "^8.20.5",
+    "@trpc/client": "^10.45.2",
+    "@trpc/react-query": "^10.45.2",
+    "@trpc/server": "^10.45.2",
     "@vite-pwa/astro": "^0.4.3",
     "arctic": "^2.3.4",
     "astro": "^4.16.17",
@@ -62,6 +68,7 @@
     "cmdk": "1.0.0",
     "date-fns": "^3.0.0",
     "dayjs": "^1.11.13",
+    "dotenv-cli": "^8.0.0",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.2",
@@ -83,6 +90,7 @@
     "recharts": "^2.14.1",
     "resend": "^4.0.1-alpha.0",
     "sonner": "^1.7.1",
+    "superjson": "^2.2.2",
     "tailwind-merge": "^2.5.4",
     "tailwindcss": "^3.4.14",
     "tailwindcss-animate": "^1.0.7",
@@ -95,7 +103,7 @@
     "workbox-strategies": "^7.3.0",
     "workbox-window": "^7.0.0",
     "xlsx": "^0.18.5",
-    "zod": "^3.23.8"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

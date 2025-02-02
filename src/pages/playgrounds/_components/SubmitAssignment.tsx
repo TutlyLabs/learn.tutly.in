@@ -1,8 +1,14 @@
-import { actions } from "astro:actions";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { api } from "@/trpc/react";
+
 import Submit from "./Submit";
+
+type AssignmentResponse = {
+  assignment: any;
+  mentorDetails: any;
+};
 
 const SubmitAssignment = ({
   currentUser,
@@ -13,30 +19,16 @@ const SubmitAssignment = ({
 }) => {
   const [assignmentDetails, setAssignmentDetails] = useState<any>(null);
   const [mentorDetails, setMentorDetails] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!assignmentId) return;
-    async function fetch() {
-      setIsLoading(true);
-      async function fetchData() {
-        const { data: res } = await actions.assignments_submitAssignment({
-          id: assignmentId,
-        });
-
-        setAssignmentDetails(res?.assignment);
-        setMentorDetails(res?.mentorDetails);
-
-        return res;
-      }
-      const data: any = await fetchData();
-      if (!data.assignment || !currentUser) {
-        toast.error("Error fetching assignment details");
-      }
-      setIsLoading(false);
-    }
-    fetch();
-  }, [assignmentId]);
+  const { isLoading } = api.assignments.submitAssignment.useMutation({
+    onSuccess: (data: AssignmentResponse) => {
+      setAssignmentDetails(data.assignment);
+      setMentorDetails(data.mentorDetails);
+    },
+    onError: () => {
+      toast.error("Error fetching assignment details");
+    },
+  });
 
   return (
     assignmentId &&

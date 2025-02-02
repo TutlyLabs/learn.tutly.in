@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Profile } from "@prisma/client";
-import { actions } from "astro:actions";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -23,6 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { api } from "@/trpc/react";
 
 const formSchema = z.object({
   github: z
@@ -97,6 +97,8 @@ export default function ProfessionalProfiles({
       hackerrank: professionalProfiles?.hackerrank || "",
     },
   });
+  const { mutateAsync: validatePlatformHandles } =
+    api.codingPlatforms.validatePlatformHandles.useMutation();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -104,15 +106,9 @@ export default function ProfessionalProfiles({
         Object.entries(values).filter(([_, value]) => value !== "" && value !== undefined)
       );
       toast.loading("Validating handles...");
-      const { data, error } = await actions.codingPlatforms_validatePlatformHandlesAction({
+      const { valid, invalidFields } = await validatePlatformHandles({
         handles: validationValues as Record<string, string>,
       });
-      if (error) {
-        toast.dismiss();
-        toast.error(`Invalid handles: ${error.message}`);
-        return;
-      }
-      const { valid, invalidFields } = data;
       if (!valid) {
         toast.dismiss();
         toast.error(`Invalid handles: ${invalidFields.join(", ")}`);

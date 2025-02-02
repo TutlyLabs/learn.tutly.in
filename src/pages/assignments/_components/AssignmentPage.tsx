@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import day from "dayjs";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -40,6 +39,7 @@ import {
 import { useRouter } from "@/hooks/use-router";
 import { useSearchParams } from "@/hooks/use-search-params";
 import NewAttachmentPage from "@/pages/courses/[id]/classes/_components/NewAssignments";
+import { api } from "@/trpc/react";
 
 interface Props {
   currentUser: any;
@@ -191,6 +191,8 @@ const StudentAssignmentSubmission = ({
 }) => {
   const [externalLink, setExternalLink] = useState("");
 
+  const { mutateAsync: submitExternalLink } = api.submission.submitExternalLink.useMutation();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -202,7 +204,7 @@ const StudentAssignmentSubmission = ({
     try {
       toast.loading("Submitting assignment...");
 
-      const { data: res, error } = await actions.submissions_submitExternalLink({
+      const res = await submitExternalLink({
         assignmentId: assignment.id,
         externalLink,
         maxSubmissions: assignment.maxSubmissions,
@@ -211,10 +213,6 @@ const StudentAssignmentSubmission = ({
 
       console.log(res);
       toast.dismiss();
-      if (error || res.error) {
-        toast.error(`Error: ${res?.error}`);
-        return;
-      }
       toast.success("Assignment submitted successfully");
       setExternalLink("");
       window.location.reload();
@@ -377,6 +375,10 @@ const AdminAssignmentTable = ({
 
   const router = useRouter();
 
+  const { mutateAsync: addOverallFeedback } = api.submission.addOverallFeedback.useMutation();
+  const { mutateAsync: deleteSubmission } = api.submission.deleteSubmission.useMutation();
+  const { mutateAsync: addPoints } = api.points.addPoints.useMutation();
+
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     setSearchParams((prev) => {
@@ -402,7 +404,7 @@ const AdminAssignmentTable = ({
 
   const handleFeedback = async (submissionId: string) => {
     try {
-      await actions.submissions_addOverallFeedback({
+      await addOverallFeedback({
         submissionId,
         feedback,
       });
@@ -438,7 +440,7 @@ const AdminAssignmentTable = ({
           score,
         }));
 
-      await actions.points_addPoints({
+      await addPoints({
         submissionId: assignments[index].id,
         marks,
       });
@@ -458,7 +460,7 @@ const AdminAssignmentTable = ({
 
     try {
       toast.loading("Deleting Submission...");
-      await actions.submissions_deleteSubmission({ submissionId: id });
+      await deleteSubmission({ submissionId: id });
       toast.success("Submission deleted successfully");
     } catch {
       toast.error("Failed to delete submission");

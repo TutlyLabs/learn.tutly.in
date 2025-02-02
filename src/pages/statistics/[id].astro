@@ -1,29 +1,23 @@
 ---
-import StudentStats from "@/components/studentStats";
+import Stats from "./page.tsx";
 import RootLayout from "@/layouts/RootLayout.astro";
-import { actions } from "astro:actions";
+import { createServerCaller } from "@/trpc/server";
 
 const courseId = Astro.params.id!;
-const call = Astro.callAction;
+const caller = await createServerCaller(Astro.request);
 if (!courseId) return null;
 
-const { data } = await call(actions.courses_getAllCourses, {});
-const { data: studentData } = await call(actions.statistics_studentBarchartData, { courseId });
-const { data: attendanceData } = await call(actions.statistics_studentHeatmapData, { courseId });
+const data = await caller.courses.getAllCourses();
+const studentData = await caller.statistics.studentHeatmapData({ courseId });
+const attendanceData = await caller.statistics.studentHeatmapData({ courseId });
 ---
 
 <RootLayout title="Statistics">
-  <div class="flex gap-2 items-center mx-4 md:mx-8 mb-2">
-    {
-      data?.data?.map((course: any) => (
-        <a
-          href={`/statistics/${course.id}`}
-          class={`p-1 px-2 border rounded-lg ${course.id === courseId ? "border-primary" : ""}`}
-        >
-          {course.title}
-        </a>
-      ))
-    }
-  </div>
-  <StudentStats client:load studentData={studentData} attendanceData={attendanceData} />
+  <Stats
+    courseId={courseId}
+    data={data}
+    studentData={studentData}
+    attendanceData={attendanceData}
+    client:load
+  />
 </RootLayout>

@@ -1,10 +1,10 @@
 import type { Account, Session } from "@prisma/client";
-import { actions } from "astro:actions";
 import { HardDrive, Laptop, Monitor, Smartphone, Tablet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractDeviceLabel } from "@/lib/device";
+import { api } from "@/trpc/react";
 
 const providers = ["credentials", "google"];
 
@@ -15,9 +15,11 @@ type SessionsModalProps = {
 };
 
 export default function Sessions({ sessions, accounts, currentSessionId }: SessionsModalProps) {
+  const { mutateAsync: deleteSession } = api.users.deleteSession.useMutation();
+
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      await actions.users_deleteSession({ sessionId });
+      await deleteSession({ sessionId });
     } catch (error) {
       console.error("Failed to delete session:", error);
     }

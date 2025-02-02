@@ -1,23 +1,25 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import db from "@/lib/db";
 import { type SandpackFiles } from "@codesandbox/sandpack-react";
-import Playground from "../_components/Playground";
+import Page from "./page";
+import { createServerCaller } from "@/trpc/server";
 
 const currentUser = Astro.locals.user!;
+if (!currentUser) return Astro.redirect("/sign-in");
 
 const assignmentId = Astro.url.searchParams.get("assignmentId");
 const submissionId = Astro.url.searchParams.get("submissionId");
 
-const submission = submissionId
-  ? await db.submission.findUnique({
-      where: { id: submissionId },
-      include: {
-        enrolledUser: true,
-        points: true,
-      },
-    })
-  : null;
+const caller = await createServerCaller(Astro.request);
+const result = submissionId ? await caller.submission.getSubmissionById({ submissionId }) : null;
+
+if (!result || !result.success || !result.data) {
+  return Astro.redirect("/404");
+}
+
+const { data } = result;
+
+const submission = data;
 
 const initialFiles = submission?.data as SandpackFiles;
 
@@ -33,11 +35,10 @@ if (!studentAccess && !mentorAccess && !instrctorAccess && submissionId) {
 ---
 
 <RootLayout>
-  <Playground
+  <Page
     currentUser={currentUser}
     assignmentId={assignmentId || ""}
     initialFiles={initialFiles}
-    template="static"
     client:only
   />
 </RootLayout>

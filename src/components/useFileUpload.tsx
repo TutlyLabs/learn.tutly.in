@@ -1,9 +1,10 @@
 import { FileType } from "@prisma/client";
-import { actions } from "astro:actions";
 import axios from "axios";
 import imageCompression from "browser-image-compression";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+
+import { api } from "@/trpc/react";
 
 export type FileUploadOptions = {
   fileType: FileType;
@@ -27,6 +28,10 @@ export const useFileUpload = (options: FileUploadOptions) => {
   const { fileType, onUpload, allowedExtensions } = options;
   const [isUploading, setIsUploading] = useState(false);
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+
+  const { mutateAsync: createFileAndGetUploadUrl } =
+    api.fileUpload.createFileAndGetUploadUrl.useMutation();
+  const { mutateAsync: markFileUploaded } = api.fileUpload.markFileUploaded.useMutation();
 
   const uploadFile = async (file: File, associatingId?: string) => {
     setIsUploading(true);
@@ -55,11 +60,10 @@ export const useFileUpload = (options: FileUploadOptions) => {
         throw new Error("Files must not exceed 10MB");
       }
 
-      const { data } = await actions.fileupload_createFileAndGetUploadUrl({
+      const data = await createFileAndGetUploadUrl({
         name: fileToUpload.name,
         fileType,
         associatingId,
-        // TODO: make this dynamic
         isPublic: true,
         mimeType: fileToUpload.type,
       });
@@ -78,7 +82,7 @@ export const useFileUpload = (options: FileUploadOptions) => {
         },
       });
 
-      const { data: updatedFile } = await actions.fileupload_markFileUploaded({
+      const updatedFile = await markFileUploaded({
         fileId: uploadedFile.id,
       });
 

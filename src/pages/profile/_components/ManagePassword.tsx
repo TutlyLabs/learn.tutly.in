@@ -1,4 +1,3 @@
-import { actions } from "astro:actions";
 import { Check, Eye, EyeOff, Loader2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -12,6 +11,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { api } from "@/trpc/react";
 
 const ManagePassword = ({ initialEmail }: { initialEmail?: string }) => {
   const [newPassword, setNewPassword] = useState("");
@@ -26,6 +26,10 @@ const ManagePassword = ({ initialEmail }: { initialEmail?: string }) => {
   const [showPasswordStrength, setShowPasswordStrength] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [canResend, setCanResend] = useState(true);
+
+  const { mutateAsync: sendOTP } = api.resetPassword.sendOTP.useMutation();
+  const { mutateAsync: verifyOTP } = api.resetPassword.verifyOTP.useMutation();
+  const { mutateAsync: resetPassword } = api.resetPassword.resetPassword.useMutation();
 
   const checkStrength = (pass: string) => {
     const requirements = [
@@ -89,25 +93,20 @@ const ManagePassword = ({ initialEmail }: { initialEmail?: string }) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data, error } = await actions.reset_password_sendOTPAction({
-        email: email,
-      });
+      const data = await sendOTP({ email });
 
-      if (error || !data || data.error) {
-        const error = data?.error;
-        toast.error(error?.message || "Failed to send OTP");
-        if (error?.existingOTP) {
+      if (data.error) {
+        toast.error(data.error.message || "Failed to send OTP");
+        if (data.error.existingOTP) {
           setStep("otp");
-          startResendTimer(error.timeRemaining);
+          startResendTimer(data.error.timeRemaining);
         }
         return;
       }
 
-      if (data && data.success) {
-        toast.success("OTP sent to your email");
-        setStep("otp");
-        startResendTimer(10 * 60 * 1000);
-      }
+      toast.success("OTP sent to your email");
+      setStep("otp");
+      startResendTimer(10 * 60 * 1000);
     } catch (error) {
       toast.error("An error occurred while sending OTP");
     } finally {
@@ -119,20 +118,15 @@ const ManagePassword = ({ initialEmail }: { initialEmail?: string }) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data, error } = await actions.reset_password_verifyOTPAction({
-        email: email,
-        otp: otp,
-      });
+      const data = await verifyOTP({ email, otp });
 
-      if (error || !data || data.error) {
-        toast.error(error?.message || "Invalid OTP");
+      if (data.error) {
+        toast.error(data.error || "Invalid OTP");
         return;
       }
 
-      if (data && data.success) {
-        toast.success("OTP verified successfully");
-        setStep("password");
-      }
+      toast.success("OTP verified successfully");
+      setStep("password");
     } catch (error) {
       toast.error("An error occurred while verifying OTP");
     } finally {
@@ -144,21 +138,19 @@ const ManagePassword = ({ initialEmail }: { initialEmail?: string }) => {
     e.preventDefault();
     setIsResetting(true);
     try {
-      const { data, error } = await actions.reset_password_resetPasswordAction({
+      const data = await resetPassword({
         email,
         otp,
         password: newPassword,
       });
 
-      if (error || !data || data.error) {
-        toast.error(error?.message || "Failed to reset password");
+      if (data.error) {
+        toast.error(data.error.message || "Failed to reset password");
         return;
       }
 
-      if (data && data.success) {
-        toast.success("Password reset successfully");
-        window.location.href = "/sign-in";
-      }
+      toast.success("Password reset successfully");
+      window.location.href = "/sign-in";
     } catch (error) {
       toast.error("An error occurred while resetting password");
     } finally {

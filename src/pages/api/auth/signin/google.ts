@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import queryString from "query-string";
 
 import { getSiteUrl } from "@/lib/utils/get-site-url";
+
 // import { env } from "@/lib/utils";
 
 export async function GET({ cookies }: APIContext) {

@@ -1,20 +1,17 @@
 ---
 import RootLayout from "@layouts/RootLayout.astro";
-import db from "@/lib/db";
-import ProfilePage from "./_components/ProfilePage";
+import Page from "./page";
 import type { User, Profile } from "@prisma/client";
-const user = Astro.locals.user;
+import { createServerCaller } from "@/trpc/server";
 
-const userProfile = await db.user.findUnique({
-  where: {
-    id: user?.id!,
-  },
-  include: {
-    profile: true,
-  },
-});
+const currentUser = Astro.locals.user;
+if (!currentUser) return Astro.redirect("/sign-in");
+
+const caller = await createServerCaller(Astro.request);
+
+const userProfile = await caller.profile.getCurrentUserProfile({ id: currentUser.id });
 ---
 
 <RootLayout title="Profile">
-  <ProfilePage userProfile={userProfile as User & { profile: Profile }} client:only />
+  <Page userProfile={userProfile as User & { profile: Profile }} client:load />
 </RootLayout>
