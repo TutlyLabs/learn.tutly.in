@@ -9,7 +9,7 @@ if (!currentUser) return Astro.redirect("/sign-in");
 const caller = await createServerCaller(Astro.request);
 const courses = await caller.courses.getUserCourses();
 
-const publishedCourses = courses.filter((course) => course.isPublished);
+const publishedCourses = courses.filter((course: any) => course.isPublished);
 const coursesFinal = currentUser.role === "INSTRUCTOR" ? courses : publishedCourses;
 ---
 

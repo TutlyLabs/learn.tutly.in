@@ -1,17 +1,15 @@
 ---
 import RootLayout from "@layouts/RootLayout.astro";
-import db from "@/lib/db";
-import Bookmarks from "./_components/Bookmarks";
+import Page from "./page";
+import { createServerCaller } from "@/trpc/server";
 
 const currentUser = Astro.locals.user;
+if (!currentUser) return Astro.redirect("/sign-in");
 
-const bookmarks = await db.bookMarks.findMany({
-  where: {
-    userId: currentUser?.id!,
-  },
-});
+const caller = await createServerCaller(Astro.request);
+const bookmarks = await caller.bookmarks.getUserBookmarks();
 ---
 
 <RootLayout title="Bookmarks">
-  <Bookmarks bookmarks={bookmarks} client:load />
+  <Page bookmarks={bookmarks} client:only="react" />
 </RootLayout>

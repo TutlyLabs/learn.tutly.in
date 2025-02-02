@@ -788,4 +788,107 @@ export const coursesRouter = createTRPCRouter({
       },
     });
   }),
+
+  getAllDoubts: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    if (!currentUser) throw new Error("Unauthorized");
+
+    const courses = await ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentUser.username,
+          },
+        },
+      },
+      include: {
+        doubts: {
+          include: {
+            user: true,
+            response: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return courses;
+  }),
+
+  getCertificateData: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = ctx.user;
+    if (!currentUser) throw new Error("Unauthorized");
+    const db = ctx.db;
+
+    const enrolledCourses = await db.enrolledUsers.findMany({
+      where: {
+        username: currentUser.username,
+        user: {
+          organizationId: currentUser.organizationId,
+        },
+      },
+      select: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            attachments: {
+              where: {
+                attachmentType: "ASSIGNMENT",
+              },
+              select: {
+                id: true,
+                title: true,
+                submissions: {
+                  where: {
+                    enrolledUser: {
+                      username: currentUser.username,
+                    },
+                  },
+                  select: {
+                    id: true,
+                    points: {
+                      select: {
+                        score: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    let dashboardData = {
+      courses: enrolledCourses.map((enrolledCourse) => {
+        const courseAssignments = enrolledCourse.course?.attachments || [];
+        const submissions = courseAssignments.flatMap((a) => a.submissions);
+
+        const totalPoints = submissions.reduce(
+          (acc, curr) => acc + curr.points.reduce((acc, curr) => acc + curr.score, 0),
+          0
+        );
+
+        return {
+          courseId: enrolledCourse.course?.id,
+          courseTitle: enrolledCourse.course?.title,
+          assignments: courseAssignments,
+          assignmentsSubmitted: submissions.length,
+          totalPoints,
+          totalAssignments: courseAssignments.length,
+        };
+      }),
+      currentUser,
+    };
+
+    return dashboardData;
+  }),
 });
