@@ -1,8 +1,7 @@
 ---
-import db from "@/lib/db";
 import RootLayout from "@/layouts/RootLayout.astro";
-import UserCards from "./_components/UserCards";
-import { Role } from "@prisma/client";
+import Page from "./page";
+import { createServerCaller } from "@/trpc/server";
 
 const user = Astro.locals.user;
 
@@ -31,68 +30,25 @@ const orderBy = {
   "join-date-asc": { createdAt: "asc" },
 }[sort] as any;
 
-const [users, totalCount, activeCount] = await Promise.all([
-  db.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      email: true,
-      mobile: true,
-      image: true,
-      role: true,
-      lastSeen: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-    where: {
-      OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-      ],
-      role: role ? { equals: role as Role } : { in: ["MENTOR", "STUDENT"] },
-      organizationId: user.organizationId,
-      ...(showOnline ? { lastSeen: { gte: onlineCutoff } } : {}),
-      ...(orderBy?.lastSeen ? { lastSeen: { not: null } } : {}),
-    },
-    skip,
-    take: limit,
-    orderBy,
-  }),
-  db.user.count({
-    where: {
-      OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-      ],
-      role: role ? { equals: role as Role } : { in: ["MENTOR", "STUDENT"] },
-      organizationId: user.organizationId,
-      ...(showOnline ? { lastSeen: { gte: onlineCutoff } } : {}),
-    },
-  }),
-  db.user.count({
-    where: {
-      OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-      ],
-      role: role ? { equals: role as Role } : { in: ["MENTOR", "STUDENT"] },
-      organizationId: user.organizationId,
-      lastSeen: { gte: onlineCutoff },
-    },
-  }),
-]);
+const caller = await createServerCaller(Astro.request);
+
+const [users, totalCount, activeCount] = await caller.users.getActivityData({
+  search,
+  role: role || '',
+  skip,
+  limit,
+  orderBy,
+  showOnline,
+  onlineCutoff,
+})
 ---
 
 <RootLayout title="Users">
-  <UserCards
+  <Page
     users={users}
-    totalItems={totalCount}
+    totalCount={totalCount}
     activeCount={activeCount}
-    defaultPageSize={limit}
+    limit={limit}
     client:load
   />
 </RootLayout>

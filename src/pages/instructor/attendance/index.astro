@@ -1,15 +1,15 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import { actions } from "astro:actions";
-import AttendanceClient from "./_components/Attendancefilters";
+import Page from "./page";
 import db from "@/lib/db";
 import type { Course, Class } from "@prisma/client";
+import { createServerCaller } from "@/trpc/server";
 
 const currentUser = Astro.locals.user;
 
-const call = Astro.callAction;
+const caller = await createServerCaller(Astro.request);
 
-const { data: attendance } = await call(actions.attendances_getAttendanceOfAllStudents, {});
+const { data: attendance } = await caller.attendance.getAttendanceOfAllStudents();
 
 let courses = await db.course.findMany({
   where: {
@@ -67,10 +67,10 @@ if (currentUser?.role !== "INSTRUCTOR") {
 
 <RootLayout title="Attendance">
   <div>
-    <AttendanceClient
-      attendance={attendance?.data ?? ""}
+    <Page
+      attendance={attendance}
       courses={courses}
-      role={currentUser?.role ?? ""}
+      currentUser={currentUser?.role ?? ""}
       client:load
     />
   </div>

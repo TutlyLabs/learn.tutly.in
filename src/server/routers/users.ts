@@ -543,4 +543,102 @@ export const usersRouter = createTRPCRouter({
         message: "Password reset successfully",
       };
     }),
+
+    getActivityData: protectedProcedure
+    .input(
+      z.object({
+        search: z.string(),
+        role: z.string(),
+        skip: z.number(),
+        limit: z.number(),
+        orderBy: z.any(),
+        showOnline: z.boolean(),
+        onlineCutoff: z.date(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const users = await ctx.db.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          email: true,
+          mobile: true,
+          image: true,
+          role: true,
+          lastSeen: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        where: {
+          OR: [
+            { name: { contains: input.search, mode: "insensitive" } },
+            { email: { contains: input.search, mode: "insensitive" } },
+            { username: { contains: input.search, mode: "insensitive" } },
+          ],
+          role: input.role ? { equals: input.role as Role } : { in: ["MENTOR", "STUDENT"] },
+          ...(input.showOnline ? { lastSeen: { gte: input.onlineCutoff } } : {}),
+          ...(input.orderBy?.lastSeen ? { lastSeen: { not: null } } : {}),
+        },
+        skip:input.skip,
+        take: input.limit,
+        orderBy:input.orderBy,
+      })
+      const totalCount = await ctx.db.user.count({
+        where: {
+          OR: [
+            { name: { contains: input.search, mode: "insensitive" } },
+            { email: { contains: input.search, mode: "insensitive" } },
+            { username: { contains: input.search, mode: "insensitive" } },
+          ],
+          role: input.role ? { equals: input.role as Role } : { in: ["MENTOR", "STUDENT"] },
+          ...(input.showOnline ? { lastSeen: { gte: input.onlineCutoff } } : {}),
+        },
+      })
+      const activeCount = await ctx.db.user.count({
+        where: {
+          OR: [
+            { name: { contains: input.search, mode: "insensitive" } },
+            { email: { contains: input.search, mode: "insensitive" } },
+            { username: { contains: input.search, mode: "insensitive" } },
+          ],
+          role: input.role ? { equals: input.role as Role } : { in: ["MENTOR", "STUDENT"] },
+          lastSeen: { gte: input.onlineCutoff },
+        },
+      })
+      return [users, totalCount, activeCount]
+    }),
+
+    manageUsers: protectedProcedure
+    .input(
+      z.object({
+        cond: z.any(),
+        page: z.number(),
+        limit: z.number(),
+        sortField: z.string(),
+        sortDirection: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const totalItems = await ctx.db.user.count({ where:input.cond });
+
+      const allUsers = await ctx.db.user.findMany({
+        where: {
+          ...input.cond,
+        },
+        orderBy: {
+          [input.sortField]: input.sortDirection,
+        },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          email: true,
+          role: true,
+        },
+        skip: (input.page - 1) * input.limit,
+        take: input.limit,
+      });
+      return [allUsers, totalItems]
+    })
 });

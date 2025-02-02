@@ -1,24 +1,21 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import UserTable from "./_components/UsersTable";
-import { actions } from "astro:actions";
+import { createServerCaller } from "@/trpc/server";
+import Page from "./page";
 
 const params = Astro.params;
 const { id } = Astro.params;
 const currentUser = Astro.locals.user;
 
-const call = Astro.callAction;
-const { data: allUsers } = await call(actions.users_getAllUsers, { courseId: id! });
+const caller = await createServerCaller(Astro.request);
+const allUsers = await caller.users.getAllUsers({ courseId: id! });
 ---
 
 <RootLayout title="Manage Course">
-  {
-    !currentUser || currentUser.role !== "INSTRUCTOR" ? (
-      <div class="mt-8 text-center text-3xl font-semibold">Unauthorized</div>
-    ) : (
-      <div class="flex items-center justify-center">
-        <UserTable users={allUsers || []} params={params} client:load />
-      </div>
-    )
-  }
+  <Page
+    allUsers={allUsers}
+    params={params}
+    currentUser={currentUser}
+    client:load
+  />
 </RootLayout>

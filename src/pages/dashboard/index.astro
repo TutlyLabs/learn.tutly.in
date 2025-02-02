@@ -1,59 +1,20 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-
-import db from "@/lib/db";
 import { Role } from "@prisma/client";
 import { DashboardData } from "@/types/dashboard";
-import Dashboard from "./_components/dashboard";
+import Page from "./page";
+import { createServerCaller } from "@/trpc/server";
 
 const currentUser = Astro.locals.user!;
 
 const role: Role = currentUser.role;
 let dashboardData: DashboardData | null = null;
 
+const caller = await createServerCaller(Astro.request);
+
 if (role === Role.STUDENT) {
-  const enrolledCourses = await db.enrolledUsers.findMany({
-    where: {
-      username: currentUser.username,
-      user: {
-        organizationId: currentUser.organizationId,
-      },
-    },
-    select: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-          attachments: {
-            where: {
-              attachmentType: "ASSIGNMENT",
-            },
-            select: {
-              id: true,
-              title: true,
-              submissions: {
-                where: {
-                  enrolledUser: {
-                    username: currentUser.username,
-                  },
-                },
-                select: {
-                  id: true,
-                  points: {
-                    select: {
-                      score: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+  const enrolledCourses = await caller.courses.studentDashboardData({
+    username: currentUser.username,
   });
 
   dashboardData = {
@@ -78,56 +39,9 @@ if (role === Role.STUDENT) {
     currentUser,
   };
 } else if (role === Role.MENTOR) {
-  const mentorCourses = await db.course.findMany({
-    where: {
-      enrolledUsers: {
-        some: {
-          mentorUsername: currentUser.username,
-          user: {
-            organizationId: currentUser.organizationId,
-          },
-        },
-      },
-    },
-    select: {
-      id: true,
-      title: true,
-      attachments: {
-        where: {
-          attachmentType: "ASSIGNMENT",
-        },
-        select: {
-          id: true,
-          title: true,
-        },
-      },
-      enrolledUsers: {
-        where: {
-          mentorUsername: currentUser.username,
-        },
-        select: {
-          user: {
-            select: {
-              username: true,
-            },
-          },
-          submission: {
-            select: {
-              id: true,
-              points: {
-                select: {
-                  score: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const mentorCourses = await caller.courses.mentorDashboardData({
+    username: currentUser.username,
+  })
 
   dashboardData = {
     courses: mentorCourses.map((mentorCourse) => {
@@ -146,30 +60,9 @@ if (role === Role.STUDENT) {
     }),
   };
 } else if (role === Role.INSTRUCTOR) {
-  const courses = await db.course.findMany({
-    where: {
-      createdById: currentUser.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      _count: {
-        select: {
-          classes: true,
-          enrolledUsers: {
-            where: {
-              user: {
-                role: "STUDENT",
-              },
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const courses = await caller.courses.instructorDashboardData({
+    id: currentUser.id
+  })
 
   dashboardData = {
     courses: courses.map((course) => ({
@@ -186,5 +79,5 @@ const name = currentUser.name;
 ---
 
 <RootLayout title="Dashboard">
-  <Dashboard data={dashboardData} name={name} currentUser={currentUser} client:load />
+  <Page dashboardData={dashboardData} name={name} currentUser={currentUser} client:load />
 </RootLayout>

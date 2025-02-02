@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import db from "@/lib/db";
+
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const attendanceRouter = createTRPCRouter({
@@ -416,9 +418,6 @@ export const attendanceRouter = createTRPCRouter({
     const enrolledUsers = await ctx.db.enrolledUsers.findMany({
       where: {
         username: currentUser?.username || "",
-        user: {
-          organizationId: currentUser.organizationId,
-        },
       },
       orderBy: {
         createdAt: "asc",
@@ -431,23 +430,42 @@ export const attendanceRouter = createTRPCRouter({
       return { error: "You must be logged in to attend a class" };
     }
 
-    const totalAttendance = await ctx.db.attendance.findMany({
-      where: {
-        user: {
-          enrolledUsers: {
-            some: {
-              mentorUsername: currentUser.username,
-              courseId,
+    let totalAttendance;
+    if (currentUser.role === "MENTOR") {
+      totalAttendance = await ctx.db.attendance.findMany({
+        where: {
+          user: {
+            enrolledUsers: {
+              some: {
+                mentorUsername: currentUser.username,
+                courseId,
+              },
             },
           },
         },
-      },
-      select: {
-        username: true,
-        user: true,
-        attended: true,
-      },
-    });
+        select: {
+          username: true,
+          user: true,
+          attended: true,
+        },
+      });
+    } else {
+      totalAttendance = await ctx.db.attendance.findMany({
+        where: {
+          user: {
+            role: "STUDENT",
+          },
+          class: {
+            courseId,
+          },
+        },
+        select: {
+          username: true,
+          user: true,
+          attended: true,
+        },
+      });
+    }
 
     const totalCount = await ctx.db.class.count({
       where: {

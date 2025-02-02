@@ -1,6 +1,7 @@
 import type { Course, User, submission } from "@prisma/client";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { z } from "zod";
 
 interface LeaderboardSubmission extends Partial<submission> {
   totalPoints: number;
@@ -292,5 +293,97 @@ export const leaderboardRouter = createTRPCRouter({
     }, 0);
 
     return { success: true, data: totalPoints };
+  }),
+
+  leaderboardForInstructor: protectedProcedure
+  .input(
+    z.object({
+      selectedCourse: z.string(),
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const currentUser = ctx.user;
+    const courses = await ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: currentUser.username,
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        isPublished: true,
+      },
+    });
+
+    const mentors =
+      currentUser.role === "INSTRUCTOR"
+        ? await ctx.db.user.findMany({
+            where: {
+              role: "MENTOR",
+              organizationId: currentUser.organizationId,
+              enrolledUsers: {
+                some: {
+                  courseId: {
+                    in: courses.map((course) => course.id),
+                  },
+                },
+              },
+            },
+            select: {
+              id: true,
+              username: true,
+            },
+          })
+        : [];
+
+    const submissions = input.selectedCourse
+      ? await ctx.db.submission.findMany({
+          where: {
+            enrolledUser: {
+              course: {
+                id: input.selectedCourse,
+              },
+            },
+          },
+          select: {
+            id: true,
+            points: true,
+            enrolledUser: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                    image: true,
+                  },
+                },
+                mentor: {
+                  select: {
+                    username: true,
+                  },
+                },
+              },
+            },
+            assignment: {
+              select: {
+                class: {
+                  select: {
+                    course: {
+                      select: {
+                        id: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        })
+      : [];
+      return [courses, mentors, submissions];
   }),
 });

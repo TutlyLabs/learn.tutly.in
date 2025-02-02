@@ -766,4 +766,145 @@ export const coursesRouter = createTRPCRouter({
         },
       });
     }),
+  
+    studentDashboardData: protectedProcedure
+    .input(
+      z.object({
+        username: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.db.enrolledUsers.findMany({
+        where: {
+          username: input.username,
+          user: {
+            organizationId: input.organizationId,
+          },
+        },
+        select: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+                select: {
+                  id: true,
+                  title: true,
+                  submissions: {
+                    where: {
+                      enrolledUser: {
+                        username: input.username,
+                      },
+                    },
+                    select: {
+                      id: true,
+                      points: {
+                        select: {
+                          score: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      })
+    }),
+
+    mentorDashboardData: protectedProcedure
+    .input(
+      z.object({
+        username: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.db.course.findMany({
+        where: {
+          enrolledUsers: {
+            some: {
+              mentorUsername: input.username,
+            },
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          attachments: {
+            where: {
+              attachmentType: "ASSIGNMENT",
+            },
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+          enrolledUsers: {
+            where: {
+              mentorUsername: input.username,
+            },
+            select: {
+              user: {
+                select: {
+                  username: true,
+                },
+              },
+              submission: {
+                select: {
+                  id: true,
+                  points: {
+                    select: {
+                      score: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      })
+    }),
+
+    instructorDashboardData: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.db.course.findMany({
+        where: {
+          createdById: input.id,
+        },
+        select: {
+          id: true,
+          title: true,
+          _count: {
+            select: {
+              classes: true,
+              enrolledUsers: {
+                where: {
+                  user: {
+                    role: "STUDENT",
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      })
+    }),
 });

@@ -2,7 +2,9 @@
 import RootLayout from "@/layouts/RootLayout.astro";
 import { actions } from "astro:actions";
 import { Course } from "@prisma/client";
-import Report, { DataItem } from "./_components/Report.tsx";
+import { DataItem } from "./_components/Report.tsx";
+import Page from "./page";
+import { createServerCaller } from "@/trpc/server";
 
 const { courseId } = Astro.params;
 
@@ -11,17 +13,19 @@ if (!courseId) {
   return Astro.redirect("/instructor/courses", 302);
 }
 
-const { data } = await call(actions.report_generateReport, { courseId });
-const report = data?.data;
+const caller = await createServerCaller(Astro.request);
+
+const { data } = await caller.report.generateReport({ courseId });
+const report = data;
 const sortedData = report ? [...report].sort((a, b) => a.username.localeCompare(b.username)) : [];
 const { data: coursesData } = await call(actions.courses_getAllCourses, {});
 const courses = coursesData?.data;
 ---
 
 <RootLayout title="Report">
-  <Report
-    intitialdata={sortedData as DataItem[]}
-    allCourses={courses as Course[]}
+  <Page
+    sortedData={sortedData as DataItem[]}
+    courses={courses as Course[]}
     courseId={courseId}
     client:load
   />

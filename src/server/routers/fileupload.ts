@@ -224,4 +224,23 @@ export const fileUploadRouter = createTRPCRouter({
 
       return file;
     }),
+
+    uploadedFiles: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const files = await ctx.db.file.findMany({
+        where: {
+          uploadedById: input?.id!,
+          isArchived: false,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      return files;
+    }),
 });

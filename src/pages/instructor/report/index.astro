@@ -1,11 +1,10 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import NoDataFound from "@/components/NoDataFound";
-import { actions } from "astro:actions";
+import Page from "./page";
+import { createServerCaller } from "@/trpc/server";
 
-const call = Astro.callAction;
-const { data } = await call(actions.courses_getEnrolledCourses, {});
-const courses = data?.data;
+const caller = await createServerCaller(Astro.request);
+const courses = await caller.courses.getEnrolledCourses();
 
 const firstCourseId = courses?.[0]?.id;
 
@@ -17,5 +16,5 @@ return Astro.redirect(`/instructor/report/${firstCourseId}`, 302);
 ---
 
 <RootLayout title="Report">
-  {!firstCourseId && <NoDataFound message="Oops! No enrolled courses found" />}
+  <Page firstCourseId={firstCourseId} client:load />
 </RootLayout>
