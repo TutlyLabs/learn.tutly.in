@@ -1,90 +1,18 @@
 ---
-import db from "@/lib/db";
 import RootLayout from "@layouts/RootLayout.astro";
-import AddCourse from "./_components/AddCourse";
-import CourseCard from "./_components/CourseCard";
-import NoDataFound from "./_components/NoDataFound";
+import CoursesPage from "./page";
+import { createServerCaller } from "@/trpc/server";
 
 const currentUser = Astro.locals.user;
-if (!currentUser) return null;
-const courses = await db.course.findMany({
-  where: {
-    enrolledUsers: {
-      some: {
-        username: currentUser.username,
-      },
-    },
-  },
-  include: {
-    classes: true,
-    createdBy: {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        image: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    },
-    _count: {
-      select: {
-        classes: true,
-      },
-    },
-    courseAdmins: {
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        image: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    },
-  },
-});
+if (!currentUser) return Astro.redirect("/sign-in");
 
-courses.forEach((course) => {
-  course.classes.sort((a, b) => {
-    return Number(a.createdAt) - Number(b.createdAt);
-  });
-});
+const caller = await createServerCaller(Astro.request);
+const courses = await caller.courses.getUserCourses();
 
 const publishedCourses = courses.filter((course) => course.isPublished);
-
 const coursesFinal = currentUser.role === "INSTRUCTOR" ? courses : publishedCourses;
 ---
 
 <RootLayout title="Courses">
-  <div class="w-full">
-    <div class="flex w-full">
-      {
-        coursesFinal?.length === 0 && (
-          <div>
-            {currentUser?.role === "INSTRUCTOR" ? (
-              <AddCourse client:load />
-            ) : (
-              <NoDataFound message="No courses found!" />
-            )}
-          </div>
-        )
-      }
-
-      {
-        coursesFinal?.length > 0 && (
-          <div class="flex flex-wrap">
-            {coursesFinal.map((course) => (
-              <CourseCard currentUser={currentUser} key={course.id} course={course} client:load />
-            ))}
-            {currentUser?.role === "INSTRUCTOR" && <AddCourse client:load />}
-          </div>
-        )
-      }
-    </div>
-  </div>
+    <CoursesPage coursesFinal={coursesFinal} currentUser={currentUser} client:only="react" />
 </RootLayout>

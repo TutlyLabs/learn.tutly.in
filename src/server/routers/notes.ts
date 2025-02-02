@@ -41,4 +41,20 @@ export const notesRouter = createTRPCRouter({
 
       return { success: true }
     }),
+
+  getNote: protectedProcedure
+    .input(z.object({
+      objectId: z.string(),
+      userId: z.string()
+    }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.notes.findUnique({
+        where: {
+          userId_objectId: {
+            userId: input.userId,
+            objectId: input.objectId
+          }
+        }
+      })
+    }),
 }) 

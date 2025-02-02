@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "@/hooks/use-router";
+import { api } from "@/trpc/react";
 
 const formSchema = z.object({
   title: z.string().min(1, {
@@ -80,6 +81,8 @@ const NewAttachmentPage = ({
   });
 
   const { isSubmitting } = form.formState;
+  const { mutateAsync: createAttachment } = api.attachments.createAttachment.useMutation();
+  const { mutateAsync: updateAttachment } = api.attachments.updateAttachment.useMutation();
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const dueDate =
@@ -89,7 +92,7 @@ const NewAttachmentPage = ({
 
     try {
       if (isEditing && attachment) {
-        const res = await actions.attachments_updateAttachment({
+        await updateAttachment({
           id: attachment.id,
           title: values.title,
           classId: values.class,
@@ -102,10 +105,9 @@ const NewAttachmentPage = ({
           courseId: courseId!,
         });
 
-        if (!res) throw new Error();
         toast.success("Assignment updated");
       } else {
-        const res = await actions.attachments_createAttachment({
+        await createAttachment({
           title: values.title,
           classId: values.class,
           link: values.link,
@@ -117,7 +119,6 @@ const NewAttachmentPage = ({
           courseId: courseId!,
         });
 
-        if (!res) throw new Error();
         toast.success("Assignment created");
       }
 

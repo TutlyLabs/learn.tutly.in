@@ -38,4 +38,17 @@ export const bookmarksRouter = createTRPCRouter({
 
       return { success: true }
     }),
+  getBookmark: protectedProcedure
+    .input(z.object({
+      objectId: z.string(),
+      userId: z.string()
+    }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.bookMarks.findFirst({
+        where: {
+          objectId: input.objectId,
+          userId: input.userId
+        }
+      })
+    }),
 }) 

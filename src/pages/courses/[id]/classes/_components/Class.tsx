@@ -1,5 +1,4 @@
 import { type Attachment, type Class, FileType, type Notes, type Video } from "@prisma/client";
-import { actions } from "astro:actions";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -16,6 +15,7 @@ import {
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useDebounce } from "use-debounce";
+import { api } from "@/trpc/react";
 
 import VideoPlayer from "@/components/VideoPlayer";
 import RichTextEditor from "@/components/editor/RichTextEditor";
@@ -64,11 +64,11 @@ export default function Class({
   courseId: string;
   currentUser: any;
   details:
-    | (Class & {
-        video: Video | null;
-        attachments: Attachment[];
-      })
-    | null;
+  | (Class & {
+    video: Video | null;
+    attachments: Attachment[];
+  })
+  | null;
   isBookmarked: boolean;
   initialNote?: Notes | null;
 }) {
@@ -144,12 +144,16 @@ export default function Class({
   const [tags, setTags] = useState<string[]>(initialNote?.tags || []);
   const [newTag, setNewTag] = useState("");
 
+  const { mutateAsync: updateNote } = api.notes.updateNote.useMutation();
+  const { mutateAsync: toggleBookmark } = api.bookmarks.toggleBookmark.useMutation();
+  const { mutateAsync: deleteAttachment } = api.attachments.deleteAttachment.useMutation();
+
   useEffect(() => {
     const saveNotes = async () => {
       if (debouncedNotes) {
         try {
           setNotesStatus("Saving...");
-          await actions.notes_updateNote({
+          await updateNote({
             objectId: classId,
             category: "CLASS",
             description: debouncedNotes,
@@ -169,9 +173,10 @@ export default function Class({
 
   const handleDelete = async () => {
     try {
-      await actions.attachments_deleteAttachment({
+      await deleteAttachment({
         id: selectedAttachment?.id!,
       });
+
       toast.success("Assignment deleted successfully");
       window.location.reload();
     } catch (error) {
@@ -179,20 +184,16 @@ export default function Class({
     }
   };
 
-  const toggleBookMark = async () => {
+  const handleBookmark = async () => {
     try {
-      const response = await actions.bookmarks_toggleBookmark({
+      await toggleBookmark({
         objectId: classId,
         category: "CLASS",
         causedObjects: { classId: classId, courseId: courseId },
       });
 
-      if (response.error) {
-        toast.error("failed to add bookmark");
-      } else {
-        toast.success(isBookmarked ? "Bookmark removed" : "Bookmark added");
-        window.location.reload();
-      }
+      toast.success(isBookmarked ? "Bookmark removed" : "Bookmark added");
+      window.location.reload();
     } catch (error) {
       toast.error("Failed to toggle bookmark");
     }
@@ -229,7 +230,7 @@ export default function Class({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={toggleBookMark}
+                      onClick={handleBookmark}
                       className="hover:bg-secondary/80"
                     >
                       {isBookmarked ? (

@@ -657,4 +657,90 @@ export const coursesRouter = createTRPCRouter({
         return { error: "Failed to delete course" };
       }
     }),
+
+  getUserCourses: protectedProcedure.query(async ({ ctx }) => {
+    const courses = await ctx.db.course.findMany({
+      where: {
+        enrolledUsers: {
+          some: {
+            username: ctx.user.username,
+          },
+        },
+      },
+      include: {
+        classes: true,
+        createdBy: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        _count: {
+          select: {
+            classes: true,
+          },
+        },
+        courseAdmins: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    return courses.map(course => ({
+      ...course,
+      classes: course.classes.sort((a, b) => 
+        Number(a.createdAt) - Number(b.createdAt)
+      )
+    }));
+  }),
+
+  getCourseAssignments: protectedProcedure
+    .input(z.object({ courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.course.findMany({
+        where: {
+          id: input.courseId,
+        },
+        select: {
+          id: true,
+          classes: {
+            select: {
+              attachments: {
+                where: {
+                  attachmentType: "ASSIGNMENT",
+                },
+                include: {
+                  class: true,
+                  submissions: {
+                    where: {
+                      enrolledUser: {
+                        username: ctx.user.username,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+        },
+      });
+    }),
 }) 

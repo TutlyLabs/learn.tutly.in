@@ -169,4 +169,37 @@ export const classesRouter = createTRPCRouter({
         throw new Error("Failed to get total number of classes. Please try again later.")
       }
     }),
+
+  getClassDetails: protectedProcedure
+    .input(z.object({
+      id: z.string()
+    }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.class.findUnique({
+        where: {
+          id: input.id
+        },
+        include: {
+          video: true,
+          attachments: true,
+          Folder: true
+        }
+      })
+    }),
+
+  getClassesWithFolders: protectedProcedure
+    .input(z.object({
+      courseId: z.string().trim().min(1),
+    }))
+    .query(async ({ ctx, input }) => {
+      const classes = await ctx.db.class.findMany({
+        where: {
+          courseId: input.courseId,
+        },
+        include: {
+          Folder: true,
+        },
+      })
+      return classes
+    }),
 }) 

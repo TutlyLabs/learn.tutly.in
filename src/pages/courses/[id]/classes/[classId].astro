@@ -1,77 +1,46 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import ClassSidebar from "./_components/classSidebar";
-import Class from "./_components/Class";
-import db from "@/lib/db";
+import { createServerCaller } from "@/trpc/server";
+import ClassPage from "./page";
 
 const currentUser = Astro.locals.user;
-
-if (!currentUser) return null;
-const classesWithFolders = await db.class.findMany({
-  where: {
-    courseId: Astro.params.id!,
-  },
-  include: {
-    Folder: true,
-  },
-});
+if (!currentUser) return Astro.redirect("/sign-in");
 
 const classId = Astro.params.classId!;
 const courseId = Astro.params.id!;
 
-const classDetails = await db.class.findUnique({
-  where: {
-    id: classId,
-  },
-  include: {
-    video: true,
-    attachments: true,
-    Folder: true,
-  },
+const caller = await createServerCaller(Astro.request);
+
+const classesWithFolders = await caller.classes.getClassesWithFolders({
+  courseId
 });
 
-const initialNote = await db.notes.findUnique({
-  where: {
-    userId_objectId: {
-      userId: currentUser.id,
-      objectId: classId,
-    },
-  },
+const classDetails = await caller.classes.getClassDetails({
+  id: classId
 });
 
-const bookmark = await db.bookMarks.findUnique({
-  where: {
-    userId_objectId: {
-      userId: currentUser.id,
-      objectId: classId,
-    },
-  },
+const initialNote = await caller.notes.getNote({
+  objectId: classId,
+  userId: currentUser.id
+});
+
+const bookmark = await caller.bookmarks.getBookmark({
+  objectId: classId,
+  userId: currentUser.id
 });
 
 const isBookmarked = bookmark ? true : false;
 ---
 
 <RootLayout title="Classes" forceClose={true}>
-  <div class="flex items-start w-full">
-    <ClassSidebar
-      client:only
-      courseId={String(Astro.params.id)}
-      classes={classesWithFolders || []}
-      title="Assignments"
-      currentUser={currentUser}
-      isCourseAdmin={currentUser.role === "INSTRUCTOR"}
-    />
-    <div class="w-full m-3">
-      <Class
-        classes={classesWithFolders || []}
-        classId={classId}
-        courseId={courseId}
-        currentUser={currentUser}
-        details={classDetails}
-        isBookmarked={isBookmarked}
-        initialNote={initialNote}
-        client:only
-      />
-    </div>
-  </div>
+  <ClassPage
+    courseId={courseId}
+    classId={classId}
+    classesWithFolders={classesWithFolders}
+    currentUser={currentUser}
+    classDetails={classDetails}
+    isBookmarked={isBookmarked}
+    initialNote={initialNote}
+    client:only="react"
+  />
 </RootLayout>
