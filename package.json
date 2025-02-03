@@ -7,9 +7,9 @@
   },
   "scripts": {
     "dev": "pnpm with-env astro dev",
-    "start": "pnpm with-env astro dev",
-    "build": "pnpm with-env astro check && prisma generate && astro build",
-    "preview": "pnpm with-env astro preview",
+    "start": "astro dev",
+    "build": "astro check && prisma generate && astro build",
+    "preview": "astro preview",
     "astro": "astro",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
