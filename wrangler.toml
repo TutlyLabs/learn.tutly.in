@@ -1,24 +1,16 @@
 name = "tutly"
-main = "dist/server/entry.mjs"
 compatibility_date = "2024-02-03"
-node_compat = true
 compatibility_flags = ["nodejs_compat"]
-node_version = "18.17.1"
 
-[build]
-command = "pnpm build"
-watch_dir = "src"
+pages_build_output_dir = "dist"
 
-[env.production]
-vars = { NODE_ENV = "production" }
+[vars]
+NODE_ENV = "production"
 
-[env.development]
-vars = { NODE_ENV = "development" }
+[env.preview.vars]
+NODE_ENV = "development"
 
 [[kv_namespaces]]
 binding = "TUTLY_KV"
 id = "619a0a1a69af46d483b55b5d6d1cf25c"
-preview_id = "9929b888aa004b46aa7a99318a162179"
-
-[site]
-bucket = "./dist/client" 
+preview_id = "9929b888aa004b46aa7a99318a162179" 

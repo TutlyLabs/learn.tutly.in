@@ -3,7 +3,7 @@
   "type": "module",
   "version": "2.2.1.beta.005",
   "engines": {
-    "node": "18.17.1"
+    "node": "20.5.1"
   },
   "scripts": {
     "dev": "pnpm with-env astro dev",
@@ -58,7 +58,6 @@
     "@trpc/client": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
-    "@vite-pwa/astro": "^0.4.3",
     "arctic": "^2.3.4",
     "astro": "^4.16.17",
     "aws-sdk": "^2.1692.0",
@@ -104,7 +103,6 @@
     "workbox-precaching": "^7.3.0",
     "workbox-routing": "^7.3.0",
     "workbox-strategies": "^7.3.0",
-    "workbox-window": "^7.0.0",
     "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },
@@ -135,7 +133,9 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "prisma": "^6.0.1",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "workbox-build": "^7.3.0",
+    "workbox-window": "^7.3.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,astro}": [
