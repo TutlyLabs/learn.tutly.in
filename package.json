@@ -120,7 +120,6 @@
     "@types/web-push": "^3.6.4",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "@vite-pwa/astro": "^0.4.3",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.56.0",
     "eslint-plugin-astro": "^0.31.0",
