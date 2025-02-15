@@ -12,6 +12,7 @@ import {
   FaRegBookmark,
   FaStickyNote,
   FaTags,
+  FaTrash,
   FaTrashAlt,
 } from "react-icons/fa";
 import { RiEdit2Fill } from "react-icons/ri";
@@ -48,6 +49,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+import EditClassDialog from "./EditClassDialog";
 import NewAttachmentPage from "./NewAssignments";
 
 export default function Class({
@@ -143,29 +145,44 @@ export default function Class({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [tags, setTags] = useState<string[]>(initialNote?.tags || []);
   const [newTag, setNewTag] = useState("");
+  const [isClearNotesDialogOpen, setIsClearNotesDialogOpen] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    const saveNotes = async () => {
-      if (debouncedNotes) {
-        try {
-          setNotesStatus("Saving...");
-          await actions.notes_updateNote({
-            objectId: classId,
-            category: "CLASS",
-            description: debouncedNotes,
-            tags: tags,
-            causedObjects: { classId: classId, courseId: courseId },
-          });
-          setLastSaved(new Date());
-          setNotesStatus("Saved");
-        } catch (error) {
-          setNotesStatus("Failed to save");
-        }
-      }
-    };
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+      return;
+    }
 
-    saveNotes();
-  }, [debouncedNotes, classId, tags]);
+    const timer = setTimeout(() => {
+      const saveNotes = async () => {
+        if (!debouncedNotes && notes === "") {
+          return;
+        }
+
+        if (debouncedNotes !== undefined) {
+          try {
+            setNotesStatus("Saving...");
+            await actions.notes_updateNote({
+              objectId: classId,
+              category: "CLASS",
+              description: debouncedNotes,
+              tags: tags,
+              causedObjects: { classId: classId, courseId: courseId },
+            });
+            setLastSaved(new Date());
+            setNotesStatus("Saved");
+          } catch (error) {
+            setNotesStatus("Failed to save");
+          }
+        }
+      };
+
+      saveNotes();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [debouncedNotes, classId, tags, isInitialLoad]);
 
   const handleDelete = async () => {
     try {
@@ -209,6 +226,31 @@ export default function Class({
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
+  const handleClearNotes = async () => {
+    try {
+      setNotesStatus("Clearing...");
+      setNotes(null);
+
+      await actions.notes_updateNote({
+        objectId: classId,
+        category: "CLASS",
+        description: null,
+        tags: [],
+        causedObjects: { classId: classId, courseId: courseId },
+      });
+
+      setTags([]);
+      setLastSaved(new Date());
+      setNotesStatus("Cleared");
+      setIsClearNotesDialogOpen(false);
+      toast.success("Notes cleared successfully");
+      window.location.reload();
+    } catch (error) {
+      setNotesStatus("Failed to clear");
+      toast.error("Failed to clear notes");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2 md:m-5">
       <div className="flex flex-wrap gap-6">
@@ -220,9 +262,14 @@ export default function Class({
                   <p className="text-xl font-semibold">{title}</p>
                   {haveAdminAccess && (
                     <div className="flex items-center gap-3">
-                      <a href={`/courses/${courseId}/classes/${classId}/edit`}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsEditDialogOpen(true)}
+                        className="hover:bg-secondary/80"
+                      >
                         <RiEdit2Fill className="h-5 w-5" />
-                      </a>
+                      </Button>
                     </div>
                   )}
                   <div className="flex items-center gap-2">
@@ -386,6 +433,17 @@ export default function Class({
             {notesStatus && <span>{notesStatus}</span>}
             {lastSaved && <span> • Last saved {dayjs(lastSaved).fromNow()}</span>}
           </div>
+          {notes && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsClearNotesDialogOpen(true)}
+              className="text-red-500 hover:text-red-600 hover:bg-red-100/10"
+            >
+              <FaTrash className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
         </div>
 
         <RichTextEditor
@@ -401,24 +459,12 @@ export default function Class({
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="min-w-[70vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Assignment</DialogTitle>
-            <DialogDescription>Modify the assignment details.</DialogDescription>
-          </DialogHeader>
-          {selectedAttachment && (
-            <NewAttachmentPage
-              classes={classes}
-              courseId={courseId}
-              classId={classId}
-              isEditing={true}
-              attachment={selectedAttachment}
-              onComplete={() => setIsEditDialogOpen(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <EditClassDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        courseId={courseId}
+        classDetails={details}
+      />
 
       {/* Delete Alert Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -433,6 +479,24 @@ export default function Class({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear Notes Alert Dialog */}
+      <AlertDialog open={isClearNotesDialogOpen} onOpenChange={setIsClearNotesDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Notes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete your notes for this class. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearNotes} className="bg-red-600 hover:bg-red-700">
+              Clear Notes
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

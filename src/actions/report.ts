@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import { defineAction } from "astro:actions";
 import { z } from "zod";
 
@@ -25,29 +26,50 @@ export const generateReport = defineAction({
       return { error: "You are not authorized to generate report" };
     }
 
+    const whereClause =
+      courseId === "all"
+        ? {
+            user: {
+              role: Role.STUDENT,
+              organizationId: currentUser.organizationId,
+            },
+          }
+        : {
+            courseId: courseId,
+            user: {
+              role: Role.STUDENT,
+              organizationId: currentUser.organizationId,
+            },
+          };
+
     const enrolledUsers = await db.enrolledUsers.findMany({
-      where: {
-        courseId: courseId,
-        user: {
-          role: "STUDENT",
-          organizationId: currentUser.organizationId,
-        },
-      },
+      where: whereClause,
       include: {
-        user: {
-          select: {
-            name: true,
-          },
-        },
+        user: true,
       },
     });
 
+    let submissionsWhereClause =
+      courseId === "all"
+        ? {
+            enrolledUser: {
+              user: {
+                organizationId: currentUser.organizationId,
+                role: Role.STUDENT,
+              },
+            },
+          }
+        : {
+            enrolledUser: {
+              courseId: courseId,
+              user: {
+                role: Role.STUDENT,
+              },
+            },
+          };
+
     let submissions = await db.submission.findMany({
-      where: {
-        enrolledUser: {
-          courseId: courseId,
-        },
-      },
+      where: submissionsWhereClause,
       select: {
         id: true,
         attachmentId: true,
@@ -74,11 +96,33 @@ export const generateReport = defineAction({
     const attendance = await db.attendance.findMany({
       where: {
         attended: true,
+        class:
+          courseId === "all"
+            ? {
+                course: {
+                  enrolledUsers: {
+                    some: {
+                      user: {
+                        organizationId: currentUser.organizationId,
+                        role: Role.STUDENT,
+                      },
+                    },
+                  },
+                },
+              }
+            : {
+                courseId: courseId,
+              },
       },
       select: {
         user: {
           select: {
             username: true,
+          },
+        },
+        class: {
+          select: {
+            courseId: true,
           },
         },
       },
@@ -90,7 +134,25 @@ export const generateReport = defineAction({
       return acc;
     }, {});
 
-    const totalClasses = await db.class.count();
+    const totalClasses = await db.class.count({
+      where:
+        courseId === "all"
+          ? {
+              course: {
+                enrolledUsers: {
+                  some: {
+                    user: {
+                      organizationId: currentUser.organizationId,
+                      role: Role.STUDENT,
+                    },
+                  },
+                },
+              },
+            }
+          : {
+              courseId: courseId,
+            },
+    });
 
     const obj: Record<
       string,
@@ -109,15 +171,17 @@ export const generateReport = defineAction({
     > = {};
 
     enrolledUsers.forEach((enrolledUser) => {
-      obj[enrolledUser.username] = {
-        username: enrolledUser.username,
-        name: enrolledUser.user.name,
-        submissions: new Set(),
-        submissionsLength: 0,
-        assignments: new Set(),
-        assignmentLength: 0,
-        mentorUsername: enrolledUser.mentorUsername,
-      };
+      if (enrolledUser.user) {
+        obj[enrolledUser.username] = {
+          username: enrolledUser.username,
+          name: enrolledUser.user.name,
+          submissions: new Set(),
+          submissionsLength: 0,
+          assignments: new Set(),
+          assignmentLength: 0,
+          mentorUsername: enrolledUser.mentorUsername,
+        };
+      }
     });
 
     submissions.forEach((submission) => {
@@ -134,6 +198,21 @@ export const generateReport = defineAction({
     });
 
     const points = await db.point.findMany({
+      where: {
+        submissions: {
+          enrolledUser:
+            courseId === "all"
+              ? {
+                  user: {
+                    organizationId: currentUser.organizationId,
+                    role: Role.STUDENT,
+                  },
+                }
+              : {
+                  courseId: courseId,
+                },
+        },
+      },
       select: {
         score: true,
         submissions: {
@@ -142,6 +221,7 @@ export const generateReport = defineAction({
             enrolledUser: {
               select: {
                 username: true,
+                courseId: true,
               },
             },
           },
@@ -151,9 +231,10 @@ export const generateReport = defineAction({
 
     Object.values(obj).forEach((ob) => {
       try {
-        const userPoints = points.filter((point) =>
-          point.submissions ? point.submissions.enrolledUser.username === ob.username : false
+        const userPoints = points.filter(
+          (point) => point.submissions?.enrolledUser.username === ob.username
         );
+
         ob.score = userPoints.reduce((acc, curr) => acc + (curr.score || 0), 0);
         ob.submissionEvaluatedLength = new Set(
           userPoints
@@ -166,10 +247,13 @@ export const generateReport = defineAction({
     });
 
     Object.values(obj).forEach((ob) => {
-      if (!groupedAttendance[ob.username]) {
-        groupedAttendance[ob.username] = 0;
+      if (courseId === "all") {
+        const userAttendance = attendance.filter((a) => a.user.username === ob.username).length;
+        const totalClassesForUser = totalClasses;
+        ob.attendance = totalClassesForUser > 0 ? (userAttendance * 100) / totalClassesForUser : 0;
+      } else {
+        ob.attendance = ((groupedAttendance[ob.username] ?? 0) * 100) / totalClasses;
       }
-      ob.attendance = ((groupedAttendance[ob.username] ?? 0) * 100) / totalClasses;
     });
 
     let SelectedFields: ReportData[] = Object.values(obj).map((ob) => ({
@@ -179,7 +263,7 @@ export const generateReport = defineAction({
       assignmentLength: ob.assignmentLength,
       score: ob.score ?? 0,
       submissionEvaluatedLength: ob.submissionEvaluatedLength ?? 0,
-      attendance: ob.attendance?.toFixed(2) ?? "0.00",
+      attendance: typeof ob.attendance === "number" ? ob.attendance.toFixed(2) : "0.00",
       mentorUsername: ob.mentorUsername ?? "",
     }));
 

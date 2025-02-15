@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionUser } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 
+import ManageFolders from "./ManageFolders";
 import NewClassDialog from "./newClass";
 
 function ClassSidebar({
@@ -122,7 +123,10 @@ function ClassSidebar({
         </ScrollArea>
         {pathname !== `/courses/${courseId}/classes/new` &&
           (currentUser?.role === "INSTRUCTOR" || isCourseAdmin) && (
-            <div className={cn("p-4 sticky bottom-0 bg-background", isCollapsed && "hidden")}>
+            <div
+              className={cn("p-4 sticky bottom-0 bg-background space-y-2", isCollapsed && "hidden")}
+            >
+              <ManageFolders courseId={courseId} />
               <NewClassDialog courseId={courseId} />
             </div>
           )}

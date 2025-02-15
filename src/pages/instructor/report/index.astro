@@ -7,15 +7,13 @@ const call = Astro.callAction;
 const { data } = await call(actions.courses_getEnrolledCourses, {});
 const courses = data?.data;
 
-const firstCourseId = courses?.[0]?.id;
-
-if (!firstCourseId) {
+if (!courses?.length) {
   return Astro.redirect("/instructor/no-courses", 302);
 }
 
-return Astro.redirect(`/instructor/report/${firstCourseId}`, 302);
+return Astro.redirect(`/instructor/report/all`, 302);
 ---
 
 <RootLayout title="Report">
-  {!firstCourseId && <NoDataFound message="Oops! No enrolled courses found" />}
+  {!courses?.length && <NoDataFound message="Oops! No enrolled courses found" />}
 </RootLayout>

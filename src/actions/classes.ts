@@ -103,61 +103,63 @@ export const updateClass = defineAction({
       throw new Error("You are not authorized to update this class.");
     }
 
-    const { classTitle, videoLink, videoType, folderId, folderName, createdAt } = data;
-
-    let newFolderId: string | undefined = undefined;
-
-    if (folderId && folderName) {
-      await db.folder.update({
-        where: {
-          id: folderId,
-        },
-        data: {
-          title: folderName,
-          createdAt: new Date(createdAt ?? ""),
-        },
-      });
-      newFolderId = folderId;
-    } else if (folderName) {
-      const res = await db.folder.create({
-        data: {
-          title: folderName,
-          createdAt: new Date(createdAt ?? ""),
-        },
-      });
-      newFolderId = res.id;
-    } else {
-      newFolderId = folderId;
-    }
+    const { classId, classTitle, videoLink, videoType, folderId, folderName, createdAt } = data;
 
     try {
-      const myClass = await db.class.update({
-        where: {
-          id: data.classId,
-        },
+      // First get the existing class
+      const existingClass = await db.class.findUnique({
+        where: { id: classId },
+        include: { video: true },
+      });
+
+      if (!existingClass) {
+        throw new Error("Class not found");
+      }
+
+      // Update video
+      await db.video.update({
+        where: { id: existingClass.video!.id },
         data: {
-          title: classTitle,
-          createdAt: new Date(createdAt ?? ""),
-          video: {
-            update: {
-              videoLink: videoLink ?? null,
-              videoType: videoType,
-            },
-          },
-          ...(newFolderId && {
-            Folder: {
-              connect: {
-                id: newFolderId,
-              },
-            },
-          }),
+          videoLink: videoLink ?? null,
+          videoType,
         },
       });
 
-      return myClass;
+      // Handle folder logic
+      let finalFolderId: string | null = null;
+
+      if (folderName) {
+        // Create new folder
+        const newFolder = await db.folder.create({
+          data: {
+            title: folderName,
+            createdAt: new Date(createdAt ?? new Date()),
+          },
+        });
+        finalFolderId = newFolder.id;
+      } else if (folderId) {
+        // Use existing folder
+        finalFolderId = folderId;
+      }
+      // If neither folderName nor folderId is provided, finalFolderId remains null
+
+      const updatedClass = await db.class.update({
+        where: { id: classId },
+        data: {
+          title: classTitle,
+          createdAt: new Date(createdAt ?? new Date()),
+          folderId: finalFolderId,
+        },
+        include: {
+          video: true,
+          Folder: true,
+        },
+      });
+
+      return { success: true, data: updatedClass };
     } catch (error) {
       console.error("Error updating class:", error);
-      throw new Error("Failed to update class. Please try again later.");
+      return { error: "Failed to update class" };
     }
   },
 });

@@ -110,6 +110,13 @@ export const foldersByCourseId = defineAction({
           },
         },
       },
+      include: {
+        _count: {
+          select: {
+            Class: true,
+          },
+        },
+      },
     });
     return folders ?? [];
   },

@@ -18,7 +18,6 @@ export const GET: APIRoute = async ({ cookies }) => {
     },
   });
 
-
   cookies.delete("app_auth_token", {
     path: "/",
   });

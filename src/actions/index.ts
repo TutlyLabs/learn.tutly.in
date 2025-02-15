@@ -9,6 +9,7 @@ import * as codingPlatforms from "./codingPlatforms";
 import * as courses from "./courses";
 import * as doubts from "./doubts";
 import * as fileupload from "./fileupload";
+import * as folders from "./folders";
 import * as leaderboard from "./getLeaderboard";
 import * as holidays from "./holidays";
 import * as mentors from "./mentors";
@@ -45,4 +46,5 @@ export const server = {
   ...groupActions("codingPlatforms", codingPlatforms, "_"),
   ...groupActions("holidays", holidays, "_"),
   ...groupActions("reset_password", resetPassword, "_"),
+  ...groupActions("folders", folders, "_"),
 };
