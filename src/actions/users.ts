@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { z } from "zod";
 
 import db from "@/lib/db";
+import { generateRandomPassword } from "@/lib/db";
 
 export const getCurrentUser = defineAction({
   async handler(_, { locals }) {
@@ -209,6 +210,7 @@ export const createUser = defineAction({
           password: hashedPassword,
           role: role as Role,
           organization: { connect: { id: locals.organization.id } },
+          oneTimePassword: generateRandomPassword(8),
         },
       });
 
@@ -358,6 +360,7 @@ export const bulkUpsert = defineAction({
                 connect: { id: locals.organization!.id },
               },
               role: user.role as Role,
+              oneTimePassword: generateRandomPassword(8),
             },
           });
         })
@@ -367,63 +370,6 @@ export const bulkUpsert = defineAction({
     } catch (error) {
       throw new ActionError({
         message: "Failed to bulk upsert users",
-        code: "INTERNAL_SERVER_ERROR",
-      });
-    }
-  },
-});
-
-export const changePassword = defineAction({
-  input: z.object({
-    id: z.string(),
-    old_password: z.string().optional(),
-    new_password: z.string(),
-  }),
-  async handler({ id, old_password, new_password }) {
-    try {
-      const user = await db.user.findUnique({
-        where: { id },
-        select: {
-          password: true,
-        },
-      });
-
-      if (!user) {
-        throw new ActionError({
-          message: "User not found",
-          code: "NOT_FOUND",
-        });
-      }
-
-      if (user.password && !old_password) {
-        throw new ActionError({
-          message: "Old password is required",
-          code: "UNAUTHORIZED",
-        });
-      }
-
-      if (user.password && old_password) {
-        const passwordMatch = await bcrypt.compare(old_password, user.password);
-
-        if (!passwordMatch) {
-          throw new ActionError({
-            message: "Old password is incorrect",
-            code: "UNAUTHORIZED",
-          });
-        }
-      }
-
-      const hashedNewPassword = await bcrypt.hash(new_password, 10);
-
-      await db.user.update({
-        where: { id },
-        data: {
-          password: hashedNewPassword,
-        },
-      });
-    } catch (error) {
-      throw new ActionError({
-        message: "Failed to change password",
         code: "INTERNAL_SERVER_ERROR",
       });
     }
@@ -687,5 +633,69 @@ export const instructor_resetPassword = defineAction({
       success: true,
       message: "Password reset successfully",
     };
+  },
+});
+
+export const changePassword = defineAction({
+  input: z.object({
+    oldPassword: z.string().optional(),
+    password: z.string().min(8),
+    confirmPassword: z.string().min(8),
+  }),
+  async handler({ oldPassword, password, confirmPassword }, { locals }) {
+    const user = locals.user;
+    try {
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      const dbUser = await db.user.findUnique({
+        where: { id: user.id },
+        select: {
+          password: true,
+        },
+      });
+
+      if (!dbUser) {
+        throw new Error("User not found");
+      }
+
+      if (oldPassword) {
+        const isOldPasswordCorrect = await bcrypt.compare(oldPassword, dbUser.password!);
+
+        if (!isOldPasswordCorrect) {
+          throw new Error("Old password is incorrect");
+        }
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await db.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+
+      await db.session.deleteMany({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      locals.session = null;
+
+      return {
+        success: true,
+        message: "Password changed successfully",
+      };
+    } catch (error) {
+      console.error("Error changing password:", error);
+      throw new Error(
+        error instanceof Error ? error.message : "An error occurred while changing password"
+      );
+    }
   },
 });

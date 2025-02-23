@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const userAgent = request.headers.get("user-agent");
-    const { sessionId } = await signInWithCredentials(email, password, userAgent);
+    const { sessionId, isPasswordSet } = await signInWithCredentials(email, password, userAgent);
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 1 day
     const isProduction = import.meta.env.PROD;
@@ -38,8 +38,8 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Logged In Successfully",
-        redirectTo: "/dashboard",
+        message: isPasswordSet ? "Logged In Successfully" : "Please set a new password",
+        redirectTo: isPasswordSet ? "/dashboard" : "/change-password",
       }),
       {
         status: 200,

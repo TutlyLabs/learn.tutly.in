@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "astro/zod";
-import { Loader2 } from "lucide-react";
+import { navigate } from "astro:transitions/client";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -16,7 +17,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "@/hooks/use-router";
 
 const signInSchema = z.object({
   email: z.string().min(1, "Username or email is required"),
@@ -26,9 +26,9 @@ const signInSchema = z.object({
 type SignInInput = z.infer<typeof signInSchema>;
 
 export function SignIn() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const form = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
@@ -72,7 +72,7 @@ export function SignIn() {
       // Wait for 200ms before redirecting to avoid cookie issues
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      router.push(result.redirectTo || "/dashboard");
+      navigate(result.redirectTo || "/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to sign in");
     } finally {
@@ -80,27 +80,27 @@ export function SignIn() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsGoogleLoading(true);
+  // const handleGoogleSignIn = async () => {
+  //   try {
+  //     setIsGoogleLoading(true);
 
-      const currentUrl = new URL(window.location.href);
-      const error = currentUrl.searchParams.get("error");
+  //     const currentUrl = new URL(window.location.href);
+  //     const error = currentUrl.searchParams.get("error");
 
-      if (error) {
-        throw new Error(decodeURIComponent(error).replace(/\+/g, " "));
-      }
+  //     if (error) {
+  //       throw new Error(decodeURIComponent(error).replace(/\+/g, " "));
+  //     }
 
-      window.location.href = "/api/auth/signin/google";
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to initiate Google sign in", {
-        duration: 3000,
-        position: "top-center",
-      });
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
+  //     window.location.href = "/api/auth/signin/google";
+  //   } catch (error) {
+  //     toast.error(error instanceof Error ? error.message : "Failed to initiate Google sign in", {
+  //       duration: 3000,
+  //       position: "top-center",
+  //     });
+  //   } finally {
+  //     setIsGoogleLoading(false);
+  //   }
+  // };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-2">
@@ -110,7 +110,7 @@ export function SignIn() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2">
               <FormField
                 control={form.control}
                 name="email"
@@ -131,25 +131,40 @@ export function SignIn() {
                   <FormItem>
                     <FormLabel className="text-foreground/80">Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        {...field}
-                        disabled={isLoading}
-                        autoComplete="current-password"
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          {...field}
+                          disabled={isLoading}
+                          autoComplete="current-password"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="flex items-center justify-end mb-2">
+              <div className="flex items-center justify-start mt-1">
                 <a href="/reset-password" className="text-sm text-primary hover:underline">
                   Forgot Password?
                 </a>
               </div>
               <Button
                 type="submit"
-                className="w-full bg-primary/90 hover:bg-primary transition-colors"
+                className="w-full bg-primary/90 hover:bg-primary transition-colors mt-4"
                 disabled={isLoading}
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -157,7 +172,7 @@ export function SignIn() {
               </Button>
             </form>
           </Form>
-          <div className="mt-6 flex flex-col gap-3">
+          {/* <div className="mt-6 flex flex-col gap-3">
             <Button
               variant="outline"
               className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30"
@@ -167,7 +182,7 @@ export function SignIn() {
               {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
             </Button>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

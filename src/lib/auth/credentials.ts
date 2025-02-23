@@ -2,6 +2,7 @@ import { ActionError } from "astro:actions";
 import bcrypt from "bcrypt";
 
 import db from "@/lib/db";
+import { generateRandomPassword } from "@/lib/db";
 
 async function validateCredentials(identifier: string, password: string) {
   const isEmail = identifier.includes("@");
@@ -16,6 +17,7 @@ async function validateCredentials(identifier: string, password: string) {
       email: true,
       username: true,
       password: true,
+      oneTimePassword: true,
       name: true,
       image: true,
       role: true,
@@ -27,6 +29,16 @@ async function validateCredentials(identifier: string, password: string) {
     throw new Error(isEmail ? "Email not found" : "Username not found");
   }
 
+  if (password === user.oneTimePassword) {
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        oneTimePassword: generateRandomPassword(8),
+      },
+    });
+    return { user, isOneTimePassword: true };
+  }
+
   if (!user.password) {
     throw new Error("Password not set for this account");
   }
@@ -36,7 +48,7 @@ async function validateCredentials(identifier: string, password: string) {
     throw new Error("Invalid password");
   }
 
-  return user;
+  return { user, isOneTimePassword: false };
 }
 
 export async function signInWithCredentials(
@@ -45,7 +57,7 @@ export async function signInWithCredentials(
   userAgent?: string | null
 ) {
   try {
-    const user = await validateCredentials(identifier, password);
+    const { user, isOneTimePassword } = await validateCredentials(identifier, password);
 
     const session = await db.session.create({
       data: {
@@ -70,6 +82,7 @@ export async function signInWithCredentials(
     return {
       sessionId: session.id,
       user: session.user,
+      isPasswordSet: !!user.password && !isOneTimePassword, // password is set and not using oneTimePassword
     };
   } catch (error) {
     throw new ActionError({

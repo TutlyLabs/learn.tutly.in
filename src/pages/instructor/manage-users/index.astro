@@ -80,6 +80,7 @@ const allUsers = await db.user.findMany({
     username: true,
     email: true,
     role: true,
+    oneTimePassword: true,
   },
   skip: (page - 1) * limit,
   take: limit,

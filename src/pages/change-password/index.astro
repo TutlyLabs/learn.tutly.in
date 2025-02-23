@@ -1,0 +1,26 @@
+---
+import db from "@/lib/db";
+import ChangePassword from "@/pages/profile/_components/ChangePassword";
+
+import RootLayout from "@layouts/RootLayout.astro";
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/sign-in");
+}
+
+const userWithPassword = await db.user.findUnique({
+  where: {
+    id: user?.id,
+  },
+  select: {
+    password: true,
+  },
+});
+
+const isPasswordExists = userWithPassword?.password !== null;
+---
+
+<RootLayout title="Change Password">
+  <ChangePassword client:load isPasswordExists={isPasswordExists} email={user?.email ?? ""} />
+</RootLayout>

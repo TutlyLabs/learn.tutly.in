@@ -1,3 +1,4 @@
+import { navigate } from "astro:transitions/client";
 import { Download, ExternalLink, LockIcon, LogOut, UserIcon } from "lucide-react";
 // import {  Settings } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -119,7 +120,7 @@ export function UserMenu({ user }: UserMenuProps) {
       // Wait for 200ms before redirecting to avoid cookie issues
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      window.location.href = "/sign-in";
+      navigate("/sign-in");
     } catch (error) {
       console.log("Error at user-menu: ", error);
     }
@@ -183,10 +184,10 @@ export function UserMenu({ user }: UserMenuProps) {
                 Profile
               </DropdownMenuItem>
             </a>
-            <a href={`/reset-password?email=${user.email}`}>
+            <a href={`/change-password`}>
               <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
                 <LockIcon className="h-5 w-5" />
-                Reset Password
+                Manage Password
               </DropdownMenuItem>
             </a>
             {/* {user.role === "STUDENT" && (
@@ -232,7 +233,7 @@ export function UserMenu({ user }: UserMenuProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={handleSignout}
-            className="flex items-center gap-2 cursor-pointer text-destructive"
+            className="flex items-center gap-2 cursor-pointer text-red-600"
           >
             <LogOut className="h-5 w-5" />
             Log out

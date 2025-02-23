@@ -1,5 +1,6 @@
 import {
   ArrowUpDown,
+  CopyIcon,
   Download,
   Edit2,
   Eye,
@@ -912,23 +913,34 @@ export default function DisplayTable({
               {columns
                 .filter((col) => !col.hidden)
                 .map((col) => (
-                  <div key={col.key} className="space-y-2">
-                    <Label>{col.label || col.name}</Label>
-                    <div className="p-2 border rounded-md bg-muted">{selectedRow?.[col.key]}</div>
+                  <div key={col.key} className="space-y-2 relative group">
+                    <div>
+                      <Label>{col.label || col.name}</Label>
+                      <div className="relative">
+                        <div className="p-2 border rounded-md bg-muted">
+                          {selectedRow?.[col.key]}
+                        </div>
+                        <Button
+                          className="absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedRow?.[col.key]);
+                            toast({
+                              title: "Copied to clipboard",
+                              description: `${col.label || col.name} copied successfully`,
+                              duration: 2000,
+                            });
+                          }}
+                        >
+                          <CopyIcon className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               <div className="flex justify-end">
-                <Button
-                  onClick={() =>
-                    setSearchParams((prev: URLSearchParams) => {
-                      prev.delete("dialog");
-                      prev.delete("id");
-                      return prev;
-                    })
-                  }
-                >
-                  Close
-                </Button>
+                <Button onClick={handleDialogClose}>Close</Button>
               </div>
             </div>
           </DialogContent>

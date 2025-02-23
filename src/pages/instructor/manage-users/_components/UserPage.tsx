@@ -89,6 +89,15 @@ const columns: Column[] = [
       message: "Password must be at least 6 characters",
     },
   },
+  {
+    key: "oneTimePassword",
+    name: "One Time Password",
+    label: "One Time Password",
+    type: "text",
+    sortable: false,
+    filterable: false,
+    hideInTable: true,
+  },
 ];
 
 const actionWrapper = (action: any) => {
