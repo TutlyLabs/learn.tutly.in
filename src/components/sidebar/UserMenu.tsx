@@ -112,17 +112,37 @@ export function UserMenu({ user }: UserMenuProps) {
   const handleSignout = async () => {
     setIsOpen(false);
     try {
-      await fetch("/api/auth/signout", {
+      //todo: temp hack for now
+      // Pre-fetch the sign-in page before signing out
+      await fetch("/sign-in", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const response = await fetch("/api/auth/signout", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
 
-      // Wait for 200ms before redirecting to avoid cookie issues
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      if (!response.ok) {
+        throw new Error("Failed to sign out");
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.navigationPreload.enable();
+
+        // Clear dashboard cache
+        const dashboardCache = await caches.open("dashboard-cache");
+        await dashboardCache.delete("/dashboard");
+      }
 
       navigate("/sign-in");
     } catch (error) {
-      console.log("Error at user-menu: ", error);
+      console.error("Error during sign out:", error);
+      window.location.href = "/sign-in";
     }
   };
 

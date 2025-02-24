@@ -69,8 +69,20 @@ export function SignIn() {
 
       const result = await response.json();
 
-      // Wait for 200ms before redirecting to avoid cookie issues
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Pre-fetch the dashboard page before navigation
+      await fetch("/dashboard", {
+        credentials: "include",
+        headers: {
+          app_auth_token:
+            document.cookie
+              .split("; ")
+              .find((row) => row.startsWith("app_auth_token="))
+              ?.split("=")[1] || "",
+        },
+      });
+
+      // Wait for 500ms to ensure the dashboard page is cached
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       navigate(result.redirectTo || "/dashboard");
     } catch (error) {

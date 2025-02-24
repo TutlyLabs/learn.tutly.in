@@ -53,6 +53,15 @@ export const auth = defineMiddleware(async ({ cookies, locals, url, redirect, re
     return redirect("/sign-in");
   }
 
+  // public route when pre-fetching
+  const isPrefetch =
+    request.headers.get("Purpose") === "prefetch" ||
+    request.headers.get("Sec-Purpose") === "prefetch";
+
+  if (pathname === "/dashboard" && isPrefetch) {
+    return next();
+  }
+
   if (pathname.startsWith("/instructor") && locals.user?.role !== "INSTRUCTOR") {
     return new Response("Not Found", { status: 404 });
   }
