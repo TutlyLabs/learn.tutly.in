@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { Resend } from "resend";
 import { z } from "zod";
 
-import { OTPEmailTemplate } from "@/components/email/OTPEmailTemplate";
+import OTPEmailTemplate from "@/components/email/OTPEmailTemplate";
 import db from "@/lib/db";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -82,7 +82,10 @@ export const sendOTPAction = defineAction({
         from: "Tutly <no-reply@otp.tutly.in>",
         to: [email],
         subject: "Password Reset OTP",
-        react: OTPEmailTemplate({ otp }),
+        react: OTPEmailTemplate({
+          otp,
+          name: user.name || "User",
+        }),
       });
 
       if (error) {

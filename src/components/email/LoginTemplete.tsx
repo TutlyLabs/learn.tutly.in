@@ -1,9 +1,16 @@
-interface OTPEmailTemplateProps {
-  otp: string;
-  name?: string;
+interface LoginTempleteProps {
+  email: string;
+  ip: string | null;
+  device: string | null;
+  time?: string;
 }
 
-const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps>) => {
+const LoginTemplete = ({
+  email,
+  ip,
+  device,
+  time = new Date().toLocaleString(),
+}: Readonly<LoginTempleteProps>) => {
   return (
     <div
       style={{
@@ -61,19 +68,8 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
               textAlign: "center",
             }}
           >
-            Password Reset OTP
+            New Login Alert
           </h1>
-
-          <p
-            style={{
-              color: "#333333",
-              fontSize: "15px",
-              marginBottom: "15px",
-              fontWeight: "500",
-            }}
-          >
-            Dear {name},
-          </p>
 
           <div
             style={{
@@ -84,9 +80,22 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
               boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
             }}
           >
-            <p style={{ margin: "0", fontSize: "15px", color: "#4a5568" }}>
-              Your OTP is: <strong>{otp}</strong>
+            <p style={{ margin: "0 0 12px 0", fontSize: "15px", color: "#4a5568" }}>
+              A new login was detected from: <strong>{email}</strong>
             </p>
+            <p style={{ margin: "0 0 12px 0", fontSize: "15px", color: "#4a5568" }}>
+              Time: <strong>{time}</strong>
+            </p>
+            {device && (
+              <p style={{ margin: "0 0 12px 0", fontSize: "15px", color: "#4a5568" }}>
+                Device: <strong>{device}</strong>
+              </p>
+            )}
+            {ip && (
+              <p style={{ margin: "0", fontSize: "15px", color: "#4a5568" }}>
+                IP Address: <strong>{ip}</strong>
+              </p>
+            )}
           </div>
 
           <div
@@ -103,21 +112,10 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
             }}
           >
             <p style={{ margin: "0" }}>
-              <strong>Note:</strong> This OTP will expire in 10 minutes for security reasons.
+              <strong>Security Notice:</strong> If you didn't perform this login, please secure your
+              account immediately.
             </p>
           </div>
-        </div>
-
-        <div
-          style={{
-            paddingBottom: "15px",
-            borderTop: "1px solid #ddd",
-            textAlign: "center",
-            fontSize: "14px",
-            color: "#666666",
-          }}
-        >
-          <p>If you didn't request this OTP, please ignore this email.</p>
         </div>
 
         <div
@@ -137,4 +135,4 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
   );
 };
 
-export default OTPEmailTemplate;
+export default LoginTemplete;

@@ -1,9 +1,10 @@
-interface OTPEmailTemplateProps {
-  otp: string;
-  name?: string;
+interface EnrollMailProps {
+  name: string;
+  email: string;
+  password: string;
 }
 
-const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps>) => {
+const EnrollMail = ({ name, email, password }: Readonly<EnrollMailProps>) => {
   return (
     <div
       style={{
@@ -23,6 +24,7 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
           borderRadius: "8px",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
           overflow: "hidden",
+          color: "#000000",
         }}
       >
         <div
@@ -50,6 +52,7 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
           style={{
             padding: "10px 30px 20px 30px",
             color: "#333333",
+            backgroundColor: "#ffffff",
           }}
         >
           <h1
@@ -61,7 +64,7 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
               textAlign: "center",
             }}
           >
-            Password Reset OTP
+            Welcome to Tutly!
           </h1>
 
           <p
@@ -75,6 +78,19 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
             Dear {name},
           </p>
 
+          <p
+            style={{
+              color: "#555555",
+              fontSize: "15px",
+              lineHeight: "1.6",
+              marginBottom: "20px",
+            }}
+          >
+            You have been successfully enrolled in the <strong>HTML CSS JS</strong> batch at
+            <strong> VNR Vignana Jyothi Institute of Engineering & Technology</strong>. Below are
+            your temporary login credentials to access your course:
+          </p>
+
           <div
             style={{
               backgroundColor: "#f0f4f8",
@@ -84,8 +100,11 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
               boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
             }}
           >
+            <p style={{ margin: "0 0 12px 0", fontSize: "15px", color: "#4a5568" }}>
+              <strong>Email:</strong> {email}
+            </p>
             <p style={{ margin: "0", fontSize: "15px", color: "#4a5568" }}>
-              Your OTP is: <strong>{otp}</strong>
+              <strong>One-Time Password:</strong> {password}
             </p>
           </div>
 
@@ -103,8 +122,28 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
             }}
           >
             <p style={{ margin: "0" }}>
-              <strong>Note:</strong> This OTP will expire in 10 minutes for security reasons.
+              <strong>Important:</strong> For security reasons, you must change your password upon
+              first login. This temporary password is valid for one-time use only.
             </p>
+          </div>
+
+          <div style={{ margin: "25px 0", textAlign: "center" }}>
+            <a
+              href="https://learn.tutly.in"
+              style={{
+                backgroundColor: "#007bff",
+                color: "#ffffff",
+                textDecoration: "none",
+                padding: "12px 28px",
+                borderRadius: "6px",
+                display: "inline-block",
+                fontSize: "15px",
+                fontWeight: "500",
+                boxShadow: "0 2px 4px rgba(0, 123, 255, 0.2)",
+              }}
+            >
+              Login Now
+            </a>
           </div>
         </div>
 
@@ -115,9 +154,15 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
             textAlign: "center",
             fontSize: "14px",
             color: "#666666",
+            backgroundColor: "#ffffff",
           }}
         >
-          <p>If you didn't request this OTP, please ignore this email.</p>
+          <p>
+            If you face any issues, contact us at{" "}
+            <a href="mailto:info@tutly.in" style={{ color: "#007bff", textDecoration: "none" }}>
+              info@tutly.in
+            </a>
+          </p>
         </div>
 
         <div
@@ -137,4 +182,4 @@ const OTPEmailTemplate = ({ otp, name = "User" }: Readonly<OTPEmailTemplateProps
   );
 };
 
-export default OTPEmailTemplate;
+export default EnrollMail;

@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-import { EmailTemplate } from "@/components/EmailTemplete";
+import LoginTemplete from "@/components/email/LoginTemplete";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -17,7 +17,12 @@ export const sendEmail = async ({
     from: "Tutly <no-reply@mail.tutly.in>",
     to: ["udaysagar.mail@gmail.com"],
     subject: `New Login from ${email}`,
-    react: EmailTemplate({ email: email, ip, device }),
+    react: LoginTemplete({
+      email: email,
+      ip,
+      device,
+      time: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+    }),
   });
 
   if (error) {
