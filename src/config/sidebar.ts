@@ -111,6 +111,74 @@ const InstructorItems = [
   },
 ];
 
+
+const AdminItems = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Home,
+  },
+  {
+    title: "Schedule",
+    url: "/schedule",
+    icon: Calendar,
+  },
+  {
+    title: "Learning",
+    url: "#",
+    icon: GraduationCap,
+    items: [
+      {
+        title: "Courses",
+        url: "/courses",
+      },
+      {
+        title: "Notes",
+        url: "/notes",
+      },
+    ],
+  },
+  {
+    title: "Assessment",
+    url: "#",
+    icon: ClipboardList,
+    items: [
+      {
+        title: "Assignments",
+        url: "/tutor/assignments",
+      },
+      {
+        title: "Leaderboard",
+        url: "/instructor/leaderboard",
+      },
+      {
+        title: "Attendance",
+        url: "/instructor/attendance",
+      },
+    ],
+  },
+  {
+    title: "Community",
+    url: "/community",
+    icon: Users,
+  },
+  {
+    title: "Bookmarks",
+    url: "/bookmarks",
+    icon: Bookmark,
+  },
+  {
+    title: "Playgrounds",
+    url: "/playgrounds",
+    icon: Terminal,
+  },
+  {
+    title: "Drive",
+    url: "/drive",
+    icon: HardDrive,
+  },
+];
+
 const MentorItems = [
   {
     title: "Dashboard",
@@ -267,10 +335,14 @@ const StudentItems = [
   },
 ];
 
-export function getDefaultSidebarItems(role: Role): SidebarItem[] {
+export function getDefaultSidebarItems({ role, isAdmin = false }: { role: Role, isAdmin?: boolean }): SidebarItem[] {
   switch (role) {
     case "INSTRUCTOR":
-      return InstructorItems as SidebarItem[];
+      if (isAdmin) {
+        return AdminItems as SidebarItem[];
+      } else {
+        return InstructorItems as SidebarItem[];
+      }
     case "MENTOR":
       return MentorItems as SidebarItem[];
     case "STUDENT":

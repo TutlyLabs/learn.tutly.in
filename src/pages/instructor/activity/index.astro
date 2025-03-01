@@ -10,6 +10,10 @@ if (user?.role !== "INSTRUCTOR") {
   return Astro.redirect("/404");
 }
 
+if (user?.isAdmin) {
+  return Astro.redirect("/404");
+}
+
 const searchParams = Astro.url.searchParams;
 const page = parseInt(searchParams.get("page") || "1");
 const limit = parseInt(searchParams.get("limit") || "10");

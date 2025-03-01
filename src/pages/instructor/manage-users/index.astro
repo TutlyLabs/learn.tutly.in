@@ -9,6 +9,10 @@ if (user?.role !== "INSTRUCTOR" || !user) {
   return Astro.redirect(`/404`);
 }
 
+if (user?.isAdmin) {
+  return Astro.redirect("/404");
+}
+
 const searchTerm = Astro.url.searchParams.get("search") || "";
 const sortField = Astro.url.searchParams.get("sort") || "name";
 const sortDirection = Astro.url.searchParams.get("direction") || "asc";

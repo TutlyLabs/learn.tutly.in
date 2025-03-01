@@ -5,6 +5,11 @@ import type { Course } from "@prisma/client";
 import Report, { DataItem } from "./_components/Report.tsx";
 
 const { courseId } = Astro.params;
+const user = Astro.locals.user;
+
+if (user?.isAdmin) {
+  return Astro.redirect("/404");
+}
 
 const call = Astro.callAction;
 if (!courseId) {

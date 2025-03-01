@@ -6,9 +6,15 @@ import { actions } from "astro:actions";
 const call = Astro.callAction;
 const { data } = await call(actions.courses_getEnrolledCourses, {});
 const courses = data?.data;
+const user = Astro.locals.user;
+
 
 if (!courses?.length) {
   return Astro.redirect("/instructor/no-courses", 302);
+}
+
+if (user?.isAdmin) {
+  return Astro.redirect("/404");
 }
 
 return Astro.redirect(`/instructor/report/all`, 302);

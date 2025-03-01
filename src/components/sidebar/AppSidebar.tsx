@@ -39,7 +39,7 @@ interface AppSidebarProps {
 export function AppSidebar({ user, forceClose = false, className, pathname }: AppSidebarProps) {
   const organizationName = "Tutly";
 
-  const sidebarItems = getDefaultSidebarItems(user.role);
+  const sidebarItems = getDefaultSidebarItems({role:user.role, isAdmin: user.isAdmin});
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("sidebarOpen");
