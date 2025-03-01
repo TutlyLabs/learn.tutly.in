@@ -1,20 +1,20 @@
-import type { Course, Organization, Role, Session, User } from "@prisma/client";
+import type { Session } from "@prisma/client";
 
 import db from "../db";
+import { UserSession } from "./core/session";
 
-export type SessionUser = Omit<User, "password" | "oneTimePassword"> & {
-  organization: Organization | null;
-  role: Role;
-  adminForCourses: Course[];
-};
+export * from "./core/session";
+
+// Re-export the session types for global use
+export type { UserSession as SessionUser };
 
 export type SessionWithUser = Session & {
-  user: SessionUser;
+  user: UserSession;
 };
 
 export type SessionValidationResult = {
   session: SessionWithUser | null;
-  user: SessionUser | null;
+  user: UserSession | null;
 };
 
 export async function validateSessionToken(token: string): Promise<SessionValidationResult> {
@@ -46,7 +46,7 @@ export async function validateSessionToken(token: string): Promise<SessionValida
       return { session: null, user: null };
     }
 
-    return { session: session as SessionWithUser, user: session.user as SessionUser };
+    return { session: session, user: session.user };
   } catch (error) {
     console.error("[Session] Error validating session:", error);
     return { session: null, user: null };

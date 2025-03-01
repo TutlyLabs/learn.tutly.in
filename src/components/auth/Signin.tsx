@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { actions } from "astro:actions";
 
 const signInSchema = z.object({
   email: z.string().min(1, "Username or email is required"),
@@ -28,7 +29,7 @@ type SignInInput = z.infer<typeof signInSchema>;
 export function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const form = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
@@ -69,21 +70,6 @@ export function SignIn() {
 
       const result = await response.json();
 
-      // Pre-fetch the dashboard page before navigation
-      await fetch("/dashboard", {
-        credentials: "include",
-        headers: {
-          app_auth_token:
-            document.cookie
-              .split("; ")
-              .find((row) => row.startsWith("app_auth_token="))
-              ?.split("=")[1] || "",
-        },
-      });
-
-      // Wait for 500ms to ensure the dashboard page is cached
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       navigate(result.redirectTo || "/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to sign in");
@@ -92,27 +78,26 @@ export function SignIn() {
     }
   };
 
-  // const handleGoogleSignIn = async () => {
-  //   try {
-  //     setIsGoogleLoading(true);
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const { data, error } = await actions.auth_oAuthSignIn({ provider: "google" });
 
-  //     const currentUrl = new URL(window.location.href);
-  //     const error = currentUrl.searchParams.get("error");
+      if (error) {
+        throw new Error(error.message);
+      }
 
-  //     if (error) {
-  //       throw new Error(decodeURIComponent(error).replace(/\+/g, " "));
-  //     }
+      navigate(data.redirect || "/dashboard");
 
-  //     window.location.href = "/api/auth/signin/google";
-  //   } catch (error) {
-  //     toast.error(error instanceof Error ? error.message : "Failed to initiate Google sign in", {
-  //       duration: 3000,
-  //       position: "top-center",
-  //     });
-  //   } finally {
-  //     setIsGoogleLoading(false);
-  //   }
-  // };
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to initiate Google sign in", {
+        duration: 3000,
+        position: "top-center",
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-2">
@@ -184,7 +169,7 @@ export function SignIn() {
               </Button>
             </form>
           </Form>
-          {/* <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-6 flex flex-col gap-3">
             <Button
               variant="outline"
               className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30"
@@ -194,7 +179,7 @@ export function SignIn() {
               {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
             </Button>
-          </div> */}
+          </div>
         </CardContent>
       </Card>
     </div>
