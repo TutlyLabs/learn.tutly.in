@@ -3,8 +3,9 @@ import {
   type SandpackPredefinedTemplate,
   SandpackPreview,
   SandpackProvider,
+  useSandpack,
 } from "@codesandbox/sandpack-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TfiFullscreen } from "react-icons/tfi";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -14,7 +15,7 @@ import MonacoEditor from "./MonacoEditor";
 import SandboxConsole from "./SandboxConsole";
 import SubmitAssignment from "./SubmitAssignment";
 
-const files = {
+const defaultFiles: SandpackFiles = {
   "/index.html": `<!DOCTYPE html>
 <html>
 
@@ -34,6 +35,18 @@ const files = {
   "/index.js": "",
 };
 
+const AutoSave = ({ assignmentId }: { assignmentId: string }) => {
+  const { sandpack } = useSandpack();
+
+  useEffect(() => {
+    if (!assignmentId) return;
+
+    localStorage.setItem(`playground-${assignmentId}`, JSON.stringify(sandpack.files));
+  }, [assignmentId, sandpack.files]);
+
+  return null;
+};
+
 const Playground = ({
   currentUser,
   assignmentId,
@@ -42,14 +55,29 @@ const Playground = ({
 }: {
   currentUser?: any;
   assignmentId?: string;
-  initialFiles: SandpackFiles;
+  initialFiles?: SandpackFiles;
   template?: SandpackPredefinedTemplate;
 }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
 
+  const startingFiles = (() => {
+    if (!assignmentId) return initialFiles || defaultFiles;
+
+    const savedFiles = localStorage.getItem(`playground-${assignmentId}`);
+    if (savedFiles) {
+      try {
+        return JSON.parse(savedFiles) as SandpackFiles;
+      } catch (e) {
+        console.error("Failed to parse saved files:", e);
+      }
+    }
+    return initialFiles || defaultFiles;
+  })();
+
   return (
     <div className="relative h-[95vh]">
-      <SandpackProvider files={initialFiles || files} template={template} theme="light">
+      <SandpackProvider files={startingFiles} template={template} theme="light">
+        {assignmentId && <AutoSave assignmentId={assignmentId} />}
         {isFullScreen && (
           <div className="fixed inset-0 z-50 bg-white">
             <button
