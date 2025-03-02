@@ -8,7 +8,6 @@ const { data } = await call(actions.courses_getEnrolledCourses, {});
 const courses = data?.data;
 const user = Astro.locals.user;
 
-
 if (!courses?.length) {
   return Astro.redirect("/instructor/no-courses", 302);
 }

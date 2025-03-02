@@ -111,7 +111,6 @@ const InstructorItems = [
   },
 ];
 
-
 const AdminItems = [
   {
     title: "Dashboard",
@@ -335,7 +334,13 @@ const StudentItems = [
   },
 ];
 
-export function getDefaultSidebarItems({ role, isAdmin = false }: { role: Role, isAdmin?: boolean }): SidebarItem[] {
+export function getDefaultSidebarItems({
+  role,
+  isAdmin = false,
+}: {
+  role: Role;
+  isAdmin?: boolean;
+}): SidebarItem[] {
   switch (role) {
     case "INSTRUCTOR":
       if (isAdmin) {

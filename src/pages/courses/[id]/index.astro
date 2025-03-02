@@ -8,34 +8,25 @@ import ClassSidebar from "./classes/_components/classSidebar";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
-const courseAssignments = await db.course.findMany({
+const courseAssignments = await db.attachment.findMany({
   where: {
-    id: String(Astro.params.id),
+    attachmentType: "ASSIGNMENT",
+    class: {
+      courseId: String(Astro.params.id),
+    },
   },
-  select: {
-    id: true,
-    classes: {
-      select: {
-        attachments: {
-          where: {
-            attachmentType: "ASSIGNMENT",
-          },
-          include: {
-            class: true,
-            submissions: {
-              where: {
-                enrolledUser: {
-                  username: currentUser.username,
-                },
-              },
-            },
-          },
+  include: {
+    class: true,
+    submissions: {
+      where: {
+        enrolledUser: {
+          username: currentUser.username,
         },
       },
-      orderBy: {
-        createdAt: "asc",
-      },
     },
+  },
+  orderBy: {
+    createdAt: "asc",
   },
 });
 
@@ -71,6 +62,9 @@ const classesWithFolders = await db.class.findMany({
   include: {
     Folder: true,
   },
+  orderBy: {
+    createdAt: "asc",
+  },
 });
 ---
 
@@ -89,75 +83,71 @@ const classesWithFolders = await db.class.findMany({
 
       <div class="mt-3 grid grid-cols-1 gap-4 p-2 sm:grid-cols-2 md:grid-cols-3">
         {
-          courseAssignments && courseAssignments[0]?.classes?.length === 0 && (
+          courseAssignments.length === 0 && (
             <div class="mt-5 text-xl dark:text-secondary-300">No assignments yet...</div>
           )
         }
 
         {
-          courseAssignments?.map((assignment) =>
-            assignment.classes.map((classItem) =>
-              classItem.attachments.map((attachment) => (
-                <div
-                  class="rounded-lg p-4 text-zinc-600 backdrop-blur-2xl dark:bg-slate-800"
-                  style={{
-                    boxShadow:
-                      "rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px",
-                  }}
+          courseAssignments.map((attachment) => (
+            <div
+              class="rounded-lg p-4 text-zinc-600 backdrop-blur-2xl dark:bg-slate-800"
+              style={{
+                boxShadow:
+                  "rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px",
+              }}
+            >
+              <div class="mb-2 flex items-center justify-between">
+                <a
+                  href={`/assignments/${attachment.id}`}
+                  class="cursor-pointer text-base font-semibold text-blue-600 hover:text-blue-500"
                 >
-                  <div class="mb-2 flex items-center justify-between">
-                    <a
-                      href={`/assignments/${attachment.id}`}
-                      class="cursor-pointer text-base font-semibold text-blue-600 hover:text-blue-500"
-                    >
-                      {attachment?.title}
-                    </a>
-                    <div class="gadiv-2 flex items-center text-sm font-medium">
-                      {attachment?.dueDate && new Date(attachment?.dueDate).toLocaleDateString()}
-                      {"  "}
-                      {currentUser?.role === "STUDENT" && (
-                        <div class="text-white">
-                          {attachment?.submissions.length !== 0 ? (
-                            <h1 class="ml-1 rounded-full border-2 border-green-600/80 bg-green-500/40 px-2 py-1 text-xs text-green-600 dark:text-green-400">
-                              submitted
-                            </h1>
-                          ) : (
-                            <h1 class="ml-1 rounded-full border-2 border-red-700 bg-red-500/40 px-2 py-1 text-xs text-red-600 dark:text-red-400">
-                              not submitted
-                            </h1>
-                          )}
-                        </div>
+                  {attachment?.title}
+                </a>
+                <div class="gadiv-2 flex items-center text-sm font-medium">
+                  {attachment?.dueDate && new Date(attachment?.dueDate).toLocaleDateString()}
+                  {"  "}
+                  {currentUser?.role === "STUDENT" && (
+                    <div class="text-white">
+                      {attachment?.submissions.length !== 0 ? (
+                        <h1 class="ml-1 rounded-full border-2 border-green-600/80 bg-green-500/40 px-2 py-1 text-xs text-green-600 dark:text-green-400">
+                          submitted
+                        </h1>
+                      ) : (
+                        <h1 class="ml-1 rounded-full border-2 border-red-700 bg-red-500/40 px-2 py-1 text-xs text-red-600 dark:text-red-400">
+                          not submitted
+                        </h1>
                       )}
-                    </div>
-                  </div>
-                  <p class="mb-2 mt-2 text-sm font-semibold text-gray-500/85 dark:text-gray-400">
-                    {/* <MarkdownPreview
-                      client:only
-                      className="text-xs font-thin"
-                      content={truncateText(
-                        attachment?.details
-                          ? attachment?.details.slice(0, 300) + "..."
-                          : "No Description"
-                      )}
-                    /> */}
-                  </p>
-                  {attachment?.link && (
-                    <div class="flex items-center justify-start space-x-2 text-sm hover:opacity-90">
-                      <a
-                        href={attachment?.link}
-                        class="text-blue-600 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View Assignment
-                      </a>
-                      <FaExternalLinkAlt className="h-3 w-3" />
                     </div>
                   )}
                 </div>
-              ))
-            )
-          )
+              </div>
+              <p class="mb-2 mt-2 text-sm font-semibold text-gray-500/85 dark:text-gray-400">
+                {/* <MarkdownPreview
+                  client:only
+                  className="text-xs font-thin"
+                  content={truncateText(
+                    attachment?.details
+                      ? attachment?.details.slice(0, 300) + "..."
+                      : "No Description"
+                  )}
+                /> */}
+              </p>
+              {attachment?.link && (
+                <div class="flex items-center justify-start space-x-2 text-sm hover:opacity-90">
+                  <a
+                    href={attachment?.link}
+                    class="text-blue-600 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Assignment
+                  </a>
+                  <FaExternalLinkAlt className="h-3 w-3" />
+                </div>
+              )}
+            </div>
+          ))
         }
       </div>
     </div>
