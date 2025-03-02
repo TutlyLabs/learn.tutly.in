@@ -17,28 +17,6 @@ registerRoute(
   ({ request }) => request.mode === "navigate",
   new StaleWhileRevalidate({
     cacheName: "pages-cache",
-    plugins: [
-      {
-        cacheWillUpdate: async ({ request, response }) => {
-          if (request.url.includes("/dashboard") || request.url.includes("/sign-in")) {
-            return response;
-          }
-          return response;
-        },
-      } as WorkboxPlugin,
-    ],
-  })
-);
-
-registerRoute(
-  ({ url }) => url.pathname === "/dashboard",
-  new CacheFirst({
-    cacheName: "dashboard-cache",
-    plugins: [
-      new ExpirationPlugin({
-        maxAgeSeconds: 60 * 60, // 1 hour
-      }) as WorkboxPlugin,
-    ],
   })
 );
 
@@ -62,18 +40,6 @@ registerRoute(
     request.destination === "worker",
   new StaleWhileRevalidate({
     cacheName: "assets-cache",
-  })
-);
-
-registerRoute(
-  ({ url }) => url.pathname === "/sign-in",
-  new CacheFirst({
-    cacheName: "auth-cache",
-    plugins: [
-      new ExpirationPlugin({
-        maxAgeSeconds: 60 * 60, // 1 hour
-      }) as WorkboxPlugin,
-    ],
   })
 );
 

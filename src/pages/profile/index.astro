@@ -16,5 +16,5 @@ const userProfile = await db.user.findUnique({
 ---
 
 <RootLayout title="Profile">
-  <ProfilePage userProfile={userProfile as User & { profile: Profile }} client:only />
+  <ProfilePage userProfile={userProfile as User & { profile: Profile }} client:only="react" />
 </RootLayout>

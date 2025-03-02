@@ -4,18 +4,18 @@ import { signInWithCredentials } from "@/lib/auth/credentials";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { email, password } = await request.json();
+    const formData = await request.formData();
+    const email = formData.get("email")?.toString();
+    const password = formData.get("password")?.toString();
+
     if (!email || !password) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Email/username and password are required",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location:
+            "/sign-in?error=" + encodeURIComponent("Email/username and password are required"),
+        },
+      });
     }
 
     const userAgent = request.headers.get("user-agent");
@@ -35,31 +35,20 @@ export const POST: APIRoute = async ({ request }) => {
       .filter(Boolean)
       .join("; ");
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: isPasswordSet ? "Logged In Successfully" : "Please set a new password",
-        redirectTo: isPasswordSet ? "/dashboard" : "/change-password",
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Set-Cookie": cookieOptions,
-        },
-      }
-    );
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: isPasswordSet ? "/dashboard" : "/change-password",
+        "Set-Cookie": cookieOptions,
+      },
+    });
   } catch (error: any) {
     console.error("[Credentials API] Sign in error:", error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: error.message || "Authentication failed",
-      }),
-      {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/sign-in?error=" + encodeURIComponent(error.message || "Authentication failed"),
+      },
+    });
   }
 };

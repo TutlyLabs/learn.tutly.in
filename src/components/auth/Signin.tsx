@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "astro/zod";
-import { navigate } from "astro:transitions/client";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -53,45 +52,6 @@ export function SignIn() {
     }
   }, []);
 
-  const onSubmit = async (data: SignInInput) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/auth/signin/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.message || "Authentication failed");
-      }
-
-      const result = await response.json();
-
-      // Pre-fetch the dashboard page before navigation
-      await fetch("/dashboard", {
-        credentials: "include",
-        headers: {
-          app_auth_token:
-            document.cookie
-              .split("; ")
-              .find((row) => row.startsWith("app_auth_token="))
-              ?.split("=")[1] || "",
-        },
-      });
-
-      // Wait for 500ms to ensure the dashboard page is cached
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      navigate(result.redirectTo || "/dashboard");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to sign in");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // const handleGoogleSignIn = async () => {
   //   try {
   //     setIsGoogleLoading(true);
@@ -122,7 +82,15 @@ export function SignIn() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2">
+            <form
+              action="/api/auth/signin/credentials"
+              method="POST"
+              encType="application/x-www-form-urlencoded"
+              className="flex flex-col gap-2"
+              onSubmit={() => setIsLoading(true)}
+            >
+              <input type="hidden" name="email" value={form.getValues("email")} />
+              <input type="hidden" name="password" value={form.getValues("password")} />
               <FormField
                 control={form.control}
                 name="email"
@@ -183,18 +151,18 @@ export function SignIn() {
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
+            {/* <div className="mt-6 flex flex-col gap-3">
+              <Button
+                variant="outline"
+                className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30"
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleLoading || isLoading}
+              >
+                {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
+              </Button>
+            </div> */}
           </Form>
-          {/* <div className="mt-6 flex flex-col gap-3">
-            <Button
-              variant="outline"
-              className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30"
-              onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading || isLoading}
-            >
-              {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
-            </Button>
-          </div> */}
         </CardContent>
       </Card>
     </div>

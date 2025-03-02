@@ -57,7 +57,7 @@ const isBookmarked = bookmark ? true : false;
 <RootLayout title="Classes" forceClose={true}>
   <div class="flex items-start w-full">
     <ClassSidebar
-      client:only
+      client:only="react"
       courseId={String(Astro.params.id)}
       classes={classesWithFolders || []}
       title="Assignments"
@@ -73,7 +73,7 @@ const isBookmarked = bookmark ? true : false;
         details={classDetails}
         isBookmarked={isBookmarked}
         initialNote={initialNote}
-        client:only
+        client:only="react"
       />
     </div>
   </div>

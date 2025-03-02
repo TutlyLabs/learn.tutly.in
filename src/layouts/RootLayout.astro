@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import Crisp from "@/components/Crisp";
+import PageLoader from "@/components/loader/PageLoader.astro";
 
 interface Props {
   title?: string;
@@ -57,10 +58,7 @@ globalThis.pathname = pathname;
     <link rel="manifest" href="/manifest.webmanifest" />
   </head>
   <body>
-    <div class="loader" transition:persist="loader">
-      <div class="loader-bar"></div>
-      <div class="loader-shimmer"></div>
-    </div>
+    <PageLoader />
     <Toaster client:load />
     {
       user && (
@@ -79,7 +77,7 @@ globalThis.pathname = pathname;
     }
     <SonnerToaster client:load />
     <ShadcnToaster client:load />
-    <Crisp client:only user={user} organization={organization} />
+    <Crisp client:only="react" user={user} organization={organization} />
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", async () => {
@@ -146,65 +144,6 @@ globalThis.pathname = pathname;
 </html>
 
 <style>
-  .loader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 9999;
-    width: 100%;
-    height: 3px;
-    pointer-events: none;
-  }
-
-  .loader-bar {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent 0%, hsl(var(--primary)) 50%, transparent 100%);
-    transform: translateX(-100%);
-    animation: none;
-  }
-
-  .loader-shimmer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transform: translateX(-100%);
-    animation: none;
-  }
-
-  .loader.loading .loader-bar {
-    animation: loading-bar 1s ease-in-out infinite;
-  }
-
-  .loader.loading .loader-shimmer {
-    animation: loading-shimmer 1s ease-in-out infinite;
-  }
-
-  @keyframes loading-bar {
-    0% {
-      transform: translateX(-100%);
-    }
-    50% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  @keyframes loading-shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(200%);
-    }
-  }
-
   :root {
     --logo-size: 32px;
   }
@@ -227,40 +166,6 @@ globalThis.pathname = pathname;
 </style>
 
 <script>
-  let loader: HTMLElement | null = null;
-  let loadingTimeout: number;
-
-  document.addEventListener("astro:before-preparation", (event) => {
-    if (!loader) {
-      loader = document.querySelector(".loader");
-    }
-
-    const originalLoader = event.loader;
-    event.loader = async function () {
-      if (loadingTimeout) {
-        clearTimeout(loadingTimeout);
-      }
-
-      loader!.classList.add("loading");
-
-      const startTime = performance.now();
-      await originalLoader();
-      const loadTime = performance.now() - startTime;
-
-      const remainingTime = Math.max(0, 400 - loadTime);
-      await new Promise((resolve) => {
-        loadingTimeout = Number(
-          setTimeout(() => {
-            loader!.classList.remove("loading");
-            resolve(null);
-          }, remainingTime)
-        );
-      });
-    };
-  });
-</script>
-
-<script is:inline define:vars={{ user }}>
   // @ts-nocheck
   !(function (t, e) {
     var o, n, p, r;

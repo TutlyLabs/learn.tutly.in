@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { extractDeviceLabel } from "@/lib/device";
 
-const providers = ["credentials", "google"];
+const providers = [
+  "credentials",
+  // , "google"
+];
 
 type SessionsModalProps = {
   sessions: Session[];

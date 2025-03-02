@@ -71,7 +71,7 @@ const classesWithFolders = await db.class.findMany({
 <RootLayout title="Courses" forceClose={true}>
   <div class="flex items-start w-full">
     <ClassSidebar
-      client:only
+      client:only="react"
       courseId={String(Astro.params.id)}
       classes={classesWithFolders || []}
       title="Assignments"
@@ -124,7 +124,7 @@ const classesWithFolders = await db.class.findMany({
               </div>
               <p class="mb-2 mt-2 text-sm font-semibold text-gray-500/85 dark:text-gray-400">
                 {/* <MarkdownPreview
-                  client:only
+                  client:only="react"
                   className="text-xs font-thin"
                   content={truncateText(
                     attachment?.details

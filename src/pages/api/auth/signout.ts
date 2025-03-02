@@ -1,15 +1,15 @@
 import type { APIRoute } from "astro";
 
+import { AUTH_COOKIE_NAME } from "@/lib/constants";
 import db from "@/lib/db";
 
 export const GET: APIRoute = async ({ cookies }) => {
-  const sessionId = cookies.get("app_auth_token")?.value;
+  const sessionId = cookies.get(AUTH_COOKIE_NAME)?.value;
   if (!sessionId) {
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
+    return new Response(null, {
+      status: 302,
       headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Location: "/sign-in",
       },
     });
   }
@@ -20,23 +20,14 @@ export const GET: APIRoute = async ({ cookies }) => {
     },
   });
 
-  cookies.delete("app_auth_token", {
+  cookies.delete(AUTH_COOKIE_NAME, {
     path: "/",
   });
 
-  cookies.delete("google_code_challenge", {
-    path: "/",
-  });
-  cookies.delete("google_oauth_state", {
-    path: "/",
-  });
-
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
+  return new Response(null, {
+    status: 302,
     headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "Clear-Site-Data": '"cache", "cookies"',
+      Location: "/sign-in",
     },
   });
 };

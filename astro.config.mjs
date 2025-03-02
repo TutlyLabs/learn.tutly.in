@@ -14,6 +14,9 @@ export default defineConfig({
   experimental: {
     serverIslands: true,
   },
+  prefetch: {
+    defaultStrategy: "hover",
+  },
   integrations: [
     react(),
     tailwind({

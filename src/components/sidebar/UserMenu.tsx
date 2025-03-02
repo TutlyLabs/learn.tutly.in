@@ -1,4 +1,3 @@
-import { navigate } from "astro:transitions/client";
 import { Download, ExternalLink, LockIcon, LogOut, UserIcon } from "lucide-react";
 // import {  Settings } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -109,43 +108,6 @@ export function UserMenu({ user }: UserMenuProps) {
     setShowOpenInAppDialog(false);
   };
 
-  const handleSignout = async () => {
-    setIsOpen(false);
-    try {
-      //todo: temp hack for now
-      // Pre-fetch the sign-in page before signing out
-      await fetch("/sign-in", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      const response = await fetch("/api/auth/signout", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to sign out");
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.navigationPreload.enable();
-
-        // Clear dashboard cache
-        const dashboardCache = await caches.open("dashboard-cache");
-        await dashboardCache.delete("/dashboard");
-      }
-
-      navigate("/sign-in");
-    } catch (error) {
-      console.error("Error during sign out:", error);
-      window.location.href = "/sign-in";
-    }
-  };
-
   return (
     <div className="relative">
       <DropdownMenu onOpenChange={setIsOpen}>
@@ -251,13 +213,12 @@ export function UserMenu({ user }: UserMenuProps) {
             )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={handleSignout}
-            className="flex items-center gap-2 cursor-pointer text-red-600"
-          >
-            <LogOut className="h-5 w-5" />
-            Log out
-          </DropdownMenuItem>
+          <a href="/api/auth/signout">
+            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-red-600">
+              <LogOut className="h-5 w-5" />
+              Log out
+            </DropdownMenuItem>
+          </a>
         </DropdownMenuContent>
       </DropdownMenu>
 
