@@ -1,76 +1,69 @@
 // @ts-nocheck
-import { Pie, PieChart, Sector } from "recharts";
-import { PieSectorDataItem } from "recharts/types/polar/Pie";
+import { Cell, Label, Pie, PieChart } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-
-const chartData = [
-  { browser: "Evaluated", visitors: 175, fill: "var(--color-chrome)" },
-  { browser: "Unreviewed", visitors: 187, fill: "var(--color-firefox)" },
-  { browser: "Unsubmitted", visitors: 90, fill: "var(--color-other)" },
-];
+import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  chrome: {
-    label: "Chrome",
+  evaluated: {
+    label: "Evaluated",
     color: "hsl(var(--chart-1))",
   },
-  safari: {
-    label: "Safari",
-    color: "hsl(var(--chart-2))",
-  },
-  firefox: {
-    label: "Firefox",
+  unreviewed: {
+    label: "Unreviewed",
     color: "hsl(var(--chart-3))",
   },
-  edge: {
-    label: "Edge",
-    color: "hsl(var(--chart-4))",
-  },
-  other: {
-    label: "Other",
+  unsubmitted: {
+    label: "Unsubmitted",
     color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig;
 
+const COLORS = ["var(--color-evaluated)", "var(--color-unreviewed)", "var(--color-unsubmitted)"];
+const LABELS = ["Evaluated", "Unreviewed", "Unsubmitted"];
+
 export function Piechart({ data }: { data: any }) {
-  // realtime data
-  chartData.forEach((item, index) => {
-    item.visitors = data[index];
-  });
+  const chartData = [
+    { name: "Evaluated", value: data[0] || 0 },
+    { name: "Unreviewed", value: data[1] || 0 },
+    { name: "Unsubmitted", value: data[2] || 0 },
+  ];
+
+  const total = chartData.reduce((sum, entry) => sum + entry.value, 0);
+
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="items-center pb-0">
+    <Card className="flex flex-col h-full w-full">
+      <CardHeader className="items-center pb-2">
         <CardTitle>Assignments</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent className="flex-1">
         <ChartContainer config={chartConfig} className="mx-auto aspect-square">
           <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
             <Pie
               data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
               innerRadius={60}
-              strokeWidth={5}
-              activeIndex={0}
-              activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => (
-                <Sector {...props} outerRadius={outerRadius + 10} />
-              )}
-            />
+              outerRadius={80}
+              paddingAngle={2}
+              label={(entry) => `${entry.name}: ${entry.value}`}
+              labelLine={true}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index]} />
+              ))}
+              <Label
+                value={`Total\n${total}`}
+                position="center"
+                className="text-sm font-medium"
+                fill="hsl(var(--foreground))"
+              />
+            </Pie>
           </PieChart>
         </ChartContainer>
       </CardContent>
-      {/* <CardFooter className="flex-col gap-2 text-sm"></CardFooter> */}
     </Card>
   );
 }

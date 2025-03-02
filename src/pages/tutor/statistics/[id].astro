@@ -7,10 +7,25 @@ import { Piechart } from "@/components/charts/piechart";
 import Header from "./_components/header";
 import { Card } from "@/components/ui/card";
 import StudentStats from "@/components/studentStats";
+import db from "@/lib/db";
+import TabView from "./_components/TabView";
 
-const currentUser = Astro.locals.user;
-const call = Astro.callAction;
 const courseId = Astro.params.id!;
+const currentUser = Astro.locals.user;
+
+if (!currentUser) return null;
+
+const enrolledCourses = await db.enrolledUsers.findMany({
+  where: {
+    username: currentUser.username,
+  },
+});
+
+if (!enrolledCourses.some((course) => course.courseId === courseId)) {
+  return Astro.redirect("/404");
+}
+
+const call = Astro.callAction;
 const mentorUsername = Astro.url.searchParams.get("mentor");
 const studentUsername = Astro.url.searchParams.get("student");
 const [piechart, barchart, _mentees, mentors, linechart, courses]: any = await Promise.all([
@@ -49,68 +64,71 @@ const { data: attendanceData } = await call(actions.statistics_studentHeatmapDat
 ---
 
 <RootLayout title="Statistics">
-  <Header
-    client:load
-    mentors={mentors.data}
-    mentees={mentees.data}
-    currentUser={currentUser}
-    data={data}
-    courseId={courseId}
-  />
+  <Header client:load data={data} courseId={courseId} />
   {
     studentUsername ? (
       <StudentStats client:load studentData={studentData} attendanceData={attendanceData} />
     ) : (
-      <div class="m-4 flex flex-col gap-4 md:mx-8 md:gap-6 mt-6">
-        <div class="flex flex-col gap-4 md:gap-6 lg:flex-row">
-          <div class="w-full rounded-xl shadow-xl shadow-blue-500/5 lg:w-1/4">
-            <Piechart client:load data={piechart.data} />
+      <>
+        <div class="m-4 flex flex-col gap-4 md:mx-8 md:gap-6 mt-6">
+          <div class="flex flex-col gap-4 md:gap-0 lg:flex-row">
+            <div class="w-full rounded-xl shadow-xl shadow-blue-500/5 lg:w-[350px]">
+              <Piechart client:load data={piechart.data} />
+            </div>
+            <div class="flex w-full flex-col gap-2 rounded-xl shadow-xl shadow-blue-500/5 md:flex-row lg:w-3/4">
+              <div class="flex w-full flex-col gap-4 p-4 text-gray-500 md:w-1/3 md:gap-6 md:p-14">
+                <div class="relative rounded-xl border-4 p-4">
+                  <h1 class="absolute -top-3 bg-background px-1 text-sm md:text-base">
+                    Total Students
+                  </h1>
+                  <h1 class="flex items-baseline justify-between text-2xl font-bold text-primary-500 md:text-4xl">
+                    {mentees.data?.length}
+                  </h1>
+                </div>
+                <div class="relative rounded-xl border-4 p-4">
+                  <h1 class="absolute -top-3 bg-background px-1 text-sm md:text-base">
+                    Total Sessions
+                  </h1>
+                  <h1 class="text-2xl font-bold text-primary-500 md:text-4xl">
+                    {linechart.data?.length}
+                  </h1>
+                </div>
+              </div>
+              <div class="w-full md:w-[600px]">
+                <Linechart client:load data={linechart.data} />
+              </div>
+            </div>
           </div>
-          <div class="flex w-full flex-col gap-2 rounded-xl shadow-xl shadow-blue-500/5 md:flex-row lg:w-3/4">
-            <div class="flex w-full flex-col gap-4 p-4 text-gray-500 md:w-1/3 md:gap-6 md:p-14">
-              <div class="relative rounded-xl border-4 p-4">
-                <h1 class="absolute -top-3 bg-background px-1 text-sm md:text-base">
-                  Total Students
-                </h1>
-                <h1 class="flex items-baseline justify-between text-2xl font-bold text-primary-500 md:text-4xl">
-                  {mentees.data?.length}
-                </h1>
-              </div>
-              <div class="relative rounded-xl border-4 p-4">
-                <h1 class="absolute -top-3 bg-background px-1 text-sm md:text-base">
-                  Total Sessions
-                </h1>
-                <h1 class="text-2xl font-bold text-primary-500 md:text-4xl">
-                  {linechart.data?.length}
-                </h1>
-              </div>
+          <div class="flex flex-col gap-4 md:gap-6 lg:flex-row">
+            <div class="max-h-[300px] w-full rounded-xl shadow-xl shadow-blue-500/5 lg:w-3/4">
+              <Barchart client:load data={barchart.data} />
             </div>
-            <div class="w-full md:w-2/3">
-              <Linechart client:load data={linechart.data} />
-            </div>
+            <Card className="w-full rounded-xl p-4 shadow-xl shadow-blue-500/5 md:p-8 lg:w-1/4">
+              <h1 class="pb-4 text-white font-semibold text-center">Evaluation</h1>
+              <div class="px-4 text-center font-semibold text-blue-500 md:px-16">
+                <span class="text-2xl font-bold md:text-3xl">
+                  {piechart.data ? piechart.data[0] : 0}
+                </span>
+                <span>/{piechart.data ? piechart.data[0] + piechart.data[1] : 0}</span>
+              </div>
+              <div class="m-auto my-4 w-4/5 rounded-full border border-gray-700">
+                <div class={`h-[10px] rounded-full bg-blue-500`} style={{ width: loaderValue }} />
+              </div>
+              <h1 class="p-2 text-center text-sm text-gray-500 md:text-base">
+                Assignments evaluated by the mentors
+              </h1>
+            </Card>
           </div>
         </div>
-        <div class="flex flex-col gap-4 md:gap-6 lg:flex-row">
-          <div class="max-h-[300px] w-full rounded-xl shadow-xl shadow-blue-500/5 lg:w-3/4">
-            <Barchart client:load data={barchart.data} />
-          </div>
-          <Card className="w-full rounded-xl p-4 shadow-xl shadow-blue-500/5 md:p-8 lg:w-1/4">
-            <h1 class="pb-4 text-white font-semibold md:py-8 text-center">Evaluation</h1>
-            <div class="px-4 text-center font-semibold text-blue-500 md:px-16">
-              <span class="text-2xl font-bold md:text-3xl">
-                {piechart.data ? piechart.data[0] : 0}
-              </span>
-              <span>/{piechart.data ? piechart.data[0] + piechart.data[1] : 0}</span>
-            </div>
-            <div class="m-auto my-4 w-4/5 rounded-full border border-gray-700">
-              <div class={`h-[10px] rounded-full bg-blue-500`} style={{ width: loaderValue }} />
-            </div>
-            <h1 class="p-2 text-center text-sm text-gray-500 md:text-base">
-              Assignments evaluated by the mentors
-            </h1>
-          </Card>
-        </div>
-      </div>
+        <TabView
+          client:load
+          mentors={mentors.data}
+          mentees={mentees.data}
+          mentorName={mentorUsername || ""}
+          menteeName={studentUsername || ""}
+          courseId={courseId}
+        />
+      </>
     )
   }
 </RootLayout>

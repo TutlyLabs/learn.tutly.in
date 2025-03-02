@@ -2,10 +2,24 @@
 import StudentStats from "@/components/studentStats";
 import RootLayout from "@/layouts/RootLayout.astro";
 import { actions } from "astro:actions";
+import db from "@/lib/db";
 
 const courseId = Astro.params.id!;
 const call = Astro.callAction;
 if (!courseId) return null;
+
+const currentUser = Astro.locals.user;
+if (!currentUser) return null;
+
+const enrolledCourses = await db.enrolledUsers.findMany({
+  where: {
+    username: currentUser.username,
+  },
+});
+
+if (!enrolledCourses.some((course) => course.courseId === courseId)) {
+  return Astro.redirect("/404");
+}
 
 const { data } = await call(actions.courses_getAllCourses, {});
 const { data: studentData } = await call(actions.statistics_studentBarchartData, { courseId });

@@ -157,6 +157,21 @@ const AdminItems = [
     ],
   },
   {
+    title: "Analytics",
+    url: "#",
+    icon: BarChart,
+    items: [
+      {
+        title: "Statistics",
+        url: "/tutor/statistics",
+      },
+      {
+        title: "Report",
+        url: "/instructor/report",
+      },
+    ],
+  },
+  {
     title: "Community",
     url: "/community",
     icon: Users,

@@ -43,7 +43,16 @@ export const generateReport = defineAction({
           };
 
     const enrolledUsers = await db.enrolledUsers.findMany({
-      where: whereClause,
+      where: {
+        ...whereClause,
+        course: {
+          enrolledUsers: {
+            some: {
+              username: currentUser.username,
+            },
+          },
+        },
+      },
       include: {
         user: true,
       },

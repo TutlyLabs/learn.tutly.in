@@ -148,7 +148,6 @@ export default function DisplayTable({
   clientSideProcessing = true,
   totalItems = 0,
   defaultPageSize = 10,
-  headerContent,
   gridViewRender,
 }: DisplayTableProps) {
   const [searchParams, setSearchParams] = useSearchParams();
