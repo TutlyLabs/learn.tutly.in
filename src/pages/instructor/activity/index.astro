@@ -2,11 +2,10 @@
 import db from "@/lib/db";
 import RootLayout from "@/layouts/RootLayout.astro";
 import UserCards from "./_components/UserCards";
-import { Role } from "@prisma/client";
 
 const user = Astro.locals.user;
 
-if (user?.role !== "INSTRUCTOR") {
+if (user?.role !== "INSTRUCTOR" || !user) {
   return Astro.redirect("/404");
 }
 
@@ -14,89 +13,89 @@ if (user?.isAdmin) {
   return Astro.redirect("/404");
 }
 
-const searchParams = Astro.url.searchParams;
-const page = parseInt(searchParams.get("page") || "1");
-const limit = parseInt(searchParams.get("limit") || "10");
-const search = searchParams.get("search") || "";
-const sort = searchParams.get("sort") || "last-login";
-const role = searchParams.get("role");
-const showOnline = searchParams.get("online-only") === "true";
-
-const skip = (page - 1) * limit;
-
+const searchTerm = Astro.url.searchParams.get("search") || "";
+const filters = Astro.url.searchParams.getAll("filter");
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+const limit = parseInt(Astro.url.searchParams.get("limit") || "12");
 const onlineCutoff = new Date(Date.now() - 2 * 60 * 1000);
 
-const orderBy = {
-  "last-login": { lastSeen: "desc" },
-  "active-desc": { lastSeen: "asc" },
-  "name-asc": { name: "asc" },
-  "name-desc": { name: "desc" },
-  "join-date-desc": { createdAt: "desc" },
-  "join-date-asc": { createdAt: "asc" },
-}[sort] as any;
+const activeFilters = filters
+  .map((f) => {
+    const [column, operator, value] = f.split(":");
+    return { column, operator, value };
+  })
+  .filter((f) => f.column && f.operator && f.value);
 
-const [users, totalCount, activeCount] = await Promise.all([
-  db.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      email: true,
-      mobile: true,
-      image: true,
-      role: true,
-      lastSeen: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-    where: {
-      OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-      ],
-      role: role ? { equals: role as Role } : { in: ["MENTOR", "STUDENT"] },
-      organizationId: user.organizationId,
-      ...(showOnline ? { lastSeen: { gte: onlineCutoff } } : {}),
-      ...(orderBy?.lastSeen ? { lastSeen: { not: null } } : {}),
-    },
-    skip,
-    take: limit,
-    orderBy,
-  }),
+let where: Record<string, any> = {
+  role: {
+    in: ["STUDENT", "MENTOR"],
+  },
+  organizationId: user.organizationId,
+};
+
+if (searchTerm) {
+  where.OR = [
+    { name: { contains: searchTerm, mode: "insensitive" } },
+    { username: { contains: searchTerm, mode: "insensitive" } },
+    { email: { contains: searchTerm, mode: "insensitive" } },
+  ];
+}
+
+activeFilters.forEach((filter) => {
+  const { column, operator, value } = filter;
+
+  if (typeof column === "string") {
+    switch (operator) {
+      case "contains":
+        where[column] = { contains: value, mode: "insensitive" };
+        break;
+      case "equals":
+        where[column] = value;
+        break;
+      case "online":
+        where.lastSeen = { gte: onlineCutoff };
+        break;
+    }
+  }
+});
+
+const [totalItems, activeCount] = await Promise.all([
+  db.user.count({ where }),
   db.user.count({
     where: {
-      OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-      ],
-      role: role ? { equals: role as Role } : { in: ["MENTOR", "STUDENT"] },
-      organizationId: user.organizationId,
-      ...(showOnline ? { lastSeen: { gte: onlineCutoff } } : {}),
-    },
-  }),
-  db.user.count({
-    where: {
-      OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-      ],
-      role: role ? { equals: role as Role } : { in: ["MENTOR", "STUDENT"] },
-      organizationId: user.organizationId,
+      ...where,
       lastSeen: { gte: onlineCutoff },
     },
   }),
 ]);
+
+const users = await db.user.findMany({
+  where,
+  orderBy: [
+    {
+      lastSeen: {
+        sort: "desc",
+        nulls: "last",
+      },
+    },
+  ],
+  select: {
+    id: true,
+    name: true,
+    username: true,
+    email: true,
+    mobile: true,
+    image: true,
+    role: true,
+    lastSeen: true,
+    createdAt: true,
+    updatedAt: true,
+  },
+  skip: (page - 1) * limit,
+  take: limit,
+});
 ---
 
 <RootLayout title="Users">
-  <UserCards
-    users={users}
-    totalItems={totalCount}
-    activeCount={activeCount}
-    defaultPageSize={limit}
-    client:load
-  />
+  <UserCards data={users} totalItems={totalItems} activeCount={activeCount} client:load />
 </RootLayout>

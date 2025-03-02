@@ -127,6 +127,8 @@ type DisplayTableProps = {
   clientSideProcessing?: boolean;
   totalItems?: number;
   defaultPageSize?: number;
+  headerContent?: React.ReactNode;
+  gridViewRender?: (data: Record<string, any>[]) => React.ReactNode;
 };
 
 export default function DisplayTable({
@@ -146,6 +148,8 @@ export default function DisplayTable({
   clientSideProcessing = true,
   totalItems = 0,
   defaultPageSize = 10,
+  headerContent,
+  gridViewRender,
 }: DisplayTableProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -307,76 +311,84 @@ export default function DisplayTable({
   );
 
   const renderGridView = () => {
+    if (gridViewRender) {
+      const dataWithActions = filteredData.map((row) => ({
+        ...row,
+        __actions: (
+          <div className="absolute top-2 right-2">
+            {(actions.length > 0 || onEdit || onDelete || onView) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {actions.map((action) => (
+                    <DropdownMenuItem
+                      key={action.label}
+                      onClick={() => action.onClick(row)}
+                      className={action.variant === "destructive" ? "text-destructive" : ""}
+                    >
+                      <div className="flex items-center">
+                        {action.icon}
+                        {action.label}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                  {actions.length > 0 && (onView || onEdit || onDelete) && (
+                    <DropdownMenuSeparator className="my-2" />
+                  )}
+                  {onView && (
+                    <DropdownMenuItem onClick={() => handleView(row)}>
+                      <div className="flex items-center">
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+                  {onEdit && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedRow(row);
+                        setIsEditModalOpen(true);
+                      }}
+                    >
+                      <div className="flex items-center">
+                        <Edit2 className="mr-2 h-4 w-4" />
+                        Edit
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedRow(row);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <div className="flex items-center">
+                        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                        Delete
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        ),
+      }));
+      return gridViewRender(dataWithActions);
+    }
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {data.map((row, index) => (
+        {filteredData.map((row, index) => (
           <div
             key={index}
             className="bg-background rounded-lg border shadow-sm hover:shadow-md transition-shadow p-4 relative"
           >
-            <div className="absolute top-2 right-2">
-              {(actions.length > 0 || onEdit || onDelete || onView) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {actions.map((action) => (
-                      <DropdownMenuItem
-                        key={action.label}
-                        onClick={() => action.onClick(row)}
-                        className={action.variant === "destructive" ? "text-destructive" : ""}
-                      >
-                        <div className="flex items-center">
-                          {action.icon}
-                          {action.label}
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                    {actions.length > 0 && (onView || onEdit || onDelete) && (
-                      <DropdownMenuSeparator className="my-2" />
-                    )}
-                    {onView && (
-                      <DropdownMenuItem onClick={() => handleView(row)}>
-                        <div className="flex items-center">
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </div>
-                      </DropdownMenuItem>
-                    )}
-                    {onEdit && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedRow(row);
-                          setIsEditModalOpen(true);
-                        }}
-                      >
-                        <div className="flex items-center">
-                          <Edit2 className="mr-2 h-4 w-4" />
-                          Edit
-                        </div>
-                      </DropdownMenuItem>
-                    )}
-                    {onDelete && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedRow(row);
-                          setIsDeleteModalOpen(true);
-                        }}
-                      >
-                        <div className="flex items-center">
-                          <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                          Delete
-                        </div>
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-
             <div className="space-y-2 pt-4">
               {columns
                 .filter((column) => !column.hidden)

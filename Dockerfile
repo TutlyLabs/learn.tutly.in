@@ -34,6 +34,8 @@ ENV HOST=0.0.0.0
 ENV PORT=4321
 ENV NODE_ENV=production
 
+RUN npx astro telemetry disable
+
 EXPOSE 4321
 
 CMD ["sh", "-c", "node ./dist/server/entry.mjs"]
