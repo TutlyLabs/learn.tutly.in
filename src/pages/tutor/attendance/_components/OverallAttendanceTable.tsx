@@ -24,10 +24,10 @@ const OverallAttendanceTable = ({ studentsAttendance }: { studentsAttendance: an
 
   const filteredData = Array.isArray(studentsAttendance)
     ? studentsAttendance.filter((item) =>
-      Object.values(item).some((value) =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+        Object.values(item).some((value) =>
+          String(value).toLowerCase().includes(searchQuery.toLowerCase())
+        )
       )
-    )
     : [];
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -143,14 +143,16 @@ const OverallAttendanceTable = ({ studentsAttendance }: { studentsAttendance: an
               <TableCell>
                 <div className="flex items-center gap-2">
                   <div
-                    className={`h-2.5 w-2.5 rounded-full ${item.percentage < 75 ? "bg-red-500" : "bg-emerald-500"
-                      }`}
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      item.percentage < 75 ? "bg-red-500" : "bg-emerald-500"
+                    }`}
                   />
                   <span
-                    className={`rounded-md px-2 py-1 text-xs font-medium ${item.percentage < 75
+                    className={`rounded-md px-2 py-1 text-xs font-medium ${
+                      item.percentage < 75
                         ? "bg-red-500/10 text-red-400"
                         : "bg-emerald-500/10 text-emerald-600"
-                      }`}
+                    }`}
                   >
                     {Math.round(item.percentage)}%
                   </span>

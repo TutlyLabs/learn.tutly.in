@@ -94,7 +94,7 @@ export const generateReport = defineAction({
         courseId: courseId === "all" ? { in: courseIds } : courseId,
       },
       ...(currentUser.role === "MENTOR"
-        ? { username: { in: enrolledUsers.map(eu => eu.username) } }
+        ? { username: { in: enrolledUsers.map((eu) => eu.username) } }
         : {}),
     };
 

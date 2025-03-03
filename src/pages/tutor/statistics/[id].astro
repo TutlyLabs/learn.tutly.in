@@ -30,7 +30,8 @@ if (!enrolledCourses.some((course) => course.courseId === courseId)) {
 }
 
 const call = Astro.callAction;
-const mentorUsername = currentUser.role === "MENTOR" ? currentUser.username : Astro.url.searchParams.get("mentor");
+const mentorUsername =
+  currentUser.role === "MENTOR" ? currentUser.username : Astro.url.searchParams.get("mentor");
 const studentUsername = Astro.url.searchParams.get("student");
 
 if (currentUser.role === "MENTOR" && !mentorUsername) {
@@ -45,7 +46,9 @@ const [piechart, barchart, _mentees, mentors, linechart, courses]: any = await P
   call(actions.statistics_getPiechartData, { courseId, mentorUsername }),
   call(actions.statistics_getBarchartData, { courseId, mentorUsername }),
   call(actions.statistics_getAllMentees, { courseId, mentorUsername }),
-  currentUser.role === "INSTRUCTOR" ? call(actions.statistics_getAllMentors, { courseId }) : { data: [] },
+  currentUser.role === "INSTRUCTOR"
+    ? call(actions.statistics_getAllMentors, { courseId })
+    : { data: [] },
   call(actions.statistics_getLinechartData, {
     courseId,
     mentorUsername,
@@ -75,11 +78,11 @@ const { data: attendanceData } = await call(actions.statistics_studentHeatmapDat
 ---
 
 <RootLayout title="Statistics">
-  <Header 
-    client:load 
-    data={data} 
-    courseId={courseId} 
-    userRole={currentUser.role as "INSTRUCTOR" | "MENTOR"} 
+  <Header
+    client:load
+    data={data}
+    courseId={courseId}
+    userRole={currentUser.role as "INSTRUCTOR" | "MENTOR"}
   />
   {
     studentUsername ? (

@@ -87,8 +87,9 @@ const TabView = ({
                     className="block h-[120px]"
                   >
                     <Card
-                      className={`h-full cursor-pointer transition-all hover:border-primary/50 ${mentorName === mentor.username ? "border-primary" : ""
-                        }`}
+                      className={`h-full cursor-pointer transition-all hover:border-primary/50 ${
+                        mentorName === mentor.username ? "border-primary" : ""
+                      }`}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
@@ -152,8 +153,9 @@ const TabView = ({
                     className="block h-[120px]"
                   >
                     <Card
-                      className={`h-full cursor-pointer transition-all hover:border-primary/50 ${menteeName === mentee.username ? "border-primary" : ""
-                        }`}
+                      className={`h-full cursor-pointer transition-all hover:border-primary/50 ${
+                        menteeName === mentee.username ? "border-primary" : ""
+                      }`}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
@@ -223,8 +225,9 @@ const TabView = ({
                     className="block h-[120px]"
                   >
                     <Card
-                      className={`h-full cursor-pointer transition-all hover:border-primary/50 ${menteeName === mentee.username ? "border-primary" : ""
-                        }`}
+                      className={`h-full cursor-pointer transition-all hover:border-primary/50 ${
+                        menteeName === mentee.username ? "border-primary" : ""
+                      }`}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">

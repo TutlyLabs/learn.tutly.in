@@ -34,40 +34,41 @@ const courses = enrolledCourses
 
 const courseIds = courses.map((course) => course.id);
 
-const mentors = currentUser.role === "INSTRUCTOR"
-  ? await db.enrolledUsers.findMany({
-      where: {
-        courseId: {
-          in: courseIds,
-        },
-        user: {
-          role: "MENTOR",
-          organizationId: currentUser.organizationId,
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            image: true,
-            mobile: true,
+const mentors =
+  currentUser.role === "INSTRUCTOR"
+    ? await db.enrolledUsers.findMany({
+        where: {
+          courseId: {
+            in: courseIds,
+          },
+          user: {
+            role: "MENTOR",
+            organizationId: currentUser.organizationId,
           },
         },
-      },
-      distinct: ["username"],
-    })
-  : [];
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              image: true,
+              mobile: true,
+            },
+          },
+        },
+        distinct: ["username"],
+      })
+    : [];
 
-const submissionsWhere = selectedCourse ? {
-  enrolledUser: {
-    courseId: selectedCourse,
-    ...(currentUser.role === "MENTOR" 
-      ? { mentorUsername: currentUser.username }
-      : {}),
-  },
-} : {};
+const submissionsWhere = selectedCourse
+  ? {
+      enrolledUser: {
+        courseId: selectedCourse,
+        ...(currentUser.role === "MENTOR" ? { mentorUsername: currentUser.username } : {}),
+      },
+    }
+  : {};
 
 const submissions = selectedCourse
   ? await db.submission.findMany({

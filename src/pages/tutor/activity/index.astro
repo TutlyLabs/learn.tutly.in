@@ -5,7 +5,7 @@ import UserCards from "./_components/UserCards";
 
 const user = Astro.locals.user;
 
-if (user?.role !== "INSTRUCTOR" && user?.role !== "MENTOR" || !user) {
+if ((user?.role !== "INSTRUCTOR" && user?.role !== "MENTOR") || !user) {
   return Astro.redirect("/404");
 }
 

@@ -5,7 +5,7 @@ import UserPage from "./_components/UserPage";
 
 const user = Astro.locals.user;
 
-if (user?.role !== "INSTRUCTOR" && user?.role !== "MENTOR" || !user) {
+if ((user?.role !== "INSTRUCTOR" && user?.role !== "MENTOR") || !user) {
   return Astro.redirect(`/404`);
 }
 
@@ -25,15 +25,16 @@ const activeFilters = filters
 
 // First get all courses based on role
 const courses = await db.course.findMany({
-  where: user.role === "INSTRUCTOR" 
-    ? { createdById: user.id }
-    : {
-        enrolledUsers: {
-          some: {
-            mentorUsername: user.username,
+  where:
+    user.role === "INSTRUCTOR"
+      ? { createdById: user.id }
+      : {
+          enrolledUsers: {
+            some: {
+              mentorUsername: user.username,
+            },
           },
         },
-      },
   select: {
     id: true,
   },
@@ -127,11 +128,11 @@ const allUsers = enrolledUsers.map((enrolled) => ({
 ---
 
 <RootLayout title="Users">
-  <UserPage 
-    data={allUsers} 
-    totalItems={totalItems} 
-    userRole={user.role} 
-    isAdmin={user.isAdmin} 
-    client:load 
+  <UserPage
+    data={allUsers}
+    totalItems={totalItems}
+    userRole={user.role}
+    isAdmin={user.isAdmin}
+    client:load
   />
 </RootLayout>

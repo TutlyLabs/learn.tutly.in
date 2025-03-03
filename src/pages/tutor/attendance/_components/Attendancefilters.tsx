@@ -63,11 +63,13 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
             courseId: currentCourse.id,
           });
           const mentorStudents = Array.isArray(res) ? res : [];
-          setUsers(mentorStudents.map(student => ({
-            ...student,
-            username: student.username || "",
-            name: student.name || "",
-          })));
+          setUsers(
+            mentorStudents.map((student) => ({
+              ...student,
+              username: student.username || "",
+              name: student.name || "",
+            }))
+          );
         }
 
         if (role === "INSTRUCTOR") {
@@ -213,39 +215,42 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
   }, [currentClass]);
 
   // Ensure fileData is always an array and has required properties
-  const aggregatedStudents = (Array.isArray(fileData) ? fileData : []).reduce((acc: any, student: Student) => {
-    if (!student?.username) return acc;
+  const aggregatedStudents = (Array.isArray(fileData) ? fileData : []).reduce(
+    (acc: any, student: Student) => {
+      if (!student?.username) return acc;
 
-    const username = student.username;
-    const duration = parseInt(String(student.Duration)) || 0;
-    const name = student.Name || "";
+      const username = student.username;
+      const duration = parseInt(String(student.Duration)) || 0;
+      const name = student.Name || "";
 
-    if (!acc[username]) {
-      acc[username] = {
-        Name: name,
-        Joins: [
-          {
-            JoinTime: student.JoinTime || "",
-            LeaveTime: student.LeaveTime || "",
-            ActualName: name,
-            Duration: duration,
-          },
-        ],
-        Duration: duration,
-        username: username,
-        attended: true,
-      };
-    } else {
-      acc[username].Joins.push({
-        JoinTime: student.JoinTime || "",
-        LeaveTime: student.LeaveTime || "",
-        ActualName: name,
-        Duration: duration,
-      });
-      acc[username].Duration += duration;
-    }
-    return acc;
-  }, {});
+      if (!acc[username]) {
+        acc[username] = {
+          Name: name,
+          Joins: [
+            {
+              JoinTime: student.JoinTime || "",
+              LeaveTime: student.LeaveTime || "",
+              ActualName: name,
+              Duration: duration,
+            },
+          ],
+          Duration: duration,
+          username: username,
+          attended: true,
+        };
+      } else {
+        acc[username].Joins.push({
+          JoinTime: student.JoinTime || "",
+          LeaveTime: student.LeaveTime || "",
+          ActualName: name,
+          Duration: duration,
+        });
+        acc[username].Duration += duration;
+      }
+      return acc;
+    },
+    {}
+  );
 
   const sortedAggregatedStudents = Object.values(aggregatedStudents).sort((a: any, b: any) => {
     const usernameA = String(a.username || "").toUpperCase();
@@ -255,7 +260,9 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
 
   const modifiedAggregatedStudents = sortedAggregatedStudents.map((student: any) => {
     if (role === "MENTOR") {
-      const matchedUser = Array.isArray(users) ? users.find((user: any) => user.username === student.username) : null;
+      const matchedUser = Array.isArray(users)
+        ? users.find((user: any) => user.username === student.username)
+        : null;
       return {
         ...student,
         Present: student.attended,
@@ -264,7 +271,9 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
       };
     }
 
-    const matchedUser = Array.isArray(users) ? users.find((user: any) => user.username === student.username) : null;
+    const matchedUser = Array.isArray(users)
+      ? users.find((user: any) => user.username === student.username)
+      : null;
     if (matchedUser) {
       return {
         ...student,
@@ -541,14 +550,22 @@ const AttendanceTable = ({
               <div className="h-2 w-2 rounded-full bg-red-500" />
               Absent
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {users.filter((u: any) => !presentStudents.find((p: any) => p.username === u.username)).length}
+                {
+                  users.filter(
+                    (u: any) => !presentStudents.find((p: any) => p.username === u.username)
+                  ).length
+                }
               </span>
             </TabsTrigger>
             <TabsTrigger value="short" className="gap-2">
               <div className="h-2 w-2 rounded-full bg-yellow-500" />
               {"<"}60min
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {presentStudents.filter((s: { Duration: number }) => s.Duration > 0 && s.Duration < 60).length}
+                {
+                  presentStudents.filter(
+                    (s: { Duration: number }) => s.Duration > 0 && s.Duration < 60
+                  ).length
+                }
               </span>
             </TabsTrigger>
           </TabsList>
@@ -582,13 +599,10 @@ const AttendanceTable = ({
           {filteredStudents.map((student: any, index: number) => (
             <TableRow
               key={index}
-              className={`hover:bg-muted/50 ${student.isAbsent ? "bg-muted/30" : ""
-                }`}
+              className={`hover:bg-muted/50 ${student.isAbsent ? "bg-muted/30" : ""}`}
             >
               <TableCell>{index + 1}</TableCell>
-              <TableCell className="font-medium">
-                {student.ActualName}
-              </TableCell>
+              <TableCell className="font-medium">{student.ActualName}</TableCell>
               <TableCell>
                 {openEditName === index + 1 ? (
                   <Input
@@ -604,12 +618,13 @@ const AttendanceTable = ({
                 {student.Duration > 0 ? (
                   <Badge
                     variant="outline"
-                    className={`${student.Duration < 30
-                      ? "bg-red-500/10 text-red-400 hover:bg-red-500/10"
-                      : student.Duration < 90
-                        ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/10"
-                        : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
-                      }`}
+                    className={`${
+                      student.Duration < 30
+                        ? "bg-red-500/10 text-red-400 hover:bg-red-500/10"
+                        : student.Duration < 90
+                          ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/10"
+                          : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
+                    }`}
                   >
                     {student.Duration}
                   </Badge>

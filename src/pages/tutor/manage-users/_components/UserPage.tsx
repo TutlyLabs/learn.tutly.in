@@ -120,14 +120,19 @@ const actionWrapper = (action: any) => {
       return {
         data: null,
         error: {
-          message: error instanceof Error ? error.message : "An error occurred"
-        }
+          message: error instanceof Error ? error.message : "An error occurred",
+        },
       };
     }
   };
 };
 
-const UserPage = ({ data, totalItems, userRole = "INSTRUCTOR", isAdmin = false }: UserPageProps) => {
+const UserPage = ({
+  data,
+  totalItems,
+  userRole = "INSTRUCTOR",
+  isAdmin = false,
+}: UserPageProps) => {
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -207,18 +212,18 @@ const UserPage = ({ data, totalItems, userRole = "INSTRUCTOR", isAdmin = false }
 
   const viewAction = shouldAllowActions
     ? async (data: any) => {
-      try {
-        const result = await actions.users_getUser(data);
-        return { data: result };
-      } catch (error) {
-        return {
-          data: null,
-          error: {
-            message: error instanceof Error ? error.message : "Failed to view user"
-          }
-        };
+        try {
+          const result = await actions.users_getUser(data);
+          return { data: result };
+        } catch (error) {
+          return {
+            data: null,
+            error: {
+              message: error instanceof Error ? error.message : "Failed to view user",
+            },
+          };
+        }
       }
-    }
     : null;
 
   return (
@@ -237,16 +242,20 @@ const UserPage = ({ data, totalItems, userRole = "INSTRUCTOR", isAdmin = false }
         onDelete={shouldAllowActions ? actionWrapper(actions.users_deleteUser) : null}
         onBulkImport={shouldAllowActions ? actionWrapper(actions.users_bulkUpsert) : null}
         title="Users Management"
-        actions={shouldAllowActions ? [
-          {
-            label: "Reset Password",
-            icon: <MdLockReset className="text-red-500 mr-2 h-5 w-5" />,
-            onClick: (user: any) => {
-              setSelectedUser(user);
-              setOpen(true);
-            },
-          },
-        ] : []}
+        actions={
+          shouldAllowActions
+            ? [
+                {
+                  label: "Reset Password",
+                  icon: <MdLockReset className="text-red-500 mr-2 h-5 w-5" />,
+                  onClick: (user: any) => {
+                    setSelectedUser(user);
+                    setOpen(true);
+                  },
+                },
+              ]
+            : []
+        }
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
