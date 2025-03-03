@@ -207,6 +207,7 @@ export default function AttendanceHeader({
     <>
       <div className="mx-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {/* Course selection */}
           <Select
             value={currentCourse?.id || ""}
             onValueChange={(value) => {
@@ -231,7 +232,7 @@ export default function AttendanceHeader({
               )}
             </SelectContent>
           </Select>
-
+          {/* Class selection */}
           <Select
             value={currentClass?.id || ""}
             onValueChange={(value) => {
@@ -260,6 +261,7 @@ export default function AttendanceHeader({
         </div>
 
         {role === "INSTRUCTOR" && pastpresentStudents.length === 0 && (
+          // Importing attendance through file
           <div className="flex items-center gap-2">
             <input
               title="file"
@@ -276,6 +278,7 @@ export default function AttendanceHeader({
                 }
               }}
             />
+            {/* Importing attendance through bulk */}
             {currentClass ? (
               <BulkImport data={[]} columns={columns} onImport={handleBulkUpload} />
             ) : (
@@ -294,11 +297,13 @@ export default function AttendanceHeader({
                 </Tooltip>
               </TooltipProvider>
             )}
+
+            {/* Upload attendance for a class by marking min duration */}
             {fileData && selectedFile && (
               <div className="flex items-center gap-2">
                 <input
                   type="number"
-                  min="0"
+                  min="60"
                   value={clientMaxDuration}
                   onChange={handleClientMaxDuration}
                   placeholder="Max duration"
@@ -315,6 +320,7 @@ export default function AttendanceHeader({
           </div>
         )}
 
+        {/* Delete Attendance for a class */}
         {role === "INSTRUCTOR" && pastpresentStudents.length > 0 && (
           <AlertDialog>
             <AlertDialogTrigger asChild>

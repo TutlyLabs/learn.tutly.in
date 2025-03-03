@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import AttendanceHeader from "./AttendanceHeader";
 import OverallAttendanceTable from "./OverallAttendanceTable";
+import { studentBarchartData } from "@/actions/statistics";
 
 interface Student {
   Name: string;
@@ -214,7 +215,7 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
     viewAttendance();
   }, [currentClass]);
 
-  // Ensure fileData is always an array and has required properties
+  // combine the duplicate users duration
   const aggregatedStudents = (Array.isArray(fileData) ? fileData : []).reduce(
     (acc: any, student: Student) => {
       if (!student?.username) return acc;
@@ -258,6 +259,7 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
     return usernameA.localeCompare(usernameB);
   });
 
+  // only enrolled students are marked present if present
   const modifiedAggregatedStudents = sortedAggregatedStudents.map((student: any) => {
     if (role === "MENTOR") {
       const matchedUser = Array.isArray(users)
@@ -297,8 +299,9 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
     Name: student.ActualName,
     username: student.username,
   }));
-
+  // Enrolled students
   const presentStudents = combinedStudents.filter((student: any) => student.Present === true);
+  // Unenrolled students
   const absentStudents = combinedStudents.filter((student: any) => !student.Present);
 
   // For the attendance table counts
@@ -355,11 +358,11 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
   return (
     <div className="p-4 text-center">
       <div>
-        <h1 className="mx-auto mb-2 mt-4 w-60 bg-gradient-to-r from-green-500 via-orange-400 to-red-400 dark:from-green-500 dark:via-orange-300 dark:to-red-500 bg-clip-text text-4xl font-black text-transparent">
+        <h1 className="mx-auto mb-2 mt-4 w-60 bg-gradient-to-r text-4xl uppercase font-black text-primary">
           Attendance
         </h1>
       </div>
-      <h1 className="text-md text-center font-semibold text-secondary-400">
+      <h1 className="text-md text-center tracking-widest font-semibold text-secondary-400">
         {" "}
         ~ Mark and Monitor Students Attendance
       </h1>
@@ -416,12 +419,14 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
               username={username}
               setUsername={setUsername}
               handleEditUsername={handleEditUsername}
+              maxInstructionDuration={maxInstructionDuration}
+              flag={false}
             />
           )}
 
           {pastpresentStudents.length > 0 && (
             <AttendanceTable
-              presentStudents={presentStudents}
+              presentStudents={pastpresentStudents}
               users={users}
               absentStudents={absentStudents}
               handleStudentClick={handleStudentClick}
@@ -430,6 +435,7 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
               username={username}
               setUsername={setUsername}
               handleEditUsername={handleEditUsername}
+              flag={true}
             />
           )}
         </>
@@ -441,7 +447,7 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-medium">
-              Attendance Details for {selectedStudent?.Name}
+              Attendance Details for {selectedStudent?.Name||selectedStudent?.user?.name!}
             </DialogTitle>
           </DialogHeader>
 
@@ -456,7 +462,7 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
                 </tr>
               </thead>
               <tbody>
-                {selectedStudent?.Joins?.map((join: any, index: number) => (
+                {(selectedStudent?.Joins||selectedStudent?.data)?.map((join: any, index: number) => (
                   <tr key={index}>
                     <td className="border px-3 py-1.5">{join.ActualName}</td>
                     <td className="border px-3 py-1.5">{join.JoinTime}</td>
@@ -468,7 +474,7 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
                   <td className="border px-3 py-1.5">Total Duration</td>
                   <td className="border px-3 py-1.5"></td>
                   <td className="border px-3 py-1.5"></td>
-                  <td className="border px-3 py-1.5">{selectedStudent?.Duration}</td>
+                  <td className="border px-3 py-1.5">{selectedStudent?.Duration||selectedStudent?.attendedDuration}</td>
                 </tr>
               </tbody>
             </table>
@@ -491,11 +497,13 @@ const AttendanceTable = ({
   username,
   setUsername,
   handleEditUsername,
+  maxInstructionDuration,
+  flag
 }: any) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
-  // Combine all students
+  // Combine all attended and not attended enrolled students
   const allStudents = [
     ...presentStudents,
     ...users
@@ -518,16 +526,15 @@ const AttendanceTable = ({
 
     switch (activeTab) {
       case "present":
-        return !student.isAbsent;
+        return flag?(student.attended):(!student.isAbsent&&student.Duration>=maxInstructionDuration);
       case "absent":
-        return student.isAbsent;
+        return flag?(!student.attended):(student.isAbsent||student.Duration<maxInstructionDuration);
       case "short":
-        return student.Duration > 0 && student.Duration < 60;
+        return (student.Duration||student.attendedDuration) > 0 && (student.Duration||student.attendedDuration) < 60;
       default:
         return true;
     }
   });
-
   return (
     <div className="mx-auto mt-8 w-[95%] space-y-4">
       <div className="flex items-center justify-between">
@@ -543,16 +550,19 @@ const AttendanceTable = ({
               <div className="h-2 w-2 rounded-full bg-emerald-500" />
               Present
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {presentStudents.length}
+                {presentStudents.filter((p: any) => (flag?p.attended:p.Duration>=maxInstructionDuration)).length}
               </span>
             </TabsTrigger>
             <TabsTrigger value="absent" className="gap-2">
               <div className="h-2 w-2 rounded-full bg-red-500" />
               Absent
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {
-                  users.filter(
-                    (u: any) => !presentStudents.find((p: any) => p.username === u.username)
+                {flag?
+                users.filter(
+                  (u: any) => !presentStudents.find((p: any) => p.username === u.username&&p.attended)
+                ).length
+                  : users.filter(
+                    (u: any) => !presentStudents.find((p: any) => p.username === u.username&&p.Duration>=maxInstructionDuration)
                   ).length
                 }
               </span>
@@ -563,7 +573,7 @@ const AttendanceTable = ({
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
                 {
                   presentStudents.filter(
-                    (s: { Duration: number }) => s.Duration > 0 && s.Duration < 60
+                    (s: any) => (s.Duration||s.attendedDuration) > 0 && (s.Duration||s.attendedDuration) < 60
                   ).length
                 }
               </span>
@@ -602,7 +612,7 @@ const AttendanceTable = ({
               className={`hover:bg-muted/50 ${student.isAbsent ? "bg-muted/30" : ""}`}
             >
               <TableCell>{index + 1}</TableCell>
-              <TableCell className="font-medium">{student.ActualName}</TableCell>
+              <TableCell className="font-medium">{student.ActualName||student.user?.name}</TableCell>
               <TableCell>
                 {openEditName === index + 1 ? (
                   <Input
@@ -615,27 +625,27 @@ const AttendanceTable = ({
                 )}
               </TableCell>
               <TableCell>
-                {student.Duration > 0 ? (
+                {student.Duration>0||student.attendedDuration>0 ? (
                   <Badge
                     variant="outline"
                     className={`${
-                      student.Duration < 30
-                        ? "bg-red-500/10 text-red-400 hover:bg-red-500/10"
-                        : student.Duration < 90
+                      (flag?!student.attended:student.Duration < Number(maxInstructionDuration))
+                        ? ("bg-red-500/10 text-red-400 hover:bg-red-500/10")
+                        : ((!flag?student.Duration < 60:student.attendedDuration < 60)
                           ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/10"
-                          : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
+                          : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10")
                     }`}
                   >
-                    {student.Duration}
+                    {flag?student.attendedDuration:student.Duration}
                   </Badge>
                 ) : (
                   "-"
                 )}
               </TableCell>
               <TableCell>
-                {student.Joins?.[0]?.JoinTime ? student.Joins[0].JoinTime.split(" ")[0] : "-"}
+                {flag?(student.data?.[0]?.JoinTime ? student.data[0].JoinTime.split("T")[0] : "-"):(student.Joins?.[0]?.JoinTime ? student.Joins[0].JoinTime.split(" ")[0] : "-")}
               </TableCell>
-              <TableCell>{student.Joins?.length || "-"}</TableCell>
+              <TableCell>{flag?student.data?.length||"-":student.Joins?.length || "-"}</TableCell>
               <TableCell>
                 <Button variant="ghost" size="sm" onClick={() => handleStudentClick(student)}>
                   View
