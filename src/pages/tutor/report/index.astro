@@ -1,0 +1,33 @@
+---
+import RootLayout from "@/layouts/RootLayout.astro";
+import NoDataFound from "@/components/NoDataFound";
+import db from "@/lib/db";
+
+const user = Astro.locals.user;
+
+if (!user || (user.role !== "INSTRUCTOR" && user.role !== "MENTOR")) {
+  return Astro.redirect("/404", 302);
+}
+
+const enrolledCourses = await db.enrolledUsers.findMany({
+  where: {
+    username: user.username,
+    courseId: {
+      not: null,
+    },
+  },
+  select: {
+    courseId: true,
+  },
+});
+
+if (!enrolledCourses?.length) {
+  return Astro.redirect("/instructor/no-courses", 302);
+}
+
+return Astro.redirect(`/tutor/report/all`, 302);
+---
+
+<RootLayout title="Report">
+  {!enrolledCourses?.length && <NoDataFound message="Oops! No enrolled courses found" />}
+</RootLayout>

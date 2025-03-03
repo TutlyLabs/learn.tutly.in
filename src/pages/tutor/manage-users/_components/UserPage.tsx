@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label";
 interface UserPageProps {
   data: Record<string, any>[];
   totalItems: number;
+  userRole?: "INSTRUCTOR" | "MENTOR";
+  isAdmin?: boolean;
 }
 
 const columns: Column[] = [
@@ -75,6 +77,14 @@ const columns: Column[] = [
     },
   },
   {
+    key: "mentorUsername",
+    name: "Assigned Mentor",
+    label: "Assigned Mentor",
+    type: "text",
+    sortable: true,
+    filterable: true,
+  },
+  {
     key: "password",
     name: "Password",
     label: "Password",
@@ -102,13 +112,22 @@ const columns: Column[] = [
 
 const actionWrapper = (action: any) => {
   return async (data: any) => {
-    const result = (await action(data)) as any;
-    window.location.reload();
-    return result;
+    try {
+      const result = (await action(data)) as any;
+      window.location.reload();
+      return { data: result };
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          message: error instanceof Error ? error.message : "An error occurred"
+        }
+      };
+    }
   };
 };
 
-const UserPage = ({ data, totalItems }: UserPageProps) => {
+const UserPage = ({ data, totalItems, userRole = "INSTRUCTOR", isAdmin = false }: UserPageProps) => {
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -184,6 +203,24 @@ const UserPage = ({ data, totalItems }: UserPageProps) => {
     }
   };
 
+  const shouldAllowActions = userRole === "INSTRUCTOR" && !isAdmin;
+
+  const viewAction = shouldAllowActions
+    ? async (data: any) => {
+      try {
+        const result = await actions.users_getUser(data);
+        return { data: result };
+      } catch (error) {
+        return {
+          data: null,
+          error: {
+            message: error instanceof Error ? error.message : "Failed to view user"
+          }
+        };
+      }
+    }
+    : null;
+
   return (
     <>
       <DisplayTable
@@ -194,15 +231,13 @@ const UserPage = ({ data, totalItems }: UserPageProps) => {
         clientSideProcessing={false}
         totalItems={totalItems}
         defaultPageSize={10}
-        onView={async (data: any) => {
-          return (await actions.users_getUser(data)) as any;
-        }}
-        onCreate={actionWrapper(actions.users_createUser)}
-        onEdit={actionWrapper(actions.users_updateUser)}
-        onDelete={actionWrapper(actions.users_deleteUser)}
-        onBulkImport={actionWrapper(actions.users_bulkUpsert)}
+        onView={viewAction}
+        onCreate={shouldAllowActions ? actionWrapper(actions.users_createUser) : null}
+        onEdit={shouldAllowActions ? actionWrapper(actions.users_updateUser) : null}
+        onDelete={shouldAllowActions ? actionWrapper(actions.users_deleteUser) : null}
+        onBulkImport={shouldAllowActions ? actionWrapper(actions.users_bulkUpsert) : null}
         title="Users Management"
-        actions={[
+        actions={shouldAllowActions ? [
           {
             label: "Reset Password",
             icon: <MdLockReset className="text-red-500 mr-2 h-5 w-5" />,
@@ -211,7 +246,7 @@ const UserPage = ({ data, totalItems }: UserPageProps) => {
               setOpen(true);
             },
           },
-        ]}
+        ] : []}
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -272,9 +307,7 @@ const UserPage = ({ data, totalItems }: UserPageProps) => {
                           <X className="h-4 w-4 text-muted-foreground/80" />
                         )}
                         <span
-                          className={`text-xs ${
-                            req.met ? "text-emerald-600" : "text-muted-foreground"
-                          }`}
+                          className={`text-xs ${req.met ? "text-emerald-600" : "text-muted-foreground"}`}
                         >
                           {req.text}
                         </span>

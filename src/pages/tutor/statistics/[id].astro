@@ -15,6 +15,10 @@ const currentUser = Astro.locals.user;
 
 if (!currentUser) return null;
 
+if (currentUser.role !== "INSTRUCTOR" && currentUser.role !== "MENTOR") {
+  return Astro.redirect("/404");
+}
+
 const enrolledCourses = await db.enrolledUsers.findMany({
   where: {
     username: currentUser.username,
@@ -26,24 +30,31 @@ if (!enrolledCourses.some((course) => course.courseId === courseId)) {
 }
 
 const call = Astro.callAction;
-const mentorUsername = Astro.url.searchParams.get("mentor");
+const mentorUsername = currentUser.role === "MENTOR" ? currentUser.username : Astro.url.searchParams.get("mentor");
 const studentUsername = Astro.url.searchParams.get("student");
+
+if (currentUser.role === "MENTOR" && !mentorUsername) {
+  return Astro.redirect(`/tutor/statistics/${courseId}?mentor=${currentUser.username}`);
+}
+
+if (currentUser.role === "MENTOR" && mentorUsername !== currentUser.username) {
+  return Astro.redirect("/404");
+}
+
 const [piechart, barchart, _mentees, mentors, linechart, courses]: any = await Promise.all([
   call(actions.statistics_getPiechartData, { courseId, mentorUsername }),
   call(actions.statistics_getBarchartData, { courseId, mentorUsername }),
   call(actions.statistics_getAllMentees, { courseId, mentorUsername }),
-  call(actions.statistics_getAllMentors, { courseId }),
+  currentUser.role === "INSTRUCTOR" ? call(actions.statistics_getAllMentors, { courseId }) : { data: [] },
   call(actions.statistics_getLinechartData, {
     courseId,
     mentorUsername,
-    // todo: fix this
     menteesCount: 0,
   }),
   call(actions.courses_getAllCourses, { currentUser }),
 ]);
 
 const mentees: any = _mentees;
-
 const data = courses.data;
 
 let loaderValue = "0%";
@@ -64,7 +75,12 @@ const { data: attendanceData } = await call(actions.statistics_studentHeatmapDat
 ---
 
 <RootLayout title="Statistics">
-  <Header client:load data={data} courseId={courseId} />
+  <Header 
+    client:load 
+    data={data} 
+    courseId={courseId} 
+    userRole={currentUser.role as "INSTRUCTOR" | "MENTOR"} 
+  />
   {
     studentUsername ? (
       <StudentStats client:load studentData={studentData} attendanceData={attendanceData} />
@@ -127,6 +143,7 @@ const { data: attendanceData } = await call(actions.statistics_studentHeatmapDat
           mentorName={mentorUsername || ""}
           menteeName={studentUsername || ""}
           courseId={courseId}
+          userRole={currentUser.role as "INSTRUCTOR" | "MENTOR"}
         />
       </>
     )

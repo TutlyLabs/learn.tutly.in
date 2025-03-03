@@ -2,25 +2,41 @@
 import RootLayout from "@/layouts/RootLayout.astro";
 import { actions } from "astro:actions";
 import type { Course } from "@prisma/client";
-import Report, { DataItem } from "./_components/Report.tsx";
+import Report, { DataItem } from "./_components/Report";
+import db from "@/lib/db";
 
 const { courseId } = Astro.params;
-
+const user = Astro.locals.user;
 const call = Astro.callAction;
-if (!courseId) {
-  return Astro.redirect("/instructor/courses", 302);
+
+if (!courseId || !user || (user.role !== "INSTRUCTOR" && user.role !== "MENTOR")) {
+  return Astro.redirect("/404", 302);
 }
 
-const { data: coursesData } = await call(actions.courses_getAllCourses, {});
-const courses = coursesData?.data;
+const enrolledCourses = await db.enrolledUsers.findMany({
+  where: {
+    username: user.username,
+    courseId: {
+      not: null,
+    },
+  },
+  include: {
+    course: true,
+  },
+});
+
+const courses = enrolledCourses.map((enrolled) => enrolled.course);
 
 const { data } = await call(actions.report_generateReport, { courseId });
 const report = data?.data;
 const sortedData = report ? [...report].sort((a, b) => a.username.localeCompare(b.username)) : [];
+
+const isMentor = user.role === "MENTOR";
 ---
 
 <RootLayout title={courseId === "all" ? "All Courses Report" : "Course Report"}>
   <Report
+    isMentor={isMentor}
     intitialdata={sortedData as DataItem[]}
     allCourses={courses as Course[]}
     courseId={courseId}

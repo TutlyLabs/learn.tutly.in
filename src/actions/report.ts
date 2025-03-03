@@ -22,145 +22,99 @@ export const generateReport = defineAction({
   async handler({ courseId }, { locals }) {
     const currentUser = locals.user;
 
-    if (!currentUser || currentUser.role === "STUDENT") {
+    if (!currentUser || (currentUser.role !== "INSTRUCTOR" && currentUser.role !== "MENTOR")) {
       return { error: "You are not authorized to generate report" };
     }
 
-    const whereClause =
-      courseId === "all"
-        ? {
-            user: {
-              role: Role.STUDENT,
-              organizationId: currentUser.organizationId,
-            },
-          }
-        : {
-            courseId: courseId,
-            user: {
-              role: Role.STUDENT,
-              organizationId: currentUser.organizationId,
-            },
-          };
-
-    const enrolledUsers = await db.enrolledUsers.findMany({
+    // First, get the courses the current user is enrolled in
+    const enrolledCourses = await db.enrolledUsers.findMany({
       where: {
-        ...whereClause,
-        course: {
-          enrolledUsers: {
-            some: {
-              username: currentUser.username,
-            },
-          },
+        username: currentUser.username,
+        courseId: {
+          not: null,
         },
       },
+      select: {
+        courseId: true,
+      },
+    });
+
+    const courseIds = enrolledCourses
+      .map((enrolled) => enrolled.courseId)
+      .filter((id): id is string => id !== null);
+
+    // Base where clause for enrolled users
+    const whereClause = {
+      user: {
+        role: Role.STUDENT,
+        organizationId: currentUser.organizationId,
+      },
+      courseId: courseId === "all" ? { in: courseIds } : courseId,
+      ...(currentUser.role === "MENTOR" ? { mentorUsername: currentUser.username } : {}),
+    };
+
+    const enrolledUsers = await db.enrolledUsers.findMany({
+      where: whereClause,
       include: {
         user: true,
       },
     });
 
-    let submissionsWhereClause =
-      courseId === "all"
-        ? {
-            enrolledUser: {
-              user: {
-                organizationId: currentUser.organizationId,
-                role: Role.STUDENT,
-              },
-            },
-          }
-        : {
-            enrolledUser: {
-              courseId: courseId,
-              user: {
-                role: Role.STUDENT,
-              },
-            },
-          };
+    // Base where clause for submissions
+    const submissionsWhereClause = {
+      enrolledUser: {
+        user: {
+          organizationId: currentUser.organizationId,
+          role: Role.STUDENT,
+        },
+        courseId: courseId === "all" ? { in: courseIds } : courseId,
+        ...(currentUser.role === "MENTOR" ? { mentorUsername: currentUser.username } : {}),
+      },
+    };
 
-    let submissions = await db.submission.findMany({
+    const submissions = await db.submission.findMany({
       where: submissionsWhereClause,
-      select: {
-        id: true,
-        attachmentId: true,
+      include: {
         enrolledUser: {
-          select: {
-            username: true,
+          include: {
             user: {
               select: {
                 name: true,
               },
             },
-            mentorUsername: true,
           },
         },
       },
     });
 
-    if (currentUser.role === "MENTOR") {
-      submissions = submissions.filter(
-        (submission) => submission.enrolledUser.mentorUsername === currentUser.username
-      );
-    }
+    // Base where clause for attendance
+    const attendanceWhereClause = {
+      attended: true,
+      class: {
+        courseId: courseId === "all" ? { in: courseIds } : courseId,
+      },
+      ...(currentUser.role === "MENTOR"
+        ? { username: { in: enrolledUsers.map(eu => eu.username) } }
+        : {}),
+    };
 
     const attendance = await db.attendance.findMany({
-      where: {
-        attended: true,
-        class:
-          courseId === "all"
-            ? {
-                course: {
-                  enrolledUsers: {
-                    some: {
-                      user: {
-                        organizationId: currentUser.organizationId,
-                        role: Role.STUDENT,
-                      },
-                    },
-                  },
-                },
-              }
-            : {
-                courseId: courseId,
-              },
-      },
-      select: {
-        user: {
-          select: {
-            username: true,
-          },
-        },
-        class: {
-          select: {
-            courseId: true,
-          },
-        },
+      where: attendanceWhereClause,
+      include: {
+        class: true,
       },
     });
 
     const groupedAttendance = attendance.reduce((acc: Record<string, number>, curr) => {
-      const username = curr.user.username;
+      const username = curr.username;
       acc[username] = (acc[username] ?? 0) + 1;
       return acc;
     }, {});
 
     const totalClasses = await db.class.count({
-      where:
-        courseId === "all"
-          ? {
-              course: {
-                enrolledUsers: {
-                  some: {
-                    user: {
-                      organizationId: currentUser.organizationId,
-                      role: Role.STUDENT,
-                    },
-                  },
-                },
-              },
-            }
-          : {
-              courseId: courseId,
-            },
+      where: {
+        courseId: courseId === "all" ? { in: courseIds } : courseId,
+      },
     });
 
     const obj: Record<
@@ -209,30 +163,16 @@ export const generateReport = defineAction({
     const points = await db.point.findMany({
       where: {
         submissions: {
-          enrolledUser:
-            courseId === "all"
-              ? {
-                  user: {
-                    organizationId: currentUser.organizationId,
-                    role: Role.STUDENT,
-                  },
-                }
-              : {
-                  courseId: courseId,
-                },
+          enrolledUser: {
+            courseId: courseId === "all" ? { in: courseIds } : courseId,
+            ...(currentUser.role === "MENTOR" ? { mentorUsername: currentUser.username } : {}),
+          },
         },
       },
-      select: {
-        score: true,
+      include: {
         submissions: {
-          select: {
-            id: true,
-            enrolledUser: {
-              select: {
-                username: true,
-                courseId: true,
-              },
-            },
+          include: {
+            enrolledUser: true,
           },
         },
       },
@@ -257,7 +197,7 @@ export const generateReport = defineAction({
 
     Object.values(obj).forEach((ob) => {
       if (courseId === "all") {
-        const userAttendance = attendance.filter((a) => a.user.username === ob.username).length;
+        const userAttendance = attendance.filter((a) => a.username === ob.username).length;
         const totalClassesForUser = totalClasses;
         ob.attendance = totalClassesForUser > 0 ? (userAttendance * 100) / totalClassesForUser : 0;
       } else {
@@ -265,7 +205,7 @@ export const generateReport = defineAction({
       }
     });
 
-    let SelectedFields: ReportData[] = Object.values(obj).map((ob) => ({
+    const SelectedFields: ReportData[] = Object.values(obj).map((ob) => ({
       username: ob.username,
       name: ob.name,
       submissionLength: ob.submissionsLength,
@@ -279,12 +219,6 @@ export const generateReport = defineAction({
     SelectedFields.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
     SelectedFields.sort((a, b) => b.score - a.score);
     SelectedFields.sort((a, b) => (a.mentorUsername ?? "").localeCompare(b.mentorUsername ?? ""));
-
-    if (currentUser.role === "MENTOR") {
-      SelectedFields = SelectedFields.filter(
-        (selectedField) => selectedField.mentorUsername === currentUser.username
-      );
-    }
 
     return { success: true, data: SelectedFields };
   },

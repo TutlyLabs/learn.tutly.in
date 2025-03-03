@@ -68,24 +68,24 @@ export type Column = {
   name: string;
   label?: string;
   type?:
-    | "text"
-    | "number"
-    | "date"
-    | "datetime-local"
-    | "time"
-    | "email"
-    | "tel"
-    | "url"
-    | "password"
-    | "select"
-    | "textarea"
-    | "checkbox"
-    | "radio"
-    | "color"
-    | "file"
-    | "range"
-    | "month"
-    | "week";
+  | "text"
+  | "number"
+  | "date"
+  | "datetime-local"
+  | "time"
+  | "email"
+  | "tel"
+  | "url"
+  | "password"
+  | "select"
+  | "textarea"
+  | "checkbox"
+  | "radio"
+  | "color"
+  | "file"
+  | "range"
+  | "month"
+  | "week";
   options?: { label: string; value: any }[];
   sortable?: boolean;
   filterable?: boolean;
@@ -110,15 +110,17 @@ export type Column = {
   hideInTable?: boolean;
 };
 
+type ActionResponse = Promise<{ data: any; error?: { message: string } }>;
+
 type DisplayTableProps = {
   data: Record<string, any>[];
   columns: Column[];
   actions?: IAction[];
-  onEdit?: (data: any) => Promise<{ data: any; error?: { message: string } }>;
-  onDelete?: ({ id }: { id: any }) => Promise<{ data: any; error?: { message: string } }>;
-  onCreate?: (data: any) => Promise<{ data: any; error?: { message: string } }>;
-  onView?: ({ id }: { id: any }) => Promise<{ data: any; error?: { message: string } }>;
-  onBulkImport?: (data: any[]) => Promise<{ data: any; error?: { message: string } }>;
+  onEdit?: ((data: any) => ActionResponse) | null;
+  onDelete?: (({ id }: { id: any }) => ActionResponse) | null;
+  onCreate?: ((data: any) => ActionResponse) | null;
+  onView?: (({ id }: { id: any }) => ActionResponse) | null;
+  onBulkImport?: ((data: any[]) => ActionResponse) | null;
   exportable?: boolean;
   searchable?: boolean;
   title?: string;
@@ -173,9 +175,9 @@ export default function DisplayTable({
 
   const sortConfig = searchParams.get("sort")
     ? {
-        key: searchParams.get("sort") || "",
-        direction: (searchParams.get("direction") as "asc" | "desc") || "asc",
-      }
+      key: searchParams.get("sort") || "",
+      direction: (searchParams.get("direction") as "asc" | "desc") || "asc",
+    }
     : null;
 
   useEffect(() => {
@@ -618,43 +620,43 @@ export default function DisplayTable({
 
   const filteredData = clientSideProcessing
     ? data.filter((row) => {
-        if (localSearchTerm) {
-          const searchFields = columns
-            .filter((col) => !col.hidden)
-            .map((col) => row[col.key])
-            .join(" ")
-            .toLowerCase();
+      if (localSearchTerm) {
+        const searchFields = columns
+          .filter((col) => !col.hidden)
+          .map((col) => row[col.key])
+          .join(" ")
+          .toLowerCase();
 
-          if (!searchFields.includes(localSearchTerm.toLowerCase())) {
-            return false;
-          }
+        if (!searchFields.includes(localSearchTerm.toLowerCase())) {
+          return false;
         }
+      }
 
-        return activeFilters.every((filter) => {
-          const value = row[filter.column];
-          if (value === undefined || value === null) return false;
+      return activeFilters.every((filter) => {
+        const value = row[filter.column];
+        if (value === undefined || value === null) return false;
 
-          const stringValue = String(value).toLowerCase();
-          const filterValue = filter.value.toLowerCase();
+        const stringValue = String(value).toLowerCase();
+        const filterValue = filter.value.toLowerCase();
 
-          switch (filter.operator) {
-            case "contains":
-              return stringValue.includes(filterValue);
-            case "equals":
-              return stringValue === filterValue;
-            case "startsWith":
-              return stringValue.startsWith(filterValue);
-            case "endsWith":
-              return stringValue.endsWith(filterValue);
-            case "greaterThan":
-              return Number(value) > Number(filterValue);
-            case "lessThan":
-              return Number(value) < Number(filterValue);
-            default:
-              return true;
-          }
-        });
-      })
+        switch (filter.operator) {
+          case "contains":
+            return stringValue.includes(filterValue);
+          case "equals":
+            return stringValue === filterValue;
+          case "startsWith":
+            return stringValue.startsWith(filterValue);
+          case "endsWith":
+            return stringValue.endsWith(filterValue);
+          case "greaterThan":
+            return Number(value) > Number(filterValue);
+          case "lessThan":
+            return Number(value) < Number(filterValue);
+          default:
+            return true;
+        }
+      });
+    })
     : data;
 
   useEffect(() => {

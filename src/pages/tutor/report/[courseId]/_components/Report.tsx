@@ -251,7 +251,7 @@ const Report = ({
     <div>
       <div className="flex items-center gap-3 p-8">
         <a
-          href="/instructor/report/all"
+          href="/tutor/report/all"
           className={`rounded p-2 ${isAllView ? "border border-blue-500" : ""}`}
         >
           All Courses
@@ -260,7 +260,7 @@ const Report = ({
           (course: any) =>
             course.isPublished === true && (
               <a
-                href={isMentor ? `/mentor/report/${course.id}` : `/instructor/report/${course.id}`}
+                href={`/tutor/report/${course.id}`}
                 className={`w-20 rounded p-2 sm:w-auto ${
                   !isAllView && currentCourse?.id === course?.id ? "border border-blue-500" : ""
                 }`}

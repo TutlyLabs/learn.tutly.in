@@ -70,7 +70,7 @@ const InstructorItems = [
       },
       {
         title: "Report",
-        url: "/instructor/report",
+        url: "/tutor/report",
       },
     ],
   },
@@ -86,11 +86,11 @@ const InstructorItems = [
     items: [
       {
         title: "Activity",
-        url: "/instructor/activity",
+        url: "/tutor/activity",
       },
       {
         title: "Manage",
-        url: "/instructor/manage-users",
+        url: "/tutor/manage-users",
       },
     ],
   },
@@ -167,7 +167,7 @@ const AdminItems = [
       },
       {
         title: "Report",
-        url: "/instructor/report",
+        url: "/tutor/report",
       },
     ],
   },
@@ -175,6 +175,21 @@ const AdminItems = [
     title: "Community",
     url: "/community",
     icon: Users,
+  },
+  {
+    title: "Management",
+    url: "#",
+    icon: Users2,
+    items: [
+      {
+        title: "Activity",
+        url: "/tutor/activity",
+      },
+      {
+        title: "Manage",
+        url: "/tutor/manage-users",
+      },
+    ],
   },
   {
     title: "Bookmarks",
@@ -249,7 +264,7 @@ const MentorItems = [
       },
       {
         title: "Report",
-        url: "/mentor/report",
+        url: "/tutor/report",
       },
     ],
   },
@@ -257,6 +272,21 @@ const MentorItems = [
     title: "Community",
     url: "/community",
     icon: Users,
+  },
+  {
+    title: "Management",
+    url: "#",
+    icon: Users2,
+    items: [
+      {
+        title: "Activity",
+        url: "/tutor/activity",
+      },
+      {
+        title: "Manage",
+        url: "/tutor/manage-users",
+      },
+    ],
   },
   {
     title: "Bookmarks",

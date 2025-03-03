@@ -141,6 +141,14 @@ const columns: Column[] = [
       );
     },
   },
+  {
+    key: "mentorUsername",
+    name: "Assigned Mentor",
+    label: "Assigned Mentor",
+    type: "text",
+    sortable: true,
+    filterable: true,
+  },
 ];
 
 const gridViewRender = (data: Record<string, any>[]) => (
@@ -203,6 +211,11 @@ const gridViewRender = (data: Record<string, any>[]) => (
           <p className="text-sm">
             <span className="font-medium">Mobile:</span> {user.mobile ?? "N/A"}
           </p>
+          {user.mentorUsername && (
+            <p className="text-sm">
+              <span className="font-medium">Mentor:</span> {user.mentorUsername}
+            </p>
+          )}
         </div>
       </div>
     ))}
