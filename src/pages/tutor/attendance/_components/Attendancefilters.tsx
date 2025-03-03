@@ -57,23 +57,32 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
       return;
     }
     const fetch = async () => {
-      if (role === "MENTOR") {
-        const { data: res } = await actions.courses_getMentorStudents({
-          courseId: currentCourse.id,
-        });
+      try {
+        if (role === "MENTOR") {
+          const { data: res } = await actions.courses_getMentorStudents({
+            courseId: currentCourse.id,
+          });
+          const mentorStudents = Array.isArray(res) ? res : [];
+          setUsers(mentorStudents.map(student => ({
+            ...student,
+            username: student.username || "",
+            name: student.name || "",
+          })));
+        }
 
-        setUsers(res);
-      }
-
-      if (role === "INSTRUCTOR") {
-        const { data: res } = await actions.users_getAllEnrolledUsers({
-          courseId: currentCourse.id,
-        });
-        setUsers(res);
+        if (role === "INSTRUCTOR") {
+          const { data: res } = await actions.users_getAllEnrolledUsers({
+            courseId: currentCourse.id,
+          });
+          setUsers(Array.isArray(res) ? res : []);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setUsers([]);
       }
     };
     fetch();
-  }, [currentCourse]);
+  }, [currentCourse, role]);
 
   const handleStudentClick = (student: any) => {
     setSelectedStudent(student);
@@ -116,75 +125,152 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
         throw new Error("Error in reading file");
       };
 
-      reader.readAsText(file);
+      reader.readAsBinaryString(file);
     } catch (e: any) {
       toast.error(e.message);
+      setFileData([]);
+      setSelectedFile(null);
     }
   };
 
   const handleBulkUpload = (data: any) => {
-    setSelectedFile("input.file");
-    const modifiedData = data.map((row: any) => ({
-      Name: row["Name"],
-      username: String(row["Name"]).substring(0, 10).toUpperCase(),
-      JoinTime: row["JoinTime"],
-      LeaveTime: row["LeaveTime"],
-      Duration: row["Duration"],
-      UserEmail: row["UserEmail"],
-      RecordingDisclaimerResponse: row["RecordingDisclaimerResponse"],
-      InWaitingRoom: row["InWaitingRoom"],
-    }));
-    setFileData(modifiedData);
+    try {
+      setSelectedFile("input.file");
+      const modifiedData = data.map((row: any) => ({
+        Name: row["Name"],
+        username: String(row["Name"]).substring(0, 10).toUpperCase(),
+        JoinTime: row["JoinTime"],
+        LeaveTime: row["LeaveTime"],
+        Duration: row["Duration"],
+        UserEmail: row["UserEmail"],
+        RecordingDisclaimerResponse: row["RecordingDisclaimerResponse"],
+        InWaitingRoom: row["InWaitingRoom"],
+      }));
+      setFileData(modifiedData);
+    } catch (error) {
+      console.error("Error in bulk upload:", error);
+      toast.error("Failed to process bulk upload data");
+      setFileData([]);
+      setSelectedFile(null);
+    }
   };
 
-  const aggregatedStudents = fileData.reduce((acc: any, student: Student) => {
-    const { username } = student;
+  const [pastpresentStudents, setPastPresentStudents] = useState<PastPresentStudent[]>([]);
+  const [present, setPresent] = useState(0);
+
+  useEffect(() => {
+    const viewAttendance = async () => {
+      if (currentClass) {
+        try {
+          const { data: res } = await actions.attendances_viewAttendanceByClassId({
+            classId: currentClass.id,
+          });
+
+          if (!res?.data?.attendance) {
+            setPastPresentStudents([]);
+            setPresent(0);
+            setFileData([]);
+            return;
+          }
+
+          const { attendance, present: presentCount = 0 } = res.data;
+          setPastPresentStudents(attendance);
+          setPresent(presentCount);
+
+          // Transform attendance data safely
+          const Totaldata = attendance.reduce((acc: any[], student: any) => {
+            if (!student?.data || !Array.isArray(student.data)) return acc;
+
+            const studentData = student.data.map((join: any) => ({
+              Name: join?.ActualName || student?.name || "",
+              username: student?.username || "",
+              JoinTime: join?.JoinTime || "",
+              LeaveTime: join?.LeaveTime || "",
+              Duration: join?.Duration || 0,
+              UserEmail: student?.UserEmail || "",
+              RecordingDisclaimerResponse: student?.RecordingDisclaimerResponse || "",
+              InWaitingRoom: student?.InWaitingRoom || "",
+            }));
+
+            return [...acc, ...studentData];
+          }, []);
+
+          setFileData(Totaldata);
+        } catch (error) {
+          console.error("Error viewing attendance:", error);
+          setPastPresentStudents([]);
+          setPresent(0);
+          setFileData([]);
+        }
+      } else {
+        // Reset states when no class is selected
+        setPastPresentStudents([]);
+        setPresent(0);
+        setFileData([]);
+      }
+    };
+    viewAttendance();
+  }, [currentClass]);
+
+  // Ensure fileData is always an array and has required properties
+  const aggregatedStudents = (Array.isArray(fileData) ? fileData : []).reduce((acc: any, student: Student) => {
+    if (!student?.username) return acc;
+
+    const username = student.username;
+    const duration = parseInt(String(student.Duration)) || 0;
+    const name = student.Name || "";
+
     if (!acc[username]) {
       acc[username] = {
-        Name: student.Name,
+        Name: name,
         Joins: [
           {
-            JoinTime: student.JoinTime,
-            LeaveTime: student.LeaveTime,
-            ActualName: student.Name,
-            Duration: parseInt(student.Duration),
+            JoinTime: student.JoinTime || "",
+            LeaveTime: student.LeaveTime || "",
+            ActualName: name,
+            Duration: duration,
           },
         ],
-        Duration: parseInt(student.Duration),
-        username: student.username,
+        Duration: duration,
+        username: username,
+        attended: true,
       };
     } else {
       acc[username].Joins.push({
-        JoinTime: student.JoinTime,
-        LeaveTime: student.LeaveTime,
-        ActualName: student.Name,
-        Duration: parseInt(student.Duration),
+        JoinTime: student.JoinTime || "",
+        LeaveTime: student.LeaveTime || "",
+        ActualName: name,
+        Duration: duration,
       });
-      acc[username].Duration += parseInt(student.Duration);
+      acc[username].Duration += duration;
     }
     return acc;
   }, {});
 
   const sortedAggregatedStudents = Object.values(aggregatedStudents).sort((a: any, b: any) => {
-    const usernameA = String(a.username).toUpperCase();
-    const usernameB = String(b.username).toUpperCase();
-    if (usernameA < usernameB) {
-      return -1;
-    }
-    if (usernameA > usernameB) {
-      return 1;
-    }
-    return 0;
+    const usernameA = String(a.username || "").toUpperCase();
+    const usernameB = String(b.username || "").toUpperCase();
+    return usernameA.localeCompare(usernameB);
   });
 
   const modifiedAggregatedStudents = sortedAggregatedStudents.map((student: any) => {
-    const matchedUser = users.find((user: any) => user.username === student.username);
+    if (role === "MENTOR") {
+      const matchedUser = Array.isArray(users) ? users.find((user: any) => user.username === student.username) : null;
+      return {
+        ...student,
+        Present: student.attended,
+        username: student.username || "",
+        ActualName: matchedUser?.name || student.Name || "",
+      };
+    }
+
+    const matchedUser = Array.isArray(users) ? users.find((user: any) => user.username === student.username) : null;
     if (matchedUser) {
       return {
         ...student,
         Present: true,
-        username: matchedUser.username,
-        ActualName: matchedUser.name,
+        username: matchedUser.username || student.username,
+        ActualName: matchedUser.name || student.Name,
       };
     } else {
       return {
@@ -206,73 +292,61 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
   const presentStudents = combinedStudents.filter((student: any) => student.Present === true);
   const absentStudents = combinedStudents.filter((student: any) => !student.Present);
 
+  // For the attendance table counts
+  const allStudents = [...presentStudents];
+  if (role === "MENTOR") {
+    const absentAssignedStudents = users
+      .filter((user: any) => !presentStudents.find((p: any) => p.username === user.username))
+      .map((user: any) => ({
+        ...user,
+        Present: false,
+        Duration: 0,
+        Joins: [],
+      }));
+    allStudents.push(...absentAssignedStudents);
+  } else {
+    allStudents.push(...absentStudents);
+  }
+
   // edit student join name
   const [username, setUsername] = useState<string>("");
   const [openEditName, setOpenEditName] = useState<number>(0);
   const handleEditUsername = (from: any, to: any) => {
-    fileData.map((student: any) => {
-      student.username = student.username.replace(from, to);
-    });
+    const newFileData = fileData.map((student: any) => ({
+      ...student,
+      username: student.username.replace(from, to),
+    }));
+    setFileData(newFileData);
   };
 
   const [maxInstructionDuration, setMaxInstructionDuration] = useState(0);
 
   const handleUpload = async () => {
+    if (!currentClass?.id) {
+      toast.error("Please select a class first");
+      return;
+    }
+
     toast.loading("uploading attendance...");
 
     try {
       await actions.attendances_postAttendance({
-        classId: currentClass?.id,
+        classId: currentClass.id,
         data: presentStudents,
         maxInstructionDuration: Number(maxInstructionDuration),
       });
       toast.dismiss();
-
       toast.success("Attendance uploaded successfully");
     } catch (e) {
-      toast.error("Attendance already uploaded!");
+      toast.dismiss();
+      toast.error("Failed to upload attendance");
     }
   };
-  const [pastpresentStudents, setPastPresentStudents] = useState<PastPresentStudent[]>([]);
-  const [present, setPresent] = useState(0);
-
-  useEffect(() => {
-    const viewAttendance = async () => {
-      if (currentClass) {
-        const { data: res } = await actions.attendances_viewAttendanceByClassId({
-          classId: currentClass.id,
-        });
-
-        if (!res) return;
-        setPastPresentStudents(res.data?.attendance || []);
-        setPresent(res.data?.present || 0);
-        const Totaldata: any = [];
-
-        res.data?.attendance.forEach((student: any) => {
-          const { username, data } = student;
-          data.forEach((join: any) => {
-            Totaldata.push({
-              Name: join.ActualName,
-              username: username,
-              JoinTime: join.JoinTime,
-              LeaveTime: join.LeaveTime,
-              Duration: join.Duration,
-              UserEmail: student.UserEmail,
-              RecordingDisclaimerResponse: student.RecordingDisclaimerResponse,
-              InWaitingRoom: student.InWaitingRoom,
-            });
-          });
-        });
-        setFileData(Totaldata);
-      }
-    };
-    viewAttendance();
-  }, [currentClass]);
 
   return (
     <div className="p-4 text-center">
       <div>
-        <h1 className="mx-auto mb-2 mt-4 w-60 bg-gradient-to-r  from-green-500 via-orange-400  to-red-400 dark:from-green-500 dark:via-orange-300 dark:to-red-500 bg-clip-text text-4xl font-black text-transparent">
+        <h1 className="mx-auto mb-2 mt-4 w-60 bg-gradient-to-r from-green-500 via-orange-400 to-red-400 dark:from-green-500 dark:via-orange-300 dark:to-red-500 bg-clip-text text-4xl font-black text-transparent">
           Attendance
         </h1>
       </div>
@@ -424,7 +498,6 @@ const AttendanceTable = ({
         Joins: [],
         isAbsent: true,
       })),
-    ...absentStudents.map((student: any) => ({ ...student, isUnknown: true })),
   ];
 
   const filteredStudents = allStudents.filter((student: any) => {
@@ -436,9 +509,9 @@ const AttendanceTable = ({
 
     switch (activeTab) {
       case "present":
-        return !student.isUnknown && !student.isAbsent;
+        return !student.isAbsent;
       case "absent":
-        return student.isAbsent || student.isUnknown;
+        return student.isAbsent;
       case "short":
         return student.Duration > 0 && student.Duration < 60;
       default:
@@ -468,17 +541,14 @@ const AttendanceTable = ({
               <div className="h-2 w-2 rounded-full bg-red-500" />
               Absent
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {absentStudents.length +
-                  users.filter(
-                    (u: any) => !presentStudents.find((p: any) => p.username === u.username)
-                  ).length}
+                {users.filter((u: any) => !presentStudents.find((p: any) => p.username === u.username)).length}
               </span>
             </TabsTrigger>
             <TabsTrigger value="short" className="gap-2">
               <div className="h-2 w-2 rounded-full bg-yellow-500" />
               {"<"}60min
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {allStudents.filter((s) => s.Duration > 0 && s.Duration < 60).length}
+                {presentStudents.filter((s: { Duration: number }) => s.Duration > 0 && s.Duration < 60).length}
               </span>
             </TabsTrigger>
           </TabsList>
@@ -512,16 +582,15 @@ const AttendanceTable = ({
           {filteredStudents.map((student: any, index: number) => (
             <TableRow
               key={index}
-              className={`hover:bg-muted/50 ${
-                student.isUnknown ? "bg-red-500/10" : student.isAbsent ? "bg-muted/30" : ""
-              }`}
+              className={`hover:bg-muted/50 ${student.isAbsent ? "bg-muted/30" : ""
+                }`}
             >
               <TableCell>{index + 1}</TableCell>
               <TableCell className="font-medium">
-                {student.isUnknown ? student.Joins[0]?.ActualName : student.ActualName}
+                {student.ActualName}
               </TableCell>
               <TableCell>
-                {student.isUnknown && openEditName === index + 1 ? (
+                {openEditName === index + 1 ? (
                   <Input
                     type="text"
                     onChange={(e) => setUsername(e.target.value)}
@@ -535,13 +604,12 @@ const AttendanceTable = ({
                 {student.Duration > 0 ? (
                   <Badge
                     variant="outline"
-                    className={`${
-                      student.Duration < 30
-                        ? "bg-red-500/10 text-red-400 hover:bg-red-500/10"
-                        : student.Duration < 90
-                          ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/10"
-                          : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
-                    }`}
+                    className={`${student.Duration < 30
+                      ? "bg-red-500/10 text-red-400 hover:bg-red-500/10"
+                      : student.Duration < 90
+                        ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/10"
+                        : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
+                      }`}
                   >
                     {student.Duration}
                   </Badge>

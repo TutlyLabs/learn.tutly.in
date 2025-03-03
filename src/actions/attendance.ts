@@ -445,13 +445,13 @@ export const getAttendanceOfAllStudents = defineAction({
 
     const jsonData = totalAttendance
       ? Object.entries(totalAttendance).map(([_, value]: [string, any]) => ({
-          username: value.username,
-          name: value.name,
-          mail: value.mail,
-          image: value.image,
-          role: value.role,
-          percentage: (Number(value.count) * 100) / Number(totalCount),
-        }))
+        username: value.username,
+        name: value.name,
+        mail: value.mail,
+        image: value.image,
+        role: value.role,
+        percentage: (Number(value.count) * 100) / Number(totalCount),
+      }))
       : [];
 
     return { success: true, data: jsonData };
@@ -476,22 +476,22 @@ export const viewAttendanceByClassId = defineAction({
     const attendance =
       currentUser.role === "MENTOR"
         ? await db.attendance.findMany({
-            where: {
-              classId: classId,
-              user: {
-                enrolledUsers: {
-                  some: {
-                    mentorUsername: currentUser.username,
-                  },
+          where: {
+            classId: classId,
+            user: {
+              enrolledUsers: {
+                some: {
+                  mentorUsername: currentUser.username,
                 },
               },
             },
-          })
+          },
+        })
         : await db.attendance.findMany({
-            where: {
-              classId: classId,
-            },
-          });
+          where: {
+            classId: classId,
+          },
+        });
 
     let present = 0;
 

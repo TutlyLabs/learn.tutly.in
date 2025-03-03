@@ -259,102 +259,100 @@ export default function AttendanceHeader({
           </Select>
         </div>
 
-        {role === "INSTRUCTOR" && (
-          <>
-            {pastpresentStudents.length === 0 ? (
+        {role === "INSTRUCTOR" && pastpresentStudents.length === 0 && (
+          <div className="flex items-center gap-2">
+            <input
+              title="file"
+              type="file"
+              className="w-60 cursor-pointer rounded border-none bg-primary-600 font-semibold text-white shadow-md outline-none transition duration-300 ease-in-out hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-700"
+              accept=".csv, .xlsx"
+              disabled={!currentClass}
+              onChange={(e) => {
+                const files = e.target.files;
+                if (!currentClass) {
+                  toast.error("select class");
+                } else if (files && files.length > 0) {
+                  onSelectFile(files[0]);
+                }
+              }}
+            />
+            {currentClass ? (
+              <BulkImport data={[]} columns={columns} onImport={handleBulkUpload} />
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button className="w-[100px] cursor-not-allowed bg-sky-600/50 hover:bg-sky-600/50">
+                      Bulk Import
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-700">
+                    <p className="text-xs font-semibold text-red-400">
+                      *Select class to upload attendance
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {fileData && selectedFile && (
               <div className="flex items-center gap-2">
                 <input
-                  title="file"
-                  type="file"
-                  className="w-60 cursor-pointer rounded border-none bg-primary-600 font-semibold text-white shadow-md outline-none transition duration-300 ease-in-out hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-700"
-                  accept=".csv, .xlsx"
-                  disabled={!currentClass}
-                  onChange={(e) => {
-                    const files = e.target.files;
-                    if (!currentClass) {
-                      toast.error("select class");
-                    } else if (files && files.length > 0) {
-                      onSelectFile(files[0]);
-                    }
-                  }}
+                  type="number"
+                  min="0"
+                  value={clientMaxDuration}
+                  onChange={handleClientMaxDuration}
+                  placeholder="Max duration"
+                  className="w-32 cursor-pointer rounded border-none bg-primary-600 px-2 py-1 font-semibold text-gray-900 shadow-md outline-none transition duration-300 ease-in-out placeholder:text-sm placeholder:text-gray-300 hover:bg-primary-700"
                 />
-                {currentClass ? (
-                  <BulkImport data={[]} columns={columns} onImport={handleBulkUpload} />
-                ) : (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button className="w-[100px] cursor-not-allowed bg-sky-600/50 hover:bg-sky-600/50">
-                          Bulk Import
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-700">
-                        <p className="text-xs font-semibold text-red-400">
-                          *Select class to upload attendance
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {fileData && selectedFile && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={clientMaxDuration}
-                      onChange={handleClientMaxDuration}
-                      placeholder="Max duration"
-                      className="w-32 cursor-pointer rounded border-none bg-primary-600 px-2 py-1 font-semibold text-gray-900 shadow-md outline-none transition duration-300 ease-in-out placeholder:text-sm placeholder:text-gray-300 hover:bg-primary-700"
-                    />
-                    <div
-                      onClick={handleClientUpload}
-                      className="flex cursor-pointer items-center gap-2 rounded bg-primary-600 px-2 py-1 hover:scale-x-105 hover:duration-500"
-                    >
-                      upload <BiSolidCloudUpload className="text-xl duration-1000" />
-                    </div>
-                  </div>
-                )}
+                <div
+                  onClick={handleClientUpload}
+                  className="flex cursor-pointer items-center gap-2 rounded bg-primary-600 px-2 py-1 hover:scale-x-105 hover:duration-500"
+                >
+                  upload <BiSolidCloudUpload className="text-xl duration-1000" />
+                </div>
               </div>
-            ) : (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button className="flex h-10 items-center justify-center gap-1 rounded-lg border-2 border-red-500 px-3 font-bold text-red-500 duration-500 hover:scale-105">
-                    <h1>Delete</h1>
-                    <MdDeleteOutline className="text-lg" />
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-2xl border-none">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Clear Attendance</AlertDialogTitle>
-                    <div className="flex gap-2">
-                      <h1 className="rounded-full border border-primary-700 p-0.5 px-2 text-xs text-primary-700">
-                        {currentCourse?.title}
-                      </h1>
-                      <h1 className="rounded-full border border-primary-700 p-0.5 px-2 text-xs text-primary-700">
-                        {currentClass?.title}
-                      </h1>
-                    </div>
-                    <p className="flex items-center gap-1 pb-10 text-sm text-gray-500">
-                      Are you sure?
-                      <br />
-                      Continuing will clear the attendance of all students for this class.
-                    </p>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="mr-2 bg-gray-200 text-black hover:bg-gray-300">
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDelete(currentClass?.id)}
-                      className="bg-red-500 text-white hover:bg-red-600"
-                    >
-                      Confirm
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             )}
-          </>
+          </div>
+        )}
+
+        {role === "INSTRUCTOR" && pastpresentStudents.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="flex h-10 items-center justify-center gap-1 rounded-lg border-2 border-red-500 px-3 font-bold text-red-500 duration-500 hover:scale-105">
+                <h1>Delete</h1>
+                <MdDeleteOutline className="text-lg" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-2xl border-none">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear Attendance</AlertDialogTitle>
+                <div className="flex gap-2">
+                  <h1 className="rounded-full border border-primary-700 p-0.5 px-2 text-xs text-primary-700">
+                    {currentCourse?.title}
+                  </h1>
+                  <h1 className="rounded-full border border-primary-700 p-0.5 px-2 text-xs text-primary-700">
+                    {currentClass?.title}
+                  </h1>
+                </div>
+                <p className="flex items-center gap-1 pb-10 text-sm text-gray-500">
+                  Are you sure?
+                  <br />
+                  Continuing will clear the attendance of all students for this class.
+                </p>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="mr-2 bg-gray-200 text-black hover:bg-gray-300">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDelete(currentClass?.id)}
+                  className="bg-red-500 text-white hover:bg-red-600"
+                >
+                  Confirm
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
     </>
