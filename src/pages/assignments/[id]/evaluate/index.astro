@@ -103,7 +103,7 @@ if (username) {
 const submission = filteredSubmissions.find((submission: any) => submission?.id == submissionId);
 ---
 
-<RootLayout title="Evaluate">
+<RootLayout title="Evaluate" forceClose={true}>
   <ResizablePanelLayout
     assignmentId={assignmentId}
     assignment={assignment}
