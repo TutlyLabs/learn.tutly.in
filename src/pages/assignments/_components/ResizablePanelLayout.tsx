@@ -22,7 +22,7 @@ const ResizablePanelLayout = ({
 }: ResizablePanelLayoutProps) => {
   return (
     <ResizablePanelGroup direction="horizontal" className="max-h-[95vh] w-full">
-      <ResizablePanel defaultSize={20}>
+      <ResizablePanel defaultSize={15}>
         <SubmissionList
           assignmentId={assignmentId}
           assignment={assignment}
@@ -31,8 +31,8 @@ const ResizablePanelLayout = ({
           username={username}
         />
       </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={80}>
+      <ResizableHandle />
+      <ResizablePanel defaultSize={85}>
         <PlaygroundPage submission={submission} />
       </ResizablePanel>
     </ResizablePanelGroup>

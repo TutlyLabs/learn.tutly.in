@@ -101,11 +101,11 @@ const Playground = ({
           <ResizablePanel defaultSize={14}>
             <FileExplorer />
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle />
           <ResizablePanel defaultSize={43}>
             <MonacoEditor />
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle />
           <ResizablePanel defaultSize={43}>
             <ResizablePanelGroup direction="vertical" className="h-[95vh] overflow-y-scroll">
               <ResizablePanel defaultSize={95}>

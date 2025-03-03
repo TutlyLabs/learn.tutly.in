@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import SortBy from "./SortBy";
 
 export const SubmissionList = ({
@@ -14,6 +16,15 @@ export const SubmissionList = ({
   username: any;
 }) => {
   const sortBy = searchParams?.sortBy || "username";
+
+  useEffect(() => {
+    if (searchParams?.submissionId) {
+      const element = document.getElementById(`submission-${searchParams.submissionId}`);
+      if (element) {
+        element.scrollIntoView({ block: "center" });
+      }
+    }
+  }, [searchParams?.submissionId]);
 
   submissions = submissions.sort((a: any, b: any) => {
     if (sortBy == "username") {
@@ -59,9 +70,26 @@ export const SubmissionList = ({
               }
             }
 
+            if (singleSubmission.id === searchParams?.submissionId) {
+              hrefLink = `${hrefLink}#submission-${singleSubmission.id}`;
+            }
+
             return (
-              <a key={index} href={hrefLink}>
+              <a
+                key={index}
+                href={hrefLink}
+                onClick={(e) => {
+                  e.preventDefault();
+                  // todo: optimise this, temp hack to avoid partial rendering on client side params change
+                  window.location.href = hrefLink;
+                }}
+              >
                 <div
+                  id={
+                    singleSubmission.id === searchParams?.submissionId
+                      ? `submission-${singleSubmission.id}`
+                      : undefined
+                  }
                   className={`cursor-pointer border-b p-2 hover:bg-gray-100 hover:text-blue-500 ${
                     singleSubmission.id == searchParams?.submissionId && "bg-gray-100 text-blue-500"
                   } ${singleSubmission.points.length > 0 && "text-green-500"}`}
