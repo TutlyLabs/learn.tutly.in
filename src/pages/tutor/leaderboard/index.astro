@@ -10,53 +10,69 @@ const searchParams = Astro.url.searchParams;
 const selectedCourse = searchParams.get("course");
 const selectedMentor = searchParams.get("mentor");
 
-const courses = await db.course.findMany({
+const enrolledCourses = await db.enrolledUsers.findMany({
   where: {
-    enrolledUsers: {
-      some: {
-        username: currentUser.username,
+    username: currentUser.username,
+    courseId: {
+      not: null,
+    },
+  },
+  include: {
+    course: {
+      select: {
+        id: true,
+        title: true,
+        isPublished: true,
       },
     },
   },
-  select: {
-    id: true,
-    title: true,
-    isPublished: true,
-  },
 });
 
-const mentors =
-  currentUser.role === "INSTRUCTOR"
-    ? await db.user.findMany({
-        where: {
+const courses = enrolledCourses
+  .map((enrolled) => enrolled.course)
+  .filter((course): course is NonNullable<typeof course> => course !== null);
+
+const courseIds = courses.map((course) => course.id);
+
+const mentors = currentUser.role === "INSTRUCTOR"
+  ? await db.enrolledUsers.findMany({
+      where: {
+        courseId: {
+          in: courseIds,
+        },
+        user: {
           role: "MENTOR",
           organizationId: currentUser.organizationId,
-          enrolledUsers: {
-            some: {
-              courseId: {
-                in: courses.map((course) => course.id),
-              },
-            },
-          },
         },
-        select: {
-          id: true,
-          username: true,
-        },
-      })
-    : [];
-
-const submissions = selectedCourse
-  ? await db.submission.findMany({
-      where: {
-        enrolledUser: {
-          course: {
-            id: selectedCourse,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+            mobile: true,
           },
         },
       },
-      select: {
-        id: true,
+      distinct: ["username"],
+    })
+  : [];
+
+const submissionsWhere = selectedCourse ? {
+  enrolledUser: {
+    courseId: selectedCourse,
+    ...(currentUser.role === "MENTOR" 
+      ? { mentorUsername: currentUser.username }
+      : {}),
+  },
+} : {};
+
+const submissions = selectedCourse
+  ? await db.submission.findMany({
+      where: submissionsWhere,
+      include: {
         points: true,
         enrolledUser: {
           select: {
@@ -108,15 +124,23 @@ const sortedSubmissions = totalPoints
   }));
 
 const publishedCourses = courses.filter((course) => course.isPublished);
-const enrolledCourses = currentUser.role === "INSTRUCTOR" ? courses : publishedCourses;
+const accessibleCourses = currentUser.role === "INSTRUCTOR" ? courses : publishedCourses;
+
+const formattedMentors = mentors.map((mentor) => ({
+  id: mentor.user.id,
+  username: mentor.user.username,
+  name: mentor.user.name,
+  image: mentor.user.image,
+  mobile: mentor.user.mobile,
+}));
 ---
 
 <RootLayout title="Leaderboard">
   <LeaderBoard
     submissions={sortedSubmissions}
-    courses={enrolledCourses}
+    courses={accessibleCourses}
     currentUser={currentUser}
-    mentors={mentors}
+    mentors={formattedMentors}
     selectedCourse={selectedCourse}
     selectedMentor={selectedMentor}
     client:load

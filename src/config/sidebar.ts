@@ -51,11 +51,11 @@ const InstructorItems = [
       },
       {
         title: "Leaderboard",
-        url: "/instructor/leaderboard",
+        url: "/tutor/leaderboard",
       },
       {
         title: "Attendance",
-        url: "/instructor/attendance",
+        url: "/tutor/attendance",
       },
     ],
   },
@@ -148,11 +148,11 @@ const AdminItems = [
       },
       {
         title: "Leaderboard",
-        url: "/instructor/leaderboard",
+        url: "/tutor/leaderboard",
       },
       {
         title: "Attendance",
-        url: "/instructor/attendance",
+        url: "/tutor/attendance",
       },
     ],
   },
@@ -245,11 +245,11 @@ const MentorItems = [
       },
       {
         title: "Leaderboard",
-        url: "/mentor/leaderboard",
+        url: "/tutor/leaderboard",
       },
       {
         title: "Attendance",
-        url: "/mentor/attendance",
+        url: "/tutor/attendance",
       },
     ],
   },
