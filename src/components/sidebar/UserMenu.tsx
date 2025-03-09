@@ -1,4 +1,4 @@
-import { Download, ExternalLink, LockIcon, LogOut, UserIcon } from "lucide-react";
+import { Download, LockIcon, LogOut, UserIcon } from "lucide-react";
 // import {  Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaCaretDown } from "react-icons/fa";
@@ -39,37 +39,54 @@ export function UserMenu({ user }: UserMenuProps) {
   const [isStandalone, setIsStandalone] = useState(false);
   const { toast } = useToast();
   const [showOpenInAppDialog, setShowOpenInAppDialog] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
+    const checkStandalone = () => {
+      const isInStandaloneMode =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone ||
+        document.referrer.includes("android-app://");
+      setIsStandalone(isInStandaloneMode);
+    };
+
+    checkStandalone();
 
     const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
       setDeferredPrompt(e);
     };
 
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
       setIsStandalone(true);
+      localStorage.setItem("appInstalled", "true");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
+    window.matchMedia("(display-mode: standalone)").addEventListener("change", checkStandalone);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
+      window
+        .matchMedia("(display-mode: standalone)")
+        .removeEventListener("change", checkStandalone);
     };
   }, []);
-
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (isMobile && !isStandalone && deferredPrompt) {
       const lastInstallPromptTime = localStorage.getItem("lastInstallPromptTime");
+      const appInstalled = localStorage.getItem("appInstalled");
       const currentTime = new Date().getTime();
       const oneWeek = 7 * 24 * 60 * 60 * 1000;
 
-      if (!lastInstallPromptTime || currentTime - parseInt(lastInstallPromptTime) > oneWeek) {
+      if (
+        (!lastInstallPromptTime || currentTime - parseInt(lastInstallPromptTime) > oneWeek) &&
+        !appInstalled
+      ) {
         toast({
           title: "Install our app",
           description: "Install our app for a better experience!",
@@ -83,14 +100,20 @@ export function UserMenu({ user }: UserMenuProps) {
         localStorage.setItem("lastInstallPromptTime", currentTime.toString());
       }
     }
-  }, [isStandalone, deferredPrompt]);
+  }, [isStandalone, deferredPrompt, isMobile, toast]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       if (isStandalone) {
-        window.location.href = window.location.href;
         return;
       }
+
+      toast({
+        title: "Installation not supported",
+        description:
+          "Your browser doesn't support app installation or the app is already installed.",
+        duration: 5000,
+      });
       return;
     }
 
@@ -104,7 +127,8 @@ export function UserMenu({ user }: UserMenuProps) {
   };
 
   const handleOpenInApp = () => {
-    window.location.href = window.location.href;
+    const appUrl = window.location.href;
+    window.location.href = appUrl;
     setShowOpenInAppDialog(false);
   };
 
@@ -193,22 +217,13 @@ export function UserMenu({ user }: UserMenuProps) {
               <Bell className="h-5 w-5" />
               Notifications
             </DropdownMenuItem> */}
-            {(isStandalone || (!isStandalone && deferredPrompt)) && (
+            {!isStandalone && deferredPrompt && (
               <DropdownMenuItem
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={handleInstallClick}
               >
-                {isStandalone ? (
-                  <>
-                    <ExternalLink className="h-5 w-5" />
-                    Open in App
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-5 w-5" />
-                    Install App
-                  </>
-                )}
+                <Download className="h-5 w-5" />
+                Install App
               </DropdownMenuItem>
             )}
           </DropdownMenuGroup>

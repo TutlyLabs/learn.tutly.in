@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { AppInstallPrompt } from "@/components/AppInstallPrompt";
 import {
   Select,
   SelectContent,
@@ -76,14 +77,20 @@ const Dashboard = ({ data, name, currentUser }: Props) => {
   };
 
   return (
-    <div className="m-2 h-40 rounded-lg bg-gradient-to-l from-blue-400 to-blue-600">
-      <div className="flex md:flex-row flex-col justify-between items-center p-8">
-        <h1 className="text-2xl font-bold text-white">
-          {getGreeting()} {name} 👋
-        </h1>
-        <div className="md:mt-0 mt-6">{renderCourseSelector()}</div>
+    <div className="space-y-4">
+      <div className="m-2 h-40 rounded-lg bg-gradient-to-l from-blue-400 to-blue-600">
+        <div className="flex md:flex-row flex-col justify-between items-center p-8">
+          <h1 className="text-2xl font-bold text-white">
+            {getGreeting()} {name} 👋
+          </h1>
+          <div className="md:mt-0 mt-6">{renderCourseSelector()}</div>
+        </div>
+        <div className="p-2 text-center">{renderCards()}</div>
       </div>
-      <div className="p-2 text-center">{renderCards()}</div>
+
+      <div className="flex justify-center">
+        <AppInstallPrompt showOnPageLoad={true} />
+      </div>
     </div>
   );
 };

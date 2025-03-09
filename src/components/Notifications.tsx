@@ -42,7 +42,7 @@ interface NotificationLink {
 
 type NotificationEventTypes = keyof typeof NotificationEvent;
 
-interface causedObjects {
+export interface causedObjects {
   courseId?: string;
   classId?: string;
   assignmentId?: string;
@@ -225,7 +225,7 @@ export default function Notifications({ user }: { user: SessionUser }) {
     }
   };
 
-  const intialSubscriptionState = async () => {
+  const initialSubscriptionState = async () => {
     try {
       if (!user?.id) return;
 
@@ -235,6 +235,10 @@ export default function Notifications({ user }: { user: SessionUser }) {
 
       // If no config endpoint exists, user is not subscribed anywhere
       if (!config?.endpoint) {
+        // If we have a subscription on this device but no config, clean it up
+        if (subscription) {
+          await subscription.unsubscribe();
+        }
         setSubscriptionStatus("NotSubscribed");
         return;
       }
@@ -245,7 +249,9 @@ export default function Notifications({ user }: { user: SessionUser }) {
         if (subscription.endpoint === config.endpoint) {
           setSubscriptionStatus("SubscribedOnThisDevice");
         } else {
-          // Different subscription exists on this device
+          // Different subscription exists on this device - clean up and
+          // recognize the one on the server as the valid one
+          console.log("Different subscription exists - cleaning up local subscription");
           await subscription.unsubscribe(); // Clean up old subscription
           setSubscriptionStatus("SubscribedOnAnotherDevice");
         }
@@ -436,7 +442,7 @@ export default function Notifications({ user }: { user: SessionUser }) {
 
     const checkSubscription = async () => {
       if (!mounted) return;
-      await intialSubscriptionState();
+      await initialSubscriptionState();
     };
 
     checkSubscription();

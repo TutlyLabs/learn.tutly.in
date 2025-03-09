@@ -2,6 +2,8 @@
 import db from "@/lib/db";
 import { NOTIFICATION_HREF_MAP } from "@/components/Notifications";
 import RootLayout from "@/layouts/RootLayout.astro";
+import type { causedObjects } from "@/components/Notifications";
+
 const id = Astro.params.id;
 
 if (!id) {
@@ -18,9 +20,26 @@ if (!notification) {
   return Astro.redirect("/notifications");
 }
 
-const notifcationlink = NOTIFICATION_HREF_MAP[notification.eventType];
+if (notification.customLink) {
+  return Astro.redirect(notification.customLink);
+}
 
-return Astro.redirect(notifcationlink);
+const getLinkFn = NOTIFICATION_HREF_MAP[notification.eventType];
+if (!getLinkFn) {
+  return Astro.redirect("/notifications");
+}
+
+const causedObj = notification.causedObjects
+  ? (JSON.parse(JSON.stringify(notification.causedObjects)) as causedObjects)
+  : {};
+const redirectUrl = getLinkFn(causedObj);
+
+await db.notification.update({
+  where: { id },
+  data: { readAt: new Date() },
+});
+
+return Astro.redirect(redirectUrl);
 ---
 
 <RootLayout title="Redirecting...">
@@ -28,9 +47,7 @@ return Astro.redirect(notifcationlink);
     <div class="text-center">
       <h1 class="text-4xl font-bold">Redirecting...</h1>
       <p class="text-xl">
-        If you are not redirected automatically, please click <a href={String(notifcationlink)}
-          >here</a
-        >.
+        If you are not redirected automatically, please click <a href={redirectUrl}>here</a>.
       </p>
     </div>
   </div>

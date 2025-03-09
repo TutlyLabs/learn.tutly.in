@@ -79,6 +79,18 @@ globalThis.pathname = pathname;
     <ShadcnToaster client:load />
     <Crisp client:only="react" user={user} organization={organization} />
     <script>
+      const isRunningStandalone = () => {
+        return (
+          window.matchMedia("(display-mode: standalone)").matches ||
+          (navigator as any).standalone === true ||
+          document.referrer.includes("android-app://")
+        );
+      };
+
+      if (isRunningStandalone()) {
+        localStorage.setItem("appInstalled", "true");
+      }
+
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", async () => {
           try {
