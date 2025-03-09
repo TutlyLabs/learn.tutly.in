@@ -146,9 +146,27 @@ if (role === Role.STUDENT) {
     }),
   };
 } else if (role === Role.INSTRUCTOR) {
+  const enrolledCourses = await db.enrolledUsers.findMany({
+    where: {
+      username: currentUser.username,
+      courseId: {
+        not: null,
+      },
+    },
+    select: {
+      courseId: true,
+    },
+  });
+
+  const courseIds = enrolledCourses
+    .map((enrolled) => enrolled.courseId)
+    .filter((id): id is string => id !== null);
+
   const courses = await db.course.findMany({
     where: {
-      createdById: currentUser.id,
+      id: {
+        in: courseIds,
+      },
     },
     select: {
       id: true,

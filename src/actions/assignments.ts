@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import db from "@/lib/db";
 
-import { getEnrolledCourses, getEnrolledCoursesById, getMentorCourses } from "./courses";
+import { getEnrolledCourses, getEnrolledCoursesById, getMentorCourses, getEnrolledCourseIds } from "./courses";
 
 export const getAllAssignedAssignments = defineAction({
   handler: async (_, { locals }) => {
@@ -569,8 +569,8 @@ export const getAllAssignmentDetailsForInstructor = defineAction({
 
       const allStudents = await db.enrolledUsers.findMany({
         where: {
-          course: {
-            createdById: currentUser.id,
+          courseId: {
+            in: await getEnrolledCourseIds(currentUser.username)
           },
           mentorUsername: {
             not: null,
@@ -855,12 +855,12 @@ export const getSubmissionsForMentorLineChart = defineAction({
           submissions:
             currentUser.role === "MENTOR"
               ? {
-                  where: {
-                    enrolledUser: {
-                      mentorUsername: currentUser.username,
-                    },
+                where: {
+                  enrolledUser: {
+                    mentorUsername: currentUser.username,
                   },
-                }
+                },
+              }
               : true,
         },
         orderBy: {

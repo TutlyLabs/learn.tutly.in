@@ -27,7 +27,13 @@ const activeFilters = filters
 const courses = await db.course.findMany({
   where:
     user.role === "INSTRUCTOR"
-      ? { createdById: user.id }
+      ? {
+          enrolledUsers: {
+            some: {
+              username: user.username,
+            },
+          },
+        }
       : {
           enrolledUsers: {
             some: {

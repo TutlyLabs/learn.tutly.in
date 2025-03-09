@@ -12,7 +12,16 @@ export const getAllCourses = defineAction({
       if (currentUser.role === "INSTRUCTOR") {
         courses = await db.course.findMany({
           where: {
-            createdById: currentUser.id,
+            OR: [
+              { createdById: currentUser.id },
+              {
+                enrolledUsers: {
+                  some: {
+                    username: currentUser.username,
+                  },
+                },
+              },
+            ],
           },
           include: {
             _count: {
@@ -162,14 +171,36 @@ export const getEnrolledCourses = defineAction({
   },
 });
 
+export const getEnrolledCourseIds = async (username: string) => {
+  const enrolledCourses = await db.enrolledUsers.findMany({
+    where: {
+      username: username,
+      courseId: {
+        not: null,
+      },
+    },
+    select: {
+      courseId: true,
+    },
+  });
+
+  return enrolledCourses
+    .map((enrolled) => enrolled.courseId)
+    .filter((id): id is string => id !== null);
+};
+
 export const getCreatedCourses = defineAction({
   async handler(_, { locals }) {
     const currentUser = locals.user;
     if (!currentUser) return { error: "Unauthorized" };
 
+    const courseIds = await getEnrolledCourseIds(currentUser.username);
+
     const courses = await db.course.findMany({
       where: {
-        createdById: currentUser.id,
+        id: {
+          in: courseIds,
+        },
       },
       include: {
         classes: true,

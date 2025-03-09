@@ -2,6 +2,7 @@ import { defineAction } from "astro:actions";
 import { z } from "zod";
 
 import db from "@/lib/db";
+import { getEnrolledCourseIds } from "./courses";
 
 export const getUserDoubtsByCourseId = defineAction({
   input: z.object({
@@ -64,9 +65,13 @@ export const getCreatedCoursesDoubts = defineAction({
     const currentUser = locals.user;
     if (!currentUser) return { error: "Unauthorized" };
 
+    const courseIds = await getEnrolledCourseIds(currentUser.username);
+
     const courses = await db.course.findMany({
       where: {
-        createdById: currentUser.id,
+        id: {
+          in: courseIds,
+        },
       },
       include: {
         doubts: {
@@ -128,12 +133,18 @@ export const getAllDoubtsForMentor = defineAction({
 export const createDoubt = defineAction({
   input: z.object({
     courseId: z.string(),
-    title: z.string().optional(),
-    description: z.string().optional(),
+    title: z.string(),
+    description: z.string(),
   }),
   async handler({ courseId, title, description }, { locals }) {
-    const currentUser = locals.user;
-    if (!currentUser) return { error: "Unauthorized" };
+    const currentUser = locals.user!;
+
+    if (currentUser.role === "INSTRUCTOR") {
+      const userCourseIds = await getEnrolledCourseIds(currentUser.username);
+      if (!userCourseIds.includes(courseId)) {
+        throw new Error("You do not have access to this course");
+      }
+    }
 
     const doubt = await db.doubt.create({
       data: {

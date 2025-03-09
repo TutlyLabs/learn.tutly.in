@@ -20,7 +20,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import AttendanceHeader from "./AttendanceHeader";
 import OverallAttendanceTable from "./OverallAttendanceTable";
-import { studentBarchartData } from "@/actions/statistics";
 
 interface Student {
   Name: string;

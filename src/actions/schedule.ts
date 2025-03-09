@@ -3,6 +3,7 @@ import { defineAction } from "astro:actions";
 import { z } from "zod";
 
 import db from "@/lib/db";
+import { getEnrolledCourseIds } from "./courses";
 
 export const getSchedule = defineAction({
   input: z.object({
@@ -73,6 +74,11 @@ export const createEvent = defineAction({
 
     if (currentUser.role !== "INSTRUCTOR") {
       throw new Error("You are not authorized to create events");
+    }
+
+    const userCourseIds = await getEnrolledCourseIds(currentUser.username);
+    if (!userCourseIds.includes(courseId)) {
+      throw new Error("You do not have access to this course");
     }
 
     const newEvent = await db.scheduleEvent.create({
