@@ -7,6 +7,9 @@ const params = Astro.params;
 const { id } = Astro.params;
 const currentUser = Astro.locals.user;
 
+if (!currentUser || currentUser.isAdmin || currentUser.role !== "INSTRUCTOR")
+  return Astro.redirect("/404");
+
 const call = Astro.callAction;
 const { data: allUsers } = await call(actions.users_getAllUsers, { courseId: id! });
 ---
@@ -16,7 +19,7 @@ const { data: allUsers } = await call(actions.users_getAllUsers, { courseId: id!
     !currentUser || currentUser.role !== "INSTRUCTOR" ? (
       <div class="mt-8 text-center text-3xl font-semibold">Unauthorized</div>
     ) : (
-      <div class="flex items-center justify-center">
+      <div class="w-full px-4">
         <UserTable users={allUsers || []} params={params} client:load />
       </div>
     )

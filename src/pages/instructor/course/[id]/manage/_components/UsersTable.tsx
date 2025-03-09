@@ -4,10 +4,9 @@ import toast from "react-hot-toast";
 import { FaSort, FaSortAlphaDown, FaSortAlphaDownAlt, FaUserPlus } from "react-icons/fa";
 import { FaUserXmark } from "react-icons/fa6";
 import { MdOutlineBlock } from "react-icons/md";
-import { RiGlobalLine } from "react-icons/ri";
-import { TbUserOff } from "react-icons/tb";
-import { TbUserSearch } from "react-icons/tb";
+import { Search, Users, UserPlus, UserX, AlertCircle } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,32 +16,56 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "@/hooks/use-router";
 
 const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [showAllUsers, setShowAllUsers] = useState(true);
   const [searchBar, setSearchBar] = useState("");
-  const roles = ["STUDENT", "MENTOR"];
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [sortColumn, setSortColumn] = useState<string>("");
   const [notificationMessage, setNotificationMessage] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
-  const filteredUsers = users.filter((user) =>
-    user.username.toLowerCase().includes(searchBar.trim().toLowerCase())
-  );
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = user.username.toLowerCase().includes(searchBar.trim().toLowerCase()) ||
+      user.name?.toLowerCase().includes(searchBar.trim().toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchBar.trim().toLowerCase());
 
-  const displayedUsers = showAllUsers
-    ? filteredUsers
-    : filteredUsers.filter((user) => user.enrolledUsers.length === 0);
+    if (!matchesSearch) return false;
+
+    switch (activeTab) {
+      case "enrolled":
+        return user.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id);
+      case "not-enrolled":
+        return !user.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id);
+      case "mentors":
+        return user.role === "MENTOR";
+      case "students":
+        return user.role === "STUDENT";
+      default:
+        return true;
+    }
+  });
+
+  const displayedUsers = filteredUsers;
 
   const mentors = users.filter(
     (user) =>
       user.role === "MENTOR" &&
       user.enrolledUsers.find(({ course }: { course: any }) => course.id === params.id) !==
-        undefined
+      undefined
   );
 
   const handleNotifyUsers = async () => {
@@ -129,33 +152,6 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     }
   };
 
-  const handleRoleChange = async (username: string, role: string) => {
-    toast.loading("Updating user role...");
-    try {
-      setLoading(true);
-
-      const { error } = await actions.courses_updateRole({
-        username,
-        role: role as "STUDENT" | "MENTOR",
-      });
-
-      if (error) {
-        toast.dismiss();
-        toast.error(error.message);
-        setLoading(false);
-        return;
-      }
-      toast.dismiss();
-      toast.success(`User role updated to ${role}`);
-      setLoading(false);
-      router.push(router.pathname);
-    } catch (err: any) {
-      setLoading(false);
-      toast.dismiss();
-      toast.error(err.response.data.error);
-    }
-  };
-
   const handleMentorChange = async (username: string, mentorUsername: string) => {
     toast.loading("Updating mentor...");
     try {
@@ -183,253 +179,303 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     }
   };
 
-  const getSortedUsers = () => {
-    const sortedUsers = [...displayedUsers];
-    sortedUsers.sort((a, b) => {
-      if (sortColumn) {
-        if (a[sortColumn] < b[sortColumn]) {
-          return sortOrder === "asc" ? -1 : 1;
-        }
-        if (a[sortColumn] > b[sortColumn]) {
-          return sortOrder === "asc" ? 1 : -1;
-        }
+  const enrolledCount = users.filter(user =>
+    user.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id)
+  ).length;
+
+  const notEnrolledCount = users.length - enrolledCount;
+
+  const mentorCount = users.filter(user => user.role === "MENTOR").length;
+
+  const sortedUsers = [...displayedUsers].sort((a, b) => {
+    if (sortColumn) {
+      if (sortColumn === "username") {
+        return sortOrder === "asc"
+          ? a.username.localeCompare(b.username)
+          : b.username.localeCompare(a.username);
+      } else if (sortColumn === "name") {
+        return sortOrder === "asc"
+          ? (a.name || "").localeCompare(b.name || "")
+          : (b.name || "").localeCompare(a.name || "");
+      } else if (sortColumn === "role") {
+        return sortOrder === "asc"
+          ? a.role.localeCompare(b.role)
+          : b.role.localeCompare(a.role);
+      } else if (sortColumn === "email") {
+        return sortOrder === "asc"
+          ? (a.email || "").localeCompare(b.email || "")
+          : (b.email || "").localeCompare(a.email || "");
       }
-      return 0;
-    });
-    return sortedUsers;
-  };
+    }
+    else {
+      const aEnrolled = a.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id);
+      const bEnrolled = b.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id);
 
-  const sortedUsers = getSortedUsers();
+      if (aEnrolled && !bEnrolled) return -1;
+      if (!aEnrolled && bEnrolled) return 1;
+
+      if (a.role !== b.role) {
+        if (a.role === "MENTOR") return -1;
+        if (b.role === "MENTOR") return 1;
+        if (a.role === "STUDENT") return -1;
+        if (b.role === "STUDENT") return 1;
+      }
+
+      return a.username.localeCompare(b.username);
+    }
+    return 0;
+  });
+
   return (
-    <div className="mb-8 max-w-full overflow-x-auto">
-      <div className="mb-4 flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-x-4 md:space-y-0">
-        <div className="relative w-full max-sm:px-3 md:w-auto">
-          <input
-            type="text"
-            placeholder="Search by username..."
-            value={searchBar}
-            onChange={(e) => setSearchBar(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
-          />
-          <TbUserSearch className="absolute right-4 top-2 h-5 w-5" />
-        </div>
+    <Card className="mb-8 w-full">
+      <CardHeader>
+        <CardTitle className="text-2xl">User Management</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-6 flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-x-4 md:space-y-0">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by username, name or email..."
+              value={searchBar}
+              onChange={(e) => setSearchBar(e.target.value)}
+              className="pl-9"
+            />
+          </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline">Notify Users</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Send Notification</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 p-4">
-              <Input
-                placeholder="Enter notification message"
-                value={notificationMessage}
-                onChange={(e) => setNotificationMessage(e.target.value)}
-              />
-              <Input
-                placeholder="Enter redirect URL (optional)"
-                value={redirectUrl}
-                onChange={(e) => setRedirectUrl(e.target.value)}
-              />
-              <Button onClick={handleNotifyUsers} disabled={loading || !notificationMessage}>
-                Send Notification
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Notify Users
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <div className="flex flex-col items-start space-y-2 max-sm:ms-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
-          <label className="flex cursor-pointer items-center">
-            <input
-              type="radio"
-              name="userFilter"
-              checked={showAllUsers}
-              onChange={() => setShowAllUsers(true)}
-              className="mr-2"
-            />
-            All <RiGlobalLine className="ml-1 h-5 w-5" />
-          </label>
-          <label className="flex cursor-pointer items-center">
-            <input
-              type="radio"
-              name="userFilter"
-              checked={!showAllUsers}
-              onChange={() => setShowAllUsers(false)}
-              className="mr-2"
-            />
-            Not Enrolled <TbUserOff className="ml-1 h-5 w-5" />
-          </label>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Send Notification to Course Users</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 p-4">
+                <Input
+                  placeholder="Enter notification message"
+                  value={notificationMessage}
+                  onChange={(e) => setNotificationMessage(e.target.value)}
+                />
+                <Input
+                  placeholder="Enter redirect URL (optional)"
+                  value={redirectUrl}
+                  onChange={(e) => setRedirectUrl(e.target.value)}
+                />
+                <Button
+                  onClick={handleNotifyUsers}
+                  disabled={loading || !notificationMessage}
+                  className="w-full"
+                >
+                  Send Notification
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px] border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-sky-800">
-              <th className="border border-gray-300 px-2 py-2 text-sm">S.No</th>
-              <th className="border border-gray-300 px-2 py-2 text-sm">
-                <div className="flex items-center justify-center max-sm:px-10">
-                  Username &nbsp;
-                  {sortColumn !== "username" && (
-                    <FaSort onClick={() => handleSort("username")} className="cursor-pointer" />
-                  )}
-                  {sortColumn === "username" && sortOrder === "desc" && (
-                    <FaSortAlphaDownAlt
-                      onClick={() => handleSort("username")}
-                      className="h-4 w-4 cursor-pointer"
-                    />
-                  )}
-                  {sortColumn === "username" && sortOrder === "asc" && (
-                    <FaSortAlphaDown
-                      onClick={() => handleSort("username")}
-                      className="h-4 w-4 cursor-pointer"
-                    />
-                  )}
-                </div>
-              </th>
-              <th className="border border-gray-300 px-2 py-2 text-sm">Name</th>
-              <th className="border border-gray-300 px-2 py-2 text-sm">
-                <div className="flex items-center justify-center">
-                  Role &nbsp;
-                  {sortColumn !== "role" && (
-                    <FaSort onClick={() => handleSort("role")} className="cursor-pointer" />
-                  )}
-                  {sortColumn === "role" && sortOrder === "desc" && (
-                    <FaSortAlphaDownAlt
-                      onClick={() => handleSort("role")}
-                      className="h-4 w-4 cursor-pointer"
-                    />
-                  )}
-                  {sortColumn === "role" && sortOrder === "asc" && (
-                    <FaSortAlphaDown
-                      onClick={() => handleSort("role")}
-                      className="h-4 w-4 cursor-pointer"
-                    />
-                  )}
-                </div>
-              </th>
-              <th className="border border-gray-300 px-2 py-2 text-sm">Email</th>
-              <th className="border border-gray-300 px-2 py-2 text-sm">Mentor</th>
-              <th className="border border-gray-300 px-2 py-2 text-sm">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedUsers.length === 0 && (
-              <tr>
-                <td colSpan={7} className="py-4 text-center text-xl">
-                  <div className="flex items-center justify-center px-4">
-                    No users found <MdOutlineBlock className="ml-2 h-8 w-8" />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+            <TabsTrigger value="all" className="gap-2">
+              <Users className="h-4 w-4" />
+              All
+              <Badge variant="outline" className="ml-1">{users.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="enrolled" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Enrolled
+              <Badge variant="outline" className="ml-1">{enrolledCount}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="not-enrolled" className="gap-2">
+              <UserX className="h-4 w-4" />
+              Not Enrolled
+              <Badge variant="outline" className="ml-1">{notEnrolledCount}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="mentors" className="gap-2">
+              Mentors
+              <Badge variant="outline" className="ml-1">{mentorCount}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="rounded-md border w-full">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="w-16">S.No</TableHead>
+                <TableHead>
+                  <div
+                    className="flex cursor-pointer items-center"
+                    onClick={() => handleSort("username")}
+                  >
+                    Username
+                    {sortColumn !== "username" && <FaSort className="ml-1 h-3 w-3" />}
+                    {sortColumn === "username" && sortOrder === "asc" && (
+                      <FaSortAlphaDown className="ml-1 h-3 w-3" />
+                    )}
+                    {sortColumn === "username" && sortOrder === "desc" && (
+                      <FaSortAlphaDownAlt className="ml-1 h-3 w-3" />
+                    )}
                   </div>
-                </td>
-              </tr>
-            )}
-            {sortedUsers.map((user, index) => (
-              <tr key={user.id} className="hover:bg-slate-600">
-                <td className="border border-gray-300 px-2 py-2 text-sm">{index + 1}</td>
-                <td className="border border-gray-300 px-2 py-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <img
-                      loading="lazy"
-                      src={user.image || "/placeholder.jpg"}
-                      alt="user"
-                      width={32}
-                      height={32}
-                      className="h-8 w-8 rounded-full"
-                    />
-                    <span>{user.username}</span>
+                </TableHead>
+                <TableHead>
+                  <div
+                    className="flex cursor-pointer items-center"
+                    onClick={() => handleSort("name")}
+                  >
+                    Name
+                    {sortColumn !== "name" && <FaSort className="ml-1 h-3 w-3" />}
+                    {sortColumn === "name" && sortOrder === "asc" && (
+                      <FaSortAlphaDown className="ml-1 h-3 w-3" />
+                    )}
+                    {sortColumn === "name" && sortOrder === "desc" && (
+                      <FaSortAlphaDownAlt className="ml-1 h-3 w-3" />
+                    )}
                   </div>
-                </td>
-                <td className="border border-gray-300 px-2 py-2 text-sm">{user.name}</td>
-                <td className="border border-gray-300 px-2 py-2 text-center text-sm">
-                  {user.role !== "INSTRUCTOR" ? (
-                    <select
-                      title="role"
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.username, e.target.value)}
-                      className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none bg-zinc-700"
+                </TableHead>
+                <TableHead>
+                  <div
+                    className="flex cursor-pointer items-center"
+                    onClick={() => handleSort("role")}
+                  >
+                    Role
+                    {sortColumn !== "role" && <FaSort className="ml-1 h-3 w-3" />}
+                    {sortColumn === "role" && sortOrder === "asc" && (
+                      <FaSortAlphaDown className="ml-1 h-3 w-3" />
+                    )}
+                    {sortColumn === "role" && sortOrder === "desc" && (
+                      <FaSortAlphaDownAlt className="ml-1 h-3 w-3" />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <div
+                    className="flex cursor-pointer items-center"
+                    onClick={() => handleSort("email")}
+                  >
+                    Email
+                    {sortColumn !== "email" && <FaSort className="ml-1 h-3 w-3" />}
+                    {sortColumn === "email" && sortOrder === "asc" && (
+                      <FaSortAlphaDown className="ml-1 h-3 w-3" />
+                    )}
+                    {sortColumn === "email" && sortOrder === "desc" && (
+                      <FaSortAlphaDownAlt className="ml-1 h-3 w-3" />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead>Mentor</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedUsers.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <MdOutlineBlock className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-muted-foreground">No users found</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {sortedUsers.map((user, index) => (
+                <TableRow key={user.id} className="group hover:bg-muted/50">
+                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <img
+                        loading="lazy"
+                        src={user.image || "/placeholder.jpg"}
+                        alt={user.username}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                      <span className="font-medium">{user.username}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={user.role === "INSTRUCTOR" ? "secondary" : "outline"}
                     >
-                      {roles.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="disabled cursor-not-allowed select-none rounded-md bg-zinc-700 px-2 py-1 text-sm font-semibold ">
                       {user.role}
-                    </span>
-                  )}
-                </td>
-                <td className="border border-gray-300 px-2 py-2 text-sm">{user.email}</td>
-                <td className="border border-gray-300 px-2 py-2 text-sm">
-                  {user.role === "STUDENT" &&
-                  user.enrolledUsers.find(
-                    ({ course }: { course: any }) => course.id === params.id
-                  ) !== undefined ? (
-                    <select
-                      title="role"
-                      value={user.mentor}
-                      onChange={(e) => handleMentorChange(user.username, e.target.value)}
-                      className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none bg-zinc-700"
-                    >
-                      <option value="">None</option>
-                      {mentors.map((mentor) => (
-                        <option
-                          key={mentor.id}
-                          value={mentor.username}
-                          selected={
-                            mentor.username ===
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    {user.role === "STUDENT" &&
+                      user.enrolledUsers.find(
+                        ({ course }: { course: any }) => course.id === params.id
+                      ) !== undefined ? (
+                      <div className="w-32">
+                        <select
+                          title="mentor"
+                          value={
                             user.enrolledUsers.find(
                               ({ course }: { course: any }) => course.id === params.id
-                            )?.mentorUsername
+                            )?.mentorUsername || ""
                           }
+                          onChange={(e) => handleMentorChange(user.username, e.target.value)}
+                          disabled={loading}
+                          className="w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                         >
-                          {mentor.username}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="disabled cursor-not-allowed select-none rounded-md bg-zinc-700 px-2 py-1 text-sm font-semibold text-white">
-                      None
-                    </span>
-                  )}
-                </td>
-                <td className="border border-gray-300 px-2 py-2 text-sm">
-                  {user.enrolledUsers.find(
-                    ({ course }: { course: any }) => course.id === params.id
-                  ) === undefined
-                    ? user.role !== "INSTRUCTOR" && (
-                        <button
+                          <option value="">None</option>
+                          {mentors.map((mentor) => (
+                            <option key={mentor.id} value={mentor.username}>
+                              {mentor.username}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <Badge variant="outline">None</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {user.enrolledUsers.find(
+                      ({ course }: { course: any }) => course.id === params.id
+                    ) === undefined
+                      ? user.role !== "INSTRUCTOR" && (
+                        <Button
+                          size="sm"
+                          className="gap-1"
                           disabled={loading}
                           onClick={() => handleEnroll(user.username)}
-                          className="flex select-none items-center justify-center rounded-full bg-emerald-700 px-2 py-1 text-sm text-white hover:bg-emerald-800 focus:bg-emerald-800 focus:outline-none"
+                          variant="outline"
                         >
-                          Enroll <FaUserPlus className="ml-1 h-4 w-4" />
-                        </button>
+                          <FaUserPlus className="h-4 w-4" />
+                          Enroll
+                        </Button>
                       )
-                    : user.role !== "INSTRUCTOR" && (
-                        <button
+                      : user.role !== "INSTRUCTOR" && (
+                        <Button
+                          size="sm"
+                          className="gap-1"
                           disabled={loading}
                           onClick={() => handleUnenroll(user.username)}
-                          className="flex select-none items-center justify-center rounded-full bg-red-800 px-2 py-1 text-sm text-white hover:bg-red-700 focus:bg-red-800 focus:outline-none"
+                          variant="destructive"
                         >
-                          Unenroll <FaUserXmark className="ml-1 h-4 w-4" />
-                        </button>
+                          <FaUserXmark className="h-4 w-4" />
+                          Unenroll
+                        </Button>
                       )}
-                  {user.role === "INSTRUCTOR" && (
-                    <span className="disabled cursor-not-allowed select-none rounded-md bg-zinc-700 px-2 py-1 text-sm font-semibold text-white">
-                      No Action
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                    {user.role === "INSTRUCTOR" && (
+                      <Badge variant="outline">No Action</Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
