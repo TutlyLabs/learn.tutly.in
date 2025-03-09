@@ -13,6 +13,7 @@ import {
 import day from "@/lib/dayjs";
 
 import type { Course } from ".prisma/client";
+import { actions } from "astro:actions";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -231,11 +232,63 @@ const Report = ({
     doc.save(`Report-${formattedDate}.pdf`);
   };
 
+  const exportToGoogleSheets = async () => {
+    try {
+      // Get current time for the sheet name
+      const formattedDate = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      // Prepare headers and data
+      const headers = Object.keys(columnMapping).filter(
+        (header) => visibleColumns[header]
+      );
+
+      const rows = filteredData.map((item) =>
+        headers.map((header) => {
+          const key = columnMapping[header] || "username";
+          if (key === "attendance") {
+            return formatAttendance(item[key]);
+          }
+          return item[key];
+        })
+      );
+
+      // Make API call to backend to create/update Google Sheet
+      const { data, error } = await actions["google-sheets_exportToGoogleSheets"]({
+        title: `${currentCourse?.title || "All Courses"} Report - ${formattedDate}`,
+        headers,
+        data: rows,
+        courseId,
+      });
+
+      if (error) {
+        throw new Error("Failed to export to Google Sheets");
+      }
+
+      // Open the Google Sheet in a new tab
+      if (data.data?.url) {
+        window.open(data.data.url, "_blank");
+      } else {
+        alert("Export successful, but no URL was returned to view the sheet.");
+      }
+    } catch (error) {
+      console.error("Error exporting to Google Sheets:", error);
+      alert("Failed to export to Google Sheets. Please try again later.");
+    }
+  };
+
   const handleDownload = () => {
     if (selectedFormat === "csv") {
       downloadCSV();
     } else if (selectedFormat === "pdf") {
       downloadPDF();
+    } else if (selectedFormat === "sheets") {
+      exportToGoogleSheets();
     }
   };
 
@@ -261,9 +314,8 @@ const Report = ({
             course.isPublished === true && (
               <a
                 href={`/tutor/report/${course.id}`}
-                className={`w-20 rounded p-2 sm:w-auto ${
-                  !isAllView && currentCourse?.id === course?.id ? "border border-blue-500" : ""
-                }`}
+                className={`w-20 rounded p-2 sm:w-auto ${!isAllView && currentCourse?.id === course?.id ? "border border-blue-500" : ""
+                  }`}
                 key={course?.id}
               >
                 <h1 className="max-w-xs truncate text-sm font-medium">{course.title}</h1>
@@ -352,6 +404,7 @@ const Report = ({
                 >
                   <option value="pdf">PDF</option>
                   <option value="csv">CSV</option>
+                  <option value="sheets">Google Sheets</option>
                 </select>
                 <button
                   onClick={handleDownload}
@@ -388,9 +441,8 @@ const Report = ({
               {filteredData.map((row, index) => (
                 <tr
                   key={index}
-                  className={`bg-gray-50 ${
-                    index % 2 === 0 ? "bg-white" : "bg-gray-100"
-                  } dark:bg-gray-800`}
+                  className={`bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-100"
+                    } dark:bg-gray-800`}
                 >
                   <td className="truncate border-b border-gray-300 px-5 py-3 dark:border-gray-700">
                     {index + 1}

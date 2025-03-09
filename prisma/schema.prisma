@@ -595,3 +595,19 @@ model Otp {
 
   @@index([email, otp])
 }
+
+enum ReportType {
+  STUDENT_PERFORMANCE
+  ATTENDANCE
+  CUSTOM
+}
+
+model ReportSheet {
+  id            String     @id @default(uuid())
+  courseId      String
+  spreadsheetId String
+  reportType    ReportType
+  lastUpdated   DateTime
+
+  @@unique([courseId, reportType])
+}
