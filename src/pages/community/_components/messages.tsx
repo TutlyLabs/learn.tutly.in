@@ -59,7 +59,7 @@ export default function Accordion({
   const handleAddDoubt = async (data: any) => {
     const { data: res, error } = await actions.doubts_createDoubt({
       courseId: currentCourseId,
-      title: undefined,
+      title: "",
       description: data.message,
     });
 

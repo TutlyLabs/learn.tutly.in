@@ -66,7 +66,7 @@ const coursesFinal = currentUser.role === "INSTRUCTOR" ? courses : publishedCour
       {
         coursesFinal?.length === 0 && (
           <div>
-            {currentUser?.role === "INSTRUCTOR" ? (
+            {currentUser?.role === "INSTRUCTOR" && !currentUser.isAdmin ? (
               <AddCourse client:load />
             ) : (
               <NoDataFound message="No courses found!" />
@@ -81,7 +81,7 @@ const coursesFinal = currentUser.role === "INSTRUCTOR" ? courses : publishedCour
             {coursesFinal.map((course) => (
               <CourseCard currentUser={currentUser} key={course.id} course={course} client:load />
             ))}
-            {currentUser?.role === "INSTRUCTOR" && <AddCourse client:load />}
+            {currentUser?.role === "INSTRUCTOR" && !currentUser.isAdmin && <AddCourse client:load />}
           </div>
         )
       }

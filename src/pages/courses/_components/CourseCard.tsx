@@ -51,7 +51,7 @@ export default function CourseCard({ course, currentUser }: any) {
           <h2 className="font-medium">{expired() ? `${course.title} [Expired]` : course.title}</h2>
         </div>
 
-        {currentUser.role === "INSTRUCTOR" && (
+        {currentUser.role === "INSTRUCTOR" && !currentUser.isAdmin && (
           <div className="flex gap-3">
             <Button
               variant="ghost"

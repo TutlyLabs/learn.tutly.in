@@ -446,7 +446,7 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-medium">
-              Attendance Details for {selectedStudent?.Name||selectedStudent?.user?.name!}
+              Attendance Details for {selectedStudent?.Name || selectedStudent?.user?.name!}
             </DialogTitle>
           </DialogHeader>
 
@@ -461,19 +461,23 @@ const AttendanceClient = ({ courses, role, attendance }: any) => {
                 </tr>
               </thead>
               <tbody>
-                {(selectedStudent?.Joins||selectedStudent?.data)?.map((join: any, index: number) => (
-                  <tr key={index}>
-                    <td className="border px-3 py-1.5">{join.ActualName}</td>
-                    <td className="border px-3 py-1.5">{join.JoinTime}</td>
-                    <td className="border px-3 py-1.5">{join.LeaveTime}</td>
-                    <td className="border px-3 py-1.5">{join.Duration}</td>
-                  </tr>
-                ))}
+                {(selectedStudent?.Joins || selectedStudent?.data)?.map(
+                  (join: any, index: number) => (
+                    <tr key={index}>
+                      <td className="border px-3 py-1.5">{join.ActualName}</td>
+                      <td className="border px-3 py-1.5">{join.JoinTime}</td>
+                      <td className="border px-3 py-1.5">{join.LeaveTime}</td>
+                      <td className="border px-3 py-1.5">{join.Duration}</td>
+                    </tr>
+                  )
+                )}
                 <tr className="bg-muted/30">
                   <td className="border px-3 py-1.5">Total Duration</td>
                   <td className="border px-3 py-1.5"></td>
                   <td className="border px-3 py-1.5"></td>
-                  <td className="border px-3 py-1.5">{selectedStudent?.Duration||selectedStudent?.attendedDuration}</td>
+                  <td className="border px-3 py-1.5">
+                    {selectedStudent?.Duration || selectedStudent?.attendedDuration}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -497,7 +501,7 @@ const AttendanceTable = ({
   setUsername,
   handleEditUsername,
   maxInstructionDuration,
-  flag
+  flag,
 }: any) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
@@ -525,11 +529,18 @@ const AttendanceTable = ({
 
     switch (activeTab) {
       case "present":
-        return flag?(student.attended):(!student.isAbsent&&student.Duration>=maxInstructionDuration);
+        return flag
+          ? student.attended
+          : !student.isAbsent && student.Duration >= maxInstructionDuration;
       case "absent":
-        return flag?(!student.attended):(student.isAbsent||student.Duration<maxInstructionDuration);
+        return flag
+          ? !student.attended
+          : student.isAbsent || student.Duration < maxInstructionDuration;
       case "short":
-        return (student.Duration||student.attendedDuration) > 0 && (student.Duration||student.attendedDuration) < 60;
+        return (
+          (student.Duration || student.attendedDuration) > 0 &&
+          (student.Duration || student.attendedDuration) < 60
+        );
       default:
         return true;
     }
@@ -549,21 +560,29 @@ const AttendanceTable = ({
               <div className="h-2 w-2 rounded-full bg-emerald-500" />
               Present
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {presentStudents.filter((p: any) => (flag?p.attended:p.Duration>=maxInstructionDuration)).length}
+                {
+                  presentStudents.filter((p: any) =>
+                    flag ? p.attended : p.Duration >= maxInstructionDuration
+                  ).length
+                }
               </span>
             </TabsTrigger>
             <TabsTrigger value="absent" className="gap-2">
               <div className="h-2 w-2 rounded-full bg-red-500" />
               Absent
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {flag?
-                users.filter(
-                  (u: any) => !presentStudents.find((p: any) => p.username === u.username&&p.attended)
-                ).length
+                {flag
+                  ? users.filter(
+                      (u: any) =>
+                        !presentStudents.find((p: any) => p.username === u.username && p.attended)
+                    ).length
                   : users.filter(
-                    (u: any) => !presentStudents.find((p: any) => p.username === u.username&&p.Duration>=maxInstructionDuration)
-                  ).length
-                }
+                      (u: any) =>
+                        !presentStudents.find(
+                          (p: any) =>
+                            p.username === u.username && p.Duration >= maxInstructionDuration
+                        )
+                    ).length}
               </span>
             </TabsTrigger>
             <TabsTrigger value="short" className="gap-2">
@@ -572,7 +591,9 @@ const AttendanceTable = ({
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
                 {
                   presentStudents.filter(
-                    (s: any) => (s.Duration||s.attendedDuration) > 0 && (s.Duration||s.attendedDuration) < 60
+                    (s: any) =>
+                      (s.Duration || s.attendedDuration) > 0 &&
+                      (s.Duration || s.attendedDuration) < 60
                   ).length
                 }
               </span>
@@ -611,7 +632,9 @@ const AttendanceTable = ({
               className={`hover:bg-muted/50 ${student.isAbsent ? "bg-muted/30" : ""}`}
             >
               <TableCell>{index + 1}</TableCell>
-              <TableCell className="font-medium">{student.ActualName||student.user?.name}</TableCell>
+              <TableCell className="font-medium">
+                {student.ActualName || student.user?.name}
+              </TableCell>
               <TableCell>
                 {openEditName === index + 1 ? (
                   <Input
@@ -624,27 +647,35 @@ const AttendanceTable = ({
                 )}
               </TableCell>
               <TableCell>
-                {student.Duration>0||student.attendedDuration>0 ? (
+                {student.Duration > 0 || student.attendedDuration > 0 ? (
                   <Badge
                     variant="outline"
                     className={`${
-                      (flag?!student.attended:student.Duration < Number(maxInstructionDuration))
-                        ? ("bg-red-500/10 text-red-400 hover:bg-red-500/10")
-                        : ((!flag?student.Duration < 60:student.attendedDuration < 60)
+                      (flag ? !student.attended : student.Duration < Number(maxInstructionDuration))
+                        ? "bg-red-500/10 text-red-400 hover:bg-red-500/10"
+                        : (!flag ? student.Duration < 60 : student.attendedDuration < 60)
                           ? "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/10"
-                          : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10")
+                          : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10"
                     }`}
                   >
-                    {flag?student.attendedDuration:student.Duration}
+                    {flag ? student.attendedDuration : student.Duration}
                   </Badge>
                 ) : (
                   "-"
                 )}
               </TableCell>
               <TableCell>
-                {flag?(student.data?.[0]?.JoinTime ? student.data[0].JoinTime.split("T")[0] : "-"):(student.Joins?.[0]?.JoinTime ? student.Joins[0].JoinTime.split(" ")[0] : "-")}
+                {flag
+                  ? student.data?.[0]?.JoinTime
+                    ? student.data[0].JoinTime.split("T")[0]
+                    : "-"
+                  : student.Joins?.[0]?.JoinTime
+                    ? student.Joins[0].JoinTime.split(" ")[0]
+                    : "-"}
               </TableCell>
-              <TableCell>{flag?student.data?.length||"-":student.Joins?.length || "-"}</TableCell>
+              <TableCell>
+                {flag ? student.data?.length || "-" : student.Joins?.length || "-"}
+              </TableCell>
               <TableCell>
                 <Button variant="ghost" size="sm" onClick={() => handleStudentClick(student)}>
                   View

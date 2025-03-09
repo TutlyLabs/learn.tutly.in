@@ -17,7 +17,7 @@ export const postAttendance = defineAction({
     const postAttendance = await db.attendance.createMany({
       data: [
         ...parsedData.map((student: any) => {
-          if (student.Duration >= (maxInstructionDuration)) {
+          if (student.Duration >= maxInstructionDuration) {
             return {
               classId,
               username: student.username,
@@ -491,9 +491,9 @@ export const viewAttendanceByClassId = defineAction({
               user: {
                 select: {
                   name: true,
-                }
-              }
-            }
+                },
+              },
+            },
           })
         : await db.attendance.findMany({
             where: {
@@ -503,9 +503,9 @@ export const viewAttendanceByClassId = defineAction({
               user: {
                 select: {
                   name: true,
-                }
-              }
-            }
+                },
+              },
+            },
           });
 
     let present = 0;

@@ -2,6 +2,7 @@ import { defineAction } from "astro:actions";
 import { z } from "zod";
 
 import db from "@/lib/db";
+
 import { getEnrolledCourseIds } from "./courses";
 
 export const getUserDoubtsByCourseId = defineAction({
