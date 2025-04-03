@@ -4,7 +4,7 @@ import { Resend } from "resend";
 import EnrollMail from "@/components/email/EnrollMail";
 
 const db = new PrismaClient();
-const resend = new Resend(process.env.AUTH_RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const main = async () => {
   const user = await db.user.findUnique({

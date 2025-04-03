@@ -125,11 +125,13 @@ const logRequest = (
   userId: string | null,
   body: string
 ) => {
-  console.log(
-    `=>[${method}] ${path} - ${status} - ${time}ms - User: ${userId || "anonymous"} - Body: ${body || "no body"}`
-  );
+  if (process.env.NODE_ENV === 'production') {
+    console.log(
+      `=>[${method}] ${path} - ${status} - ${time}ms - User: ${userId || "anonymous"} - Body: ${body || "no body"}`
+    );
 
-  if (status === 302) {
-    console.log("Redirecting to:", path);
+    if (status === 302) {
+      console.log("Redirecting to:", path);
+    }
   }
 };

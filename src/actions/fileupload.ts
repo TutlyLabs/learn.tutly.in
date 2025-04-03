@@ -55,6 +55,11 @@ const s3Client = new S3Client({
     accessKeyId: import.meta.env.AWS_ACCESS_KEY!,
     secretAccessKey: import.meta.env.AWS_SECRET_KEY!,
   },
+  // only for dev (localstack)
+  ...(import.meta.env.AWS_ENDPOINT && {
+    endpoint: import.meta.env.AWS_ENDPOINT,
+    forcePathStyle: true
+  })
 });
 
 export const createFileAndGetUploadUrl = defineAction({
@@ -161,7 +166,7 @@ export const markFileUploaded = defineAction({
     if (!file) throw new Error("File not found");
 
     const publicUrl = file.isPublic
-      ? `https://${import.meta.env.AWS_BUCKET_NAME}.s3.${import.meta.env.AWS_BUCKET_REGION}.amazonaws.com/${file.fileType}/${file.internalName}`
+      ? `${import.meta.env.AWS_S3_URL}/${file.fileType}/${file.internalName}`
       : null;
 
     const updatedFile = await db.file.update({

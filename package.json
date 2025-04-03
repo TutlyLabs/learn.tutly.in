@@ -12,8 +12,9 @@
     "format": "prettier --write .",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "prisma:generate": "prisma generate",
-    "seed": "tsx ./prisma/seed.ts"
+    "db:generate": "prisma generate",
+    "seed": "tsx prisma/seed/index.ts",
+    "db:seed": "tsx prisma/seed/index.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

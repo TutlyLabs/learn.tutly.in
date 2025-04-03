@@ -1,32 +1,6 @@
 services:
-  app:
-    build:
-      context: .
-      target: runtime
-    ports:
-      - "4321:4321"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/tutly_local
-      - NODE_ENV=development
-      - HOST=0.0.0.0
-      - HOSTNAME=0.0.0.0
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - .:/app
-      - /app/node_modules
-    networks:
-      - tutly_network
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:4321/health || exit 1"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   start_period: 5s
-    #   retries: 3
-
   db:
-    image: postgres:alpine
+    image: postgres:15-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -35,13 +9,39 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready -U postgres"]
-    #   interval: 5s
-    #   timeout: 5s
-    #   retries: 5
     networks:
       - tutly_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+      - LOCALSTACK_HOST=localhost
+      - USE_SSL=0
+      - PERSISTENCE=1
+      - DATA_DIR=/var/lib/localstack
+      - DISABLE_CORS_CHECKS=1
+      - DEBUG=1
+    volumes:
+      - ./data/localstack:/var/lib/localstack
+    networks:
+      - tutly_network
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal s3 ls"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
 volumes:
   postgres_data:
