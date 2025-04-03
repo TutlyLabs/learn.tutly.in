@@ -1,13 +1,14 @@
 import { actions } from "astro:actions";
+import { AlertCircle, Search, UserPlus, UserX, Users } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { FaSort, FaSortAlphaDown, FaSortAlphaDownAlt, FaUserPlus } from "react-icons/fa";
 import { FaUserXmark } from "react-icons/fa6";
 import { MdOutlineBlock } from "react-icons/md";
-import { Search, Users, UserPlus, UserX, AlertCircle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "@/hooks/use-router";
 
 const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
@@ -39,7 +39,8 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
   const [activeTab, setActiveTab] = useState("all");
 
   const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.username.toLowerCase().includes(searchBar.trim().toLowerCase()) ||
+    const matchesSearch =
+      user.username.toLowerCase().includes(searchBar.trim().toLowerCase()) ||
       user.name?.toLowerCase().includes(searchBar.trim().toLowerCase()) ||
       user.email?.toLowerCase().includes(searchBar.trim().toLowerCase());
 
@@ -65,7 +66,7 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     (user) =>
       user.role === "MENTOR" &&
       user.enrolledUsers.find(({ course }: { course: any }) => course.id === params.id) !==
-      undefined
+        undefined
   );
 
   const handleNotifyUsers = async () => {
@@ -179,13 +180,13 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
     }
   };
 
-  const enrolledCount = users.filter(user =>
+  const enrolledCount = users.filter((user) =>
     user.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id)
   ).length;
 
   const notEnrolledCount = users.length - enrolledCount;
 
-  const mentorCount = users.filter(user => user.role === "MENTOR").length;
+  const mentorCount = users.filter((user) => user.role === "MENTOR").length;
 
   const sortedUsers = [...displayedUsers].sort((a, b) => {
     if (sortColumn) {
@@ -198,18 +199,19 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
           ? (a.name || "").localeCompare(b.name || "")
           : (b.name || "").localeCompare(a.name || "");
       } else if (sortColumn === "role") {
-        return sortOrder === "asc"
-          ? a.role.localeCompare(b.role)
-          : b.role.localeCompare(a.role);
+        return sortOrder === "asc" ? a.role.localeCompare(b.role) : b.role.localeCompare(a.role);
       } else if (sortColumn === "email") {
         return sortOrder === "asc"
           ? (a.email || "").localeCompare(b.email || "")
           : (b.email || "").localeCompare(a.email || "");
       }
-    }
-    else {
-      const aEnrolled = a.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id);
-      const bEnrolled = b.enrolledUsers.some(({ course }: { course: any }) => course.id === params.id);
+    } else {
+      const aEnrolled = a.enrolledUsers.some(
+        ({ course }: { course: any }) => course.id === params.id
+      );
+      const bEnrolled = b.enrolledUsers.some(
+        ({ course }: { course: any }) => course.id === params.id
+      );
 
       if (aEnrolled && !bEnrolled) return -1;
       if (!aEnrolled && bEnrolled) return 1;
@@ -283,21 +285,29 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
             <TabsTrigger value="all" className="gap-2">
               <Users className="h-4 w-4" />
               All
-              <Badge variant="outline" className="ml-1">{users.length}</Badge>
+              <Badge variant="outline" className="ml-1">
+                {users.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="enrolled" className="gap-2">
               <UserPlus className="h-4 w-4" />
               Enrolled
-              <Badge variant="outline" className="ml-1">{enrolledCount}</Badge>
+              <Badge variant="outline" className="ml-1">
+                {enrolledCount}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="not-enrolled" className="gap-2">
               <UserX className="h-4 w-4" />
               Not Enrolled
-              <Badge variant="outline" className="ml-1">{notEnrolledCount}</Badge>
+              <Badge variant="outline" className="ml-1">
+                {notEnrolledCount}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="mentors" className="gap-2">
               Mentors
-              <Badge variant="outline" className="ml-1">{mentorCount}</Badge>
+              <Badge variant="outline" className="ml-1">
+                {mentorCount}
+              </Badge>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -401,18 +411,16 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
                   </TableCell>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={user.role === "INSTRUCTOR" ? "secondary" : "outline"}
-                    >
+                    <Badge variant={user.role === "INSTRUCTOR" ? "secondary" : "outline"}>
                       {user.role}
                     </Badge>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     {user.role === "STUDENT" &&
-                      user.enrolledUsers.find(
-                        ({ course }: { course: any }) => course.id === params.id
-                      ) !== undefined ? (
+                    user.enrolledUsers.find(
+                      ({ course }: { course: any }) => course.id === params.id
+                    ) !== undefined ? (
                       <div className="w-32">
                         <select
                           title="mentor"
@@ -442,32 +450,30 @@ const UserTable = ({ users, params }: { users: Array<any>; params: any }) => {
                       ({ course }: { course: any }) => course.id === params.id
                     ) === undefined
                       ? user.role !== "INSTRUCTOR" && (
-                        <Button
-                          size="sm"
-                          className="gap-1"
-                          disabled={loading}
-                          onClick={() => handleEnroll(user.username)}
-                          variant="outline"
-                        >
-                          <FaUserPlus className="h-4 w-4" />
-                          Enroll
-                        </Button>
-                      )
+                          <Button
+                            size="sm"
+                            className="gap-1"
+                            disabled={loading}
+                            onClick={() => handleEnroll(user.username)}
+                            variant="outline"
+                          >
+                            <FaUserPlus className="h-4 w-4" />
+                            Enroll
+                          </Button>
+                        )
                       : user.role !== "INSTRUCTOR" && (
-                        <Button
-                          size="sm"
-                          className="gap-1"
-                          disabled={loading}
-                          onClick={() => handleUnenroll(user.username)}
-                          variant="destructive"
-                        >
-                          <FaUserXmark className="h-4 w-4" />
-                          Unenroll
-                        </Button>
-                      )}
-                    {user.role === "INSTRUCTOR" && (
-                      <Badge variant="outline">No Action</Badge>
-                    )}
+                          <Button
+                            size="sm"
+                            className="gap-1"
+                            disabled={loading}
+                            onClick={() => handleUnenroll(user.username)}
+                            variant="destructive"
+                          >
+                            <FaUserXmark className="h-4 w-4" />
+                            Unenroll
+                          </Button>
+                        )}
+                    {user.role === "INSTRUCTOR" && <Badge variant="outline">No Action</Badge>}
                   </TableCell>
                 </TableRow>
               ))}

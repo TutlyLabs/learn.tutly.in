@@ -1,9 +1,9 @@
-import { Role } from "@prisma/client"
+import { Role } from "@prisma/client";
 
 export const organization = {
-  name: "Tutly Org", 
-  orgCode: "TUTLY001"
-}
+  name: "Tutly Org",
+  orgCode: "TUTLY001",
+};
 
 export const courses = [
   {
@@ -11,10 +11,10 @@ export const courses = [
     isPublished: true,
   },
   {
-    title: "Course 2", 
+    title: "Course 2",
     isPublished: true,
-  }
-]
+  },
+];
 
 export const users = [
   {
@@ -26,7 +26,7 @@ export const users = [
   },
   {
     name: "Mentor 1",
-    username: "MENTOR_001", 
+    username: "MENTOR_001",
     email: "mentor1@tutly.in",
     password: "mentor@123",
     role: Role.MENTOR,
@@ -34,7 +34,7 @@ export const users = [
   {
     name: "Mentor 2",
     username: "MENTOR_002",
-    email: "mentor2@tutly.in", 
+    email: "mentor2@tutly.in",
     password: "mentor@123",
     role: Role.MENTOR,
   },
@@ -44,5 +44,5 @@ export const users = [
     email: `student${i + 1}@tutly.in`,
     password: "student@123",
     role: Role.STUDENT,
-  }))
-]
+  })),
+];

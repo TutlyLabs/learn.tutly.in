@@ -58,8 +58,8 @@ const s3Client = new S3Client({
   // only for dev (localstack)
   ...(import.meta.env.AWS_ENDPOINT && {
     endpoint: import.meta.env.AWS_ENDPOINT,
-    forcePathStyle: true
-  })
+    forcePathStyle: true,
+  }),
 });
 
 export const createFileAndGetUploadUrl = defineAction({

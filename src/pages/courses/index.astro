@@ -81,7 +81,9 @@ const coursesFinal = currentUser.role === "INSTRUCTOR" ? courses : publishedCour
             {coursesFinal.map((course) => (
               <CourseCard currentUser={currentUser} key={course.id} course={course} client:load />
             ))}
-            {currentUser?.role === "INSTRUCTOR" && !currentUser.isAdmin && <AddCourse client:load />}
+            {currentUser?.role === "INSTRUCTOR" && !currentUser.isAdmin && (
+              <AddCourse client:load />
+            )}
           </div>
         )
       }

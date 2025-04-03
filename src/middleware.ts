@@ -125,7 +125,7 @@ const logRequest = (
   userId: string | null,
   body: string
 ) => {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === "production") {
     console.log(
       `=>[${method}] ${path} - ${status} - ${time}ms - User: ${userId || "anonymous"} - Body: ${body || "no body"}`
     );
