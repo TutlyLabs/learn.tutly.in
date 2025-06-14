@@ -1,5 +1,5 @@
 import { actions } from "astro:actions";
-import { AlertCircle, Check, Eye, EyeOff, Loader2, UserCheck, UserX, X } from "lucide-react";
+import { AlertCircle, Check, Eye, EyeOff, Loader2, UserX, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { MdLockReset } from "react-icons/md";
