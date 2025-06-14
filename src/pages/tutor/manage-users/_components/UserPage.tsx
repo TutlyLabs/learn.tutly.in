@@ -1,10 +1,11 @@
 import { actions } from "astro:actions";
-import { Check, Eye, EyeOff, Loader2, X } from "lucide-react";
+import { AlertCircle, Check, Eye, EyeOff, Loader2, UserCheck, UserX, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { MdLockReset } from "react-icons/md";
 
 import DisplayTable, { type Column } from "@/components/table/DisplayTable";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +38,16 @@ const columns: Column[] = [
       regex: /^[A-Za-z0-9\s]{2,50}$/,
       message: "Name must be 2-50 characters, letters and numbers only",
     },
+    render: (value: string, row: any) => (
+      <div className="flex items-center gap-2">
+        {row.disabledAt && (
+          <div title="Account Disabled">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+          </div>
+        )}
+        <span className={row.disabledAt ? "text-muted-foreground line-through" : ""}>{value}</span>
+      </div>
+    ),
   },
   {
     key: "username",
@@ -107,6 +118,24 @@ const columns: Column[] = [
     sortable: false,
     filterable: false,
     hideInTable: true,
+  },
+  {
+    key: "disabledAt",
+    name: "Status",
+    label: "Status",
+    type: "text",
+    sortable: true,
+    filterable: true,
+    render: (value: string) => {
+      return (
+        <Badge
+          variant={value ? "destructive" : "default"}
+          className={value ? "bg-red-500" : "bg-green-500"}
+        >
+          {value ? "Disabled" : "Active"}
+        </Badge>
+      );
+    },
   },
 ];
 
@@ -251,6 +280,23 @@ const UserPage = ({
                   onClick: (user: any) => {
                     setSelectedUser(user);
                     setOpen(true);
+                  },
+                },
+                {
+                  label: "Disable/Enable User",
+                  icon: <UserX className="text-red-500 mr-2 h-5 w-5" />,
+                  onClick: async (user: any) => {
+                    try {
+                      const result = await actions.users_disableUser({ id: user.id });
+                      if (result.error) {
+                        toast.error(result.error.message || "Failed to update user status");
+                      } else {
+                        toast.success(result.data.message);
+                        window.location.reload();
+                      }
+                    } catch (error) {
+                      toast.error("An error occurred while updating user status");
+                    }
                   },
                 },
               ]

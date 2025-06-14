@@ -699,3 +699,68 @@ export const changePassword = defineAction({
     }
   },
 });
+
+export const disableUser = defineAction({
+  input: z.object({
+    id: z.string(),
+  }),
+  async handler({ id }, { locals }) {
+    const currentUser = locals.user;
+    if (!currentUser || currentUser.role !== "INSTRUCTOR") {
+      throw new ActionError({
+        message: "Unauthorized - Only instructors can manage user status",
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    try {
+      const user = await db.user.findUnique({
+        where: { id },
+        select: { disabledAt: true },
+      });
+
+      if (!user) {
+        throw new ActionError({
+          message: "User not found",
+          code: "NOT_FOUND",
+        });
+      }
+
+      const isCurrentlyDisabled = !!user.disabledAt;
+
+      if (isCurrentlyDisabled) {
+        const updatedUser = await db.user.update({
+          where: { id },
+          data: { disabledAt: null },
+        });
+        return {
+          success: true,
+          message: "User enabled successfully",
+          user: updatedUser,
+          action: "enabled",
+        };
+      } else {
+        await db.session.deleteMany({
+          where: { userId: id },
+        });
+
+        const updatedUser = await db.user.update({
+          where: { id },
+          data: { disabledAt: new Date() },
+        });
+
+        return {
+          success: true,
+          message: "User disabled successfully",
+          user: updatedUser,
+          action: "disabled",
+        };
+      }
+    } catch (error) {
+      throw new ActionError({
+        message: "Failed to update user status",
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    }
+  },
+});

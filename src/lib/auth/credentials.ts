@@ -22,11 +22,16 @@ async function validateCredentials(identifier: string, password: string) {
       image: true,
       role: true,
       organization: true,
+      disabledAt: true,
     },
   });
 
   if (!user) {
     throw new Error(isEmail ? "Email not found" : "Username not found");
+  }
+
+  if (user.disabledAt) {
+    throw new Error("This account has been disabled. Please contact your instructor.");
   }
 
   if (password === user.oneTimePassword) {
