@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
     const { sessionId, isPasswordSet } = await signInWithCredentials(email, password, userAgent);
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 1 day
-    const isProduction = import.meta.env.PROD;
+    // const isProduction = import.meta.env.PROD;
 
     const cookieOptions = [
       `app_auth_token=${sessionId}`,
@@ -30,7 +30,7 @@ export const POST: APIRoute = async ({ request }) => {
       "HttpOnly",
       "SameSite=Lax",
       `Expires=${expiresAt.toUTCString()}`,
-      isProduction ? "Secure" : "",
+      // isProduction ? "Secure" : "",
     ]
       .filter(Boolean)
       .join("; ");
