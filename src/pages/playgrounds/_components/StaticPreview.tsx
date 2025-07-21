@@ -1,17 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useSandpack } from "@codesandbox/sandpack-react";
+import { useEffect, useRef, useState } from "react";
 
-const StaticPreview = ({ onConsoleLog = () => { } }: { onConsoleLog?: (log: string) => void }) => {
+const StaticPreview = ({
+  onConsoleLog = () => {},
+  onClear,
+}: {
+  onConsoleLog?: (log: string) => void;
+  onClear?: () => void;
+}) => {
   const { sandpack } = useSandpack();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeSrc, setIframeSrc] = useState("");
 
   useEffect(() => {
+    if (onClear) onClear();
     const files = sandpack.files;
 
-    let html = files["/index.html"]?.code ?? "<!DOCTYPE html><html><head></head><body></body></html>";
+    let html =
+      files["/index.html"]?.code ?? "<!DOCTYPE html><html><head></head><body></body></html>";
 
     const styles: string[] = [];
     const scripts: string[] = [];
@@ -42,10 +50,16 @@ const StaticPreview = ({ onConsoleLog = () => { } }: { onConsoleLog?: (log: stri
         })();
       </script>
     `;
-    html = html.replace('</head>', `${styles.join("\n")}
-</head>`);
-    html = html.replace('</body>', `${consoleOverride}\n${scripts.join("\n")}
-</body>`);
+    html = html.replace(
+      "</head>",
+      `${styles.join("\n")}
+</head>`
+    );
+    html = html.replace(
+      "</body>",
+      `${consoleOverride}\n${scripts.join("\n")}
+</body>`
+    );
 
     const blob = new Blob([html], { type: "text/html" });
     const blobURL = URL.createObjectURL(blob);
@@ -57,13 +71,13 @@ const StaticPreview = ({ onConsoleLog = () => { } }: { onConsoleLog?: (log: stri
   useEffect(() => {
     if (!onConsoleLog) return;
     function handleMessage(event: MessageEvent) {
-      if (event.data && event.data.source === 'static-preview-console') {
+      if (event.data && event.data.source === "static-preview-console") {
         const { type, args } = event.data;
-        onConsoleLog(`[${type}] ${args.join(' ')}`);
+        onConsoleLog(`[${type}] ${args.join(" ")}`);
       }
     }
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [onConsoleLog]);
 
   return (

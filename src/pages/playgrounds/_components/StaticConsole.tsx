@@ -1,5 +1,3 @@
-
-
 const StaticConsole = ({ logs, onClear }: { logs: string[]; onClear: () => void }) => {
   return (
     <div className="h-full bg-white flex flex-col overflow-y-scroll">
@@ -17,7 +15,9 @@ const StaticConsole = ({ logs, onClear }: { logs: string[]; onClear: () => void 
           <div className="text-gray-400 text-center">No console output yet.</div>
         ) : (
           logs.map((log, idx) => (
-            <div key={idx} className="whitespace-pre-wrap">{log}</div>
+            <div key={idx} className="whitespace-pre-wrap">
+              {log}
+            </div>
           ))
         )}
       </div>
@@ -25,4 +25,4 @@ const StaticConsole = ({ logs, onClear }: { logs: string[]; onClear: () => void 
   );
 };
 
-export default StaticConsole; 
+export default StaticConsole;

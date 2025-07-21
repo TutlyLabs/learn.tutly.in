@@ -3,9 +3,8 @@ import {
   type SandpackPredefinedTemplate,
   SandpackPreview,
   SandpackProvider,
-  useSandpack,
 } from "@codesandbox/sandpack-react";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { TfiFullscreen } from "react-icons/tfi";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -13,9 +12,9 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import FileExplorer from "./FileExplorer";
 import MonacoEditor from "./MonacoEditor";
 import SandboxConsole from "./SandboxConsole";
+import StaticConsole from "./StaticConsole";
 import StaticPreview from "./StaticPreview";
 import SubmitAssignment from "./SubmitAssignment";
-import StaticConsole from "./StaticConsole";
 
 const defaultFiles: SandpackFiles = {
   "/index.html": `<!DOCTYPE html>
@@ -35,18 +34,6 @@ const defaultFiles: SandpackFiles = {
 `,
   "/styles.css": "",
   "/index.js": "",
-};
-
-const AutoSave = ({ assignmentId }: { assignmentId: string }) => {
-  const { sandpack } = useSandpack();
-
-  useEffect(() => {
-    if (!assignmentId) return;
-
-    localStorage.setItem(`playground-${assignmentId}`, JSON.stringify(sandpack.files));
-  }, [assignmentId, sandpack.files]);
-
-  return null;
 };
 
 const Playground = ({
@@ -71,24 +58,11 @@ const Playground = ({
     setStaticLogs([]);
   }, []);
 
-  const startingFiles = (() => {
-    if (!assignmentId) return initialFiles || defaultFiles;
-
-    const savedFiles = localStorage.getItem(`playground-${assignmentId}`);
-    if (savedFiles) {
-      try {
-        return JSON.parse(savedFiles) as SandpackFiles;
-      } catch (e) {
-        console.error("Failed to parse saved files:", e);
-      }
-    }
-    return initialFiles || defaultFiles;
-  })();
+  const startingFiles = initialFiles || defaultFiles;
 
   return (
     <div className="relative h-[95vh]">
       <SandpackProvider files={startingFiles} template={template} theme="light">
-        {assignmentId && <AutoSave assignmentId={assignmentId} />}
         {isFullScreen && (
           <div className="fixed inset-0 z-50 bg-white">
             <button
@@ -98,7 +72,7 @@ const Playground = ({
               Exit Fullscreen
             </button>
             {template === "static" ? (
-              <StaticPreview onConsoleLog={handleStaticLog} />
+              <StaticPreview onConsoleLog={handleStaticLog} onClear={handleClearStaticLogs} />
             ) : (
               <SandpackPreview
                 showNavigator
@@ -133,7 +107,7 @@ const Playground = ({
                     />
                   </div>
                   {template === "static" ? (
-                    <StaticPreview onConsoleLog={handleStaticLog} />
+                    <StaticPreview onConsoleLog={handleStaticLog} onClear={handleClearStaticLogs} />
                   ) : (
                     <SandpackPreview
                       showOpenNewtab
@@ -145,7 +119,11 @@ const Playground = ({
               </ResizablePanel>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={30}>
-                {template === "static" ? <StaticConsole logs={staticLogs} onClear={handleClearStaticLogs} /> : <SandboxConsole />}
+                {template === "static" ? (
+                  <StaticConsole logs={staticLogs} onClear={handleClearStaticLogs} />
+                ) : (
+                  <SandboxConsole />
+                )}
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
