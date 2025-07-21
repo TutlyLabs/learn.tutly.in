@@ -5,7 +5,7 @@ import {
   SandpackProvider,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { TfiFullscreen } from "react-icons/tfi";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -13,7 +13,9 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import FileExplorer from "./FileExplorer";
 import MonacoEditor from "./MonacoEditor";
 import SandboxConsole from "./SandboxConsole";
+import StaticPreview from "./StaticPreview";
 import SubmitAssignment from "./SubmitAssignment";
+import StaticConsole from "./StaticConsole";
 
 const defaultFiles: SandpackFiles = {
   "/index.html": `<!DOCTYPE html>
@@ -59,6 +61,15 @@ const Playground = ({
   template?: SandpackPredefinedTemplate;
 }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [staticLogs, setStaticLogs] = useState<string[]>([]);
+
+  const handleStaticLog = useCallback((log: string) => {
+    setStaticLogs((prev) => [...prev, log]);
+  }, []);
+
+  const handleClearStaticLogs = useCallback(() => {
+    setStaticLogs([]);
+  }, []);
 
   const startingFiles = (() => {
     if (!assignmentId) return initialFiles || defaultFiles;
@@ -86,11 +97,15 @@ const Playground = ({
             >
               Exit Fullscreen
             </button>
-            <SandpackPreview
-              showNavigator
-              showOpenInCodeSandbox={false}
-              className="h-[95vh] overflow-y-scroll"
-            />
+            {template === "static" ? (
+              <StaticPreview onConsoleLog={handleStaticLog} />
+            ) : (
+              <SandpackPreview
+                showNavigator
+                showOpenInCodeSandbox={false}
+                className="h-[95vh] overflow-y-scroll"
+              />
+            )}
           </div>
         )}
 
@@ -108,7 +123,7 @@ const Playground = ({
           <ResizableHandle />
           <ResizablePanel defaultSize={43}>
             <ResizablePanelGroup direction="vertical" className="h-[95vh] overflow-y-scroll">
-              <ResizablePanel defaultSize={95}>
+              <ResizablePanel defaultSize={70}>
                 <div className="relative h-[95vh] overflow-y-scroll">
                   <div className="border-b bg-white text-black">
                     <h1 className="text-center text-xl font-bold">Preview</h1>
@@ -117,16 +132,20 @@ const Playground = ({
                       onClick={() => setIsFullScreen(true)}
                     />
                   </div>
-                  <SandpackPreview
-                    showOpenNewtab
-                    showOpenInCodeSandbox={false}
-                    className="h-[95vh] overflow-y-scroll"
-                  />
+                  {template === "static" ? (
+                    <StaticPreview onConsoleLog={handleStaticLog} />
+                  ) : (
+                    <SandpackPreview
+                      showOpenNewtab
+                      showOpenInCodeSandbox={false}
+                      className="h-[95vh] overflow-y-scroll"
+                    />
+                  )}
                 </div>
               </ResizablePanel>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={5}>
-                <SandboxConsole />
+              <ResizablePanel defaultSize={30}>
+                {template === "static" ? <StaticConsole logs={staticLogs} onClear={handleClearStaticLogs} /> : <SandboxConsole />}
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
