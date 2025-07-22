@@ -274,7 +274,7 @@ const NewAttachmentPage = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="bg-secondary-700 bg-background text-base text-white">
-                    {classes.map((c: any) => (
+                    {(classes || []).map((c: any) => (
                       <SelectItem
                         key={c.id}
                         value={c.id}

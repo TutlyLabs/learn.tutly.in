@@ -92,15 +92,26 @@ export default function AssignmentPage({
       </h1>
 
       <div className="my-4 flex items-center justify-between text-xs font-medium md:text-sm">
-        <p className="rounded bg-secondary-500 p-1 px-2 text-white">
-          # {assignment?.class?.course?.title}
-        </p>
+        <div className="flex gap-2 items-center">
+          <p className="rounded bg-secondary-500 p-1 px-2 text-white">
+            # {assignment?.class?.course?.title}
+          </p>
+          {assignment?.class && assignment?.class?.course && (
+            <a
+              href={`/courses/${assignment.class.course.id}/classes/${assignment.class.id}`}
+              className="rounded bg-blue-500 p-1 px-2 text-white hover:bg-blue-600 transition"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {assignment.class.title}
+            </a>
+          )}
+        </div>
         <div className="flex items-center justify-center gap-4">
           {assignment?.dueDate != null && (
             <div
-              className={`rounded p-1 px-2 text-white ${
-                new Date(assignment?.dueDate) > new Date() ? "bg-primary-600" : "bg-secondary-500"
-              }`}
+              className={`rounded p-1 px-2 text-white ${new Date(assignment?.dueDate) > new Date() ? "bg-primary-600" : "bg-secondary-500"
+                }`}
             >
               Last Date : {assignment?.dueDate.toISOString().split("T")[0]}
             </div>
@@ -127,7 +138,7 @@ export default function AssignmentPage({
                 </DialogHeader>
                 {assignment && (
                   <NewAttachmentPage
-                    classes={assignment.class.course.classes}
+                    classes={assignment.course.classes}
                     courseId={assignment.courseId}
                     classId={assignment.classId}
                     isEditing={true}

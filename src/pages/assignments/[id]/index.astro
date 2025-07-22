@@ -52,6 +52,9 @@ const baseInclude = {
   class: {
     select: {
       id: true,
+      title: true,
+      videoId: true,
+      folderId: true,
       course: {
         select: {
           id: true,
@@ -140,6 +143,7 @@ const assignment = await (async (): Promise<AssignmentWithSubmissions | null> =>
                   mentorUsername: true,
                 },
               },
+              classes: true,
             },
           },
         },
@@ -251,6 +255,7 @@ const assignment = await (async (): Promise<AssignmentWithSubmissions | null> =>
                   mentorUsername: true,
                 },
               },
+              classes: true,
             },
           },
         },

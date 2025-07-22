@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { getExtension } from "@/components/useFileUpload";
 import db from "@/lib/db";
+import { env } from "@/lib/utils";
 
 export const allowedMimeTypes = [
   // Images
@@ -50,14 +51,14 @@ export const allowedMimeTypes = [
 ];
 
 const s3Client = new S3Client({
-  region: import.meta.env.AWS_BUCKET_REGION!,
+  region: env("AWS_BUCKET_REGION")!,
   credentials: {
-    accessKeyId: import.meta.env.AWS_ACCESS_KEY!,
-    secretAccessKey: import.meta.env.AWS_SECRET_KEY!,
+    accessKeyId: env("AWS_ACCESS_KEY"),
+    secretAccessKey: env("AWS_SECRET_KEY"),
   },
   // only for dev (localstack)
-  ...(import.meta.env.AWS_ENDPOINT && {
-    endpoint: import.meta.env.AWS_ENDPOINT,
+  ...(env("AWS_ENDPOINT") && {
+    endpoint: env("AWS_ENDPOINT"),
     forcePathStyle: true,
   }),
 });
@@ -93,7 +94,7 @@ export const createFileAndGetUploadUrl = defineAction({
     });
 
     const command = new PutObjectCommand({
-      Bucket: import.meta.env.AWS_BUCKET_NAME,
+      Bucket: env("AWS_BUCKET_NAME"),
       Key: `${file.fileType}/${file.internalName}`,
       ContentType: mimeType,
     });
@@ -119,7 +120,7 @@ export const getDownloadUrl = defineAction({
     }
 
     const command = new GetObjectCommand({
-      Bucket: import.meta.env.AWS_BUCKET_NAME,
+      Bucket: env("AWS_BUCKET_NAME"),
       Key: `${file.fileType}/${file.internalName}`,
     });
 
@@ -166,7 +167,7 @@ export const markFileUploaded = defineAction({
     if (!file) throw new Error("File not found");
 
     const publicUrl = file.isPublic
-      ? `${import.meta.env.AWS_S3_URL}/${file.fileType}/${file.internalName}`
+      ? `${env("AWS_S3_URL")}/${file.fileType}/${file.internalName}`
       : null;
 
     const updatedFile = await db.file.update({
@@ -194,7 +195,7 @@ export const deleteFile = defineAction({
 
     // Delete from S3
     const command = new DeleteObjectCommand({
-      Bucket: import.meta.env.AWS_BUCKET_NAME,
+      Bucket: env("AWS_BUCKET_NAME"),
       Key: `${file.fileType}/${file.internalName}`,
     });
     await s3Client.send(command);
