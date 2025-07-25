@@ -7,6 +7,7 @@ import {
   GraduationCap,
   HardDrive,
   Home,
+  Plug,
   Terminal,
   Users,
   Users2,
@@ -379,25 +380,41 @@ const StudentItems = [
   },
 ];
 
+const commonItems = [
+  {
+    title: "Integrations",
+    url: "/integrations",
+    icon: Plug,
+  },
+];
+
 export function getDefaultSidebarItems({
   role,
   isAdmin = false,
+  isIntegrationsEnabled = false,
 }: {
   role: Role;
   isAdmin?: boolean;
+  isIntegrationsEnabled?: boolean;
 }): SidebarItem[] {
-  switch (role) {
-    case "INSTRUCTOR":
-      if (isAdmin) {
-        return AdminItems as SidebarItem[];
-      } else {
-        return InstructorItems as SidebarItem[];
-      }
-    case "MENTOR":
-      return MentorItems as SidebarItem[];
-    case "STUDENT":
-      return StudentItems as SidebarItem[];
-    default:
-      return [];
+  let items: SidebarItem[] = [];
+  if (role === "INSTRUCTOR") {
+    if (isAdmin) {
+      items = AdminItems as SidebarItem[];
+    } else {
+      items = InstructorItems as SidebarItem[];
+    }
+  } else if (role === "MENTOR") {
+    items = MentorItems as SidebarItem[];
+  } else if (role === "STUDENT") {
+    items = StudentItems as SidebarItem[];
+  } else {
+    items = [];
   }
+
+  if (isIntegrationsEnabled) {
+    items = [...items, ...commonItems];
+  }
+
+  return items;
 }

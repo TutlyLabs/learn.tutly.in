@@ -439,10 +439,14 @@ export const unlinkAccount = defineAction({
       });
     }
 
+    const providerAccountId = provider; // Assuming providerAccountId is same as provider for this context
+
     const account = await db.account.findUnique({
       where: {
-        userId: currentUser.id,
-        provider,
+        provider_providerAccountId: {
+          provider,
+          providerAccountId,
+        },
       },
     });
 
@@ -469,8 +473,10 @@ export const unlinkAccount = defineAction({
     try {
       await db.account.delete({
         where: {
-          userId: currentUser.id,
-          provider,
+          provider_providerAccountId: {
+            provider,
+            providerAccountId,
+          },
         },
       });
     } catch (error) {

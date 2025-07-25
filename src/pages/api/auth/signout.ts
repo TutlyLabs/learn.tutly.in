@@ -24,10 +24,20 @@ export const GET: APIRoute = async ({ cookies }) => {
     path: "/",
   });
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: "/sign-in",
-    },
-  });
+  return new Response(
+    `
+    <script>
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+      }
+      window.location.href = '/sign-in';
+    </script>
+  `,
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html",
+      },
+    }
+  );
 };

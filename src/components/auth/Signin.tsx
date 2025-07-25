@@ -24,10 +24,17 @@ const signInSchema = z.object({
 
 type SignInInput = z.infer<typeof signInSchema>;
 
-export function SignIn() {
+export function SignIn({
+  isGoogleSignInEnabled,
+  isGithubSignInEnabled,
+}: {
+  isGoogleSignInEnabled: boolean | undefined;
+  isGithubSignInEnabled: boolean | undefined;
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
 
   const form = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
@@ -52,27 +59,41 @@ export function SignIn() {
     }
   }, []);
 
-  // const handleGoogleSignIn = async () => {
-  //   try {
-  //     setIsGoogleLoading(true);
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
 
-  //     const currentUrl = new URL(window.location.href);
-  //     const error = currentUrl.searchParams.get("error");
+      const currentUrl = new URL(window.location.href);
+      const error = currentUrl.searchParams.get("error");
 
-  //     if (error) {
-  //       throw new Error(decodeURIComponent(error).replace(/\+/g, " "));
-  //     }
+      if (error) {
+        throw new Error(decodeURIComponent(error).replace(/\+/g, " "));
+      }
 
-  //     window.location.href = "/api/auth/signin/google";
-  //   } catch (error) {
-  //     toast.error(error instanceof Error ? error.message : "Failed to initiate Google sign in", {
-  //       duration: 3000,
-  //       position: "top-center",
-  //     });
-  //   } finally {
-  //     setIsGoogleLoading(false);
-  //   }
-  // };
+      window.location.href = "/api/auth/signin/google";
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to initiate Google sign in", {
+        duration: 3000,
+        position: "top-center",
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    try {
+      setIsGithubLoading(true);
+      window.location.href = "/api/auth/signin/github";
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to initiate GitHub sign in", {
+        duration: 3000,
+        position: "top-center",
+      });
+    } finally {
+      setIsGithubLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-2">
@@ -151,17 +172,42 @@ export function SignIn() {
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
-            {/* <div className="mt-6 flex flex-col gap-3">
-              <Button
-                variant="outline"
-                className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30"
-                onClick={handleGoogleSignIn}
-                disabled={isGoogleLoading || isLoading}
-              >
-                {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
-              </Button>
-            </div> */}
+            {(isGoogleSignInEnabled || isGithubSignInEnabled) && (
+              <div className="mt-3 flex flex-col gap-3">
+                {isGoogleSignInEnabled && (
+                  <Button
+                    variant="outline"
+                    className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30 flex items-center justify-center gap-2"
+                    onClick={handleGoogleSignIn}
+                    disabled={isGoogleLoading || isLoading}
+                  >
+                    <img
+                      src="/integrations/google.png"
+                      alt="Google logo"
+                      style={{ width: 20, height: 20 }}
+                    />
+                    {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
+                  </Button>
+                )}
+                {isGithubSignInEnabled && (
+                  <Button
+                    variant="outline"
+                    className="w-full backdrop-blur-sm bg-white/20 dark:bg-gray-900/20 border-white/30 dark:border-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-800/30 flex items-center justify-center gap-2"
+                    onClick={handleGithubSignIn}
+                    disabled={isGithubLoading || isLoading}
+                  >
+                    <img
+                      src="/integrations/github.png"
+                      alt="GitHub logo"
+                      className="rounded-full w-5 h-5 bg-white"
+                    />
+                    {isGithubLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isGithubLoading ? "Connecting..." : "Sign in with GitHub"}
+                  </Button>
+                )}
+              </div>
+            )}
           </Form>
         </CardContent>
       </Card>

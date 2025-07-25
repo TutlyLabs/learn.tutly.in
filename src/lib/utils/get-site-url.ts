@@ -1,8 +1,7 @@
-// import { env } from "@/lib/utils";
+import { env } from "@/lib/utils";
 
 const getSiteUrl = () => {
-  return "https://learn.tutly.in";
-  // return env("SITE") || "http://localhost:4321";
+  return env("FRONTEND_URL") || "https://learn.tutly.in";
 };
 
 export { getSiteUrl };

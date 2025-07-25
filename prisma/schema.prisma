@@ -477,8 +477,12 @@ model Account {
   session_state     String?
   expires_at        Int?
 
+  username   String?
+  email      String?
+  avatar_url String?
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @unique
+  userId String
 
   @@unique([provider, providerAccountId])
 }
