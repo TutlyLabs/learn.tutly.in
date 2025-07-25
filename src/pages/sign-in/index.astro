@@ -1,9 +1,25 @@
 ---
 import { SignIn } from "@/components/auth/Signin";
-
+import { posthog } from "@/lib/posthog";
 import AuthLayout from "@layouts/AuthLayout.astro";
+
+const user = Astro.locals.user;
+
+const isGoogleSignInEnabled = await posthog.isFeatureEnabled(
+  "google_sign_in",
+  user?.id ?? "unauthenticated"
+);
+
+const isGithubSignInEnabled = await posthog.isFeatureEnabled(
+  "github_sign_in",
+  user?.id ?? "unauthenticated"
+);
 ---
 
 <AuthLayout title="Sign in">
-  <SignIn client:load />
+  <SignIn
+    client:load
+    isGoogleSignInEnabled={isGoogleSignInEnabled}
+    isGithubSignInEnabled={isGithubSignInEnabled}
+  />
 </AuthLayout>

@@ -16,9 +16,11 @@ import * as mentors from "./mentors";
 import * as notes from "./notes";
 // import * as resend from "./resend";
 import * as notifications from "./notifications";
+import * as oauth from "./oauth";
 import * as points from "./points";
 import * as report from "./report";
 import * as resetPassword from "./reset-password";
+import * as sandbox from "./sandbox";
 import * as schedule from "./schedule";
 import * as statistics from "./statistics";
 import * as submissions from "./submission";
@@ -47,4 +49,6 @@ export const server = {
   ...groupActions("holidays", holidays, "_"),
   ...groupActions("reset_password", resetPassword, "_"),
   ...groupActions("folders", folders, "_"),
+  ...groupActions("sandbox", sandbox, "_"),
+  ...groupActions("oauth", oauth, "_"),
 };

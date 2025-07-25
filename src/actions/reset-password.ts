@@ -5,9 +5,9 @@ import { z } from "zod";
 
 import OTPEmailTemplate from "@/components/email/OTPEmailTemplate";
 import db from "@/lib/db";
+import { env } from "@/lib/utils";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const resend = new Resend(RESEND_API_KEY);
+const resend = new Resend(env("RESEND_API_KEY"));
 
 export const sendOTPAction = defineAction({
   input: z.object({

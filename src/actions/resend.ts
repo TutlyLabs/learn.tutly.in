@@ -1,8 +1,9 @@
 import { Resend } from "resend";
 
 import LoginTemplete from "@/components/email/LoginTemplete";
+import { env } from "@/lib/utils";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(env("RESEND_API_KEY"));
 
 export const sendEmail = async ({
   email,

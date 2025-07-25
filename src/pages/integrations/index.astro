@@ -1,0 +1,70 @@
+---
+import RootLayout from "@/layouts/RootLayout.astro";
+import { posthog } from "@/lib/posthog";
+import { SandboxIntegration } from "./_components/Sandbox";
+import { ZoomIntegration } from "./_components/Zoom";
+import { GithubIntegration } from "./_components/Github";
+import { GoogleIntegration } from "./_components/Google";
+import db from "@/lib/db";
+
+const currentUser = Astro.locals.user;
+if (!currentUser) return null;
+
+const isIntegrationsEnabled = await posthog.isFeatureEnabled("integrations_tab", currentUser.id);
+if (!isIntegrationsEnabled) {
+  return Astro.redirect("/");
+}
+
+const features = (await posthog.getFeatureFlagPayload("integrations_tab", currentUser.id)) as
+  | {
+      codesandbox?: boolean;
+      github?: boolean;
+      google?: boolean;
+      zoom?: boolean;
+    }
+  | undefined;
+
+let sandbox = await db.account.findFirst({
+  where: {
+    userId: currentUser.id,
+    provider: "codesandbox",
+  },
+});
+
+if (sandbox && sandbox.access_token) {
+  const token = sandbox.access_token;
+  if (token.length > 6) {
+    sandbox.access_token = token.slice(0, 7) + "*".repeat(25) + token.slice(-3);
+  } else {
+    sandbox.access_token = "*".repeat(token.length);
+  }
+}
+
+let github = await db.account.findFirst({
+  where: {
+    userId: currentUser.id,
+    provider: "github",
+  },
+});
+
+let google = await db.account.findFirst({
+  where: {
+    userId: currentUser.id,
+    provider: "google",
+  },
+});
+
+let zoom = await db.account.findFirst({
+  where: {
+    userId: currentUser.id,
+    provider: "zoom",
+  },
+});
+---
+
+<RootLayout title="Integrations">
+  {features?.codesandbox && <SandboxIntegration sandbox={sandbox ?? undefined} client:only />}
+  {features?.zoom && <ZoomIntegration zoom={zoom ?? undefined} client:only />}
+  {features?.github && <GithubIntegration github={github ?? undefined} client:only />}
+  {features?.google && <GoogleIntegration google={google ?? undefined} client:only />}
+</RootLayout>

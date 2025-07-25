@@ -34,12 +34,23 @@ interface AppSidebarProps {
   forceClose?: boolean;
   className?: string;
   pathname: string;
+  isIntegrationsEnabled: boolean | undefined;
 }
 
-export function AppSidebar({ user, forceClose = false, className, pathname }: AppSidebarProps) {
+export function AppSidebar({
+  user,
+  forceClose = false,
+  className,
+  pathname,
+  isIntegrationsEnabled,
+}: AppSidebarProps) {
   const organizationName = "Tutly";
 
-  const sidebarItems = getDefaultSidebarItems({ role: user.role, isAdmin: user.isAdmin });
+  const sidebarItems = getDefaultSidebarItems({
+    role: user.role,
+    isAdmin: user.isAdmin,
+    isIntegrationsEnabled: isIntegrationsEnabled ?? false,
+  });
   const [isOpen, setIsOpen] = useState(() => !forceClose);
 
   useEffect(() => {
