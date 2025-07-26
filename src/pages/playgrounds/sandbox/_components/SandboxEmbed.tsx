@@ -4,10 +4,11 @@ import {
   SandpackProvider,
   SandpackCodeEditor,
   SandpackPreview,
-  SandpackFileExplorer,
   SandpackConsole,
   SandpackTheme,
 } from "@codesandbox/sandpack-react";
+// @ts-ignore
+import { SandpackFileExplorer } from 'sandpack-file-explorer';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import "./styles.css";
 import { SandpackPredefinedTemplate } from "@codesandbox/sandpack-react";
@@ -23,9 +24,9 @@ const glassyTheme: SandpackTheme = {
     surface3: "#222225",
     disabled: "#706e77",
     base: "#edecee",
-    clickable: "#2fc8ee",
-    hover: "#68ddfd",
-    accent: "#25d0ab",
+    clickable: "#a1a0a7",
+    hover: "#edecee",
+    accent: "#00e0b8",
     error: "#ff666b",
     errorSurface: "rgba(255, 102, 107, 0.1)",
     warning: "#f0c000",
@@ -72,20 +73,13 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
               background: 'linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)',
               borderColor: 'rgba(100, 100, 100, 0.2)'
             }}>
-              <div className="p-3 h-[42px] border-b backdrop-blur-xl flex-shrink-0 rounded-tl-xl" style={{
-                borderColor: 'rgba(60, 60, 60, 0.4)',
-                background: 'linear-gradient(90deg, rgba(10, 10, 10, 0.98) 0%, rgba(25, 25, 25, 0.95) 100%)'
-              }}>
-                <h3 className="text-sm font-semibold flex items-center" style={{ color: '#ffffff' }}>
-                  <span className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm" style={{
-                    backgroundColor: '#10b981',
-                    boxShadow: '0 0 4px rgba(16, 185, 129, 0.5)'
-                  }}></span>
-                  Files
-                </h3>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <SandpackFileExplorer style={{ height: '100%' }} />
+              <div
+                className="flex-1 overflow-y-auto file-explorer"
+                style={{
+                  '--sp-layout-height': '95vh',
+                } as React.CSSProperties}
+              >
+                <SandpackFileExplorer />
               </div>
             </div>
           </ResizablePanel>
