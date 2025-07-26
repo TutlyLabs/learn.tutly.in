@@ -63,7 +63,7 @@ let zoom = await db.account.findFirst({
 ---
 
 <RootLayout title="Integrations">
-  <SandboxIntegration sandbox={sandbox ?? undefined} client:only="react" />
+  {features?.codesandbox && <SandboxIntegration sandbox={sandbox ?? undefined} client:only="react" />}
   {features?.zoom && <ZoomIntegration zoom={zoom ?? undefined} client:only="react" />}
   {features?.github && <GithubIntegration github={github ?? undefined} client:only="react" />}
   {features?.google && <GoogleIntegration google={google ?? undefined} client:only="react" />}
