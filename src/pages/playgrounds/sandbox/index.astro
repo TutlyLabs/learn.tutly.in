@@ -1,0 +1,34 @@
+---
+import RootLayout from "@/layouts/RootLayout.astro";
+import { SandboxEmbed } from "./_components/SandboxEmbed";
+import { SandboxHeader } from "./_components/SandboxHeader";
+import { posthog } from "@/lib/posthog";
+
+const id = Astro.url.searchParams.get("id");
+const currentUser = Astro.locals.user;
+
+if (!id) {
+  return Astro.redirect("/playgrounds");
+}
+
+if (!currentUser) {
+  return Astro.redirect("/auth/signin");
+}
+
+const isSandboxEnabled = await posthog.isFeatureEnabled("sandbox_templates", currentUser?.id);
+
+if (!isSandboxEnabled) {
+  return Astro.redirect("/playgrounds");
+}
+
+Astro.response.headers.set("X-Frame-Options", "ALLOWALL");
+---
+
+<RootLayout title={`Playground - ${id}`} forceClose className="!p-0 pr-2">
+  <div class="h-screen flex flex-col rounded overflow-hidden">
+    <SandboxHeader sandboxId={id} client:only="react" />
+    <div class="flex-1">
+      <SandboxEmbed sandboxId={id} client:only="react" />
+    </div>
+  </div>
+</RootLayout>

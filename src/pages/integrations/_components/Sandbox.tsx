@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Account } from "@prisma/client";
 import { actions } from "astro:actions";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, XCircle, SkipForward } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,7 +36,12 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
 
   const [checking, setChecking] = useState(false);
   const [showChecks, setShowChecks] = useState(false);
-  const [results, setResults] = useState<any>({
+  const [results, setResults] = useState<{
+    create: { ok: boolean | null | "skipped"; error?: string } | null;
+    read: { ok: boolean | null | "skipped"; error?: string } | null;
+    edit: { ok: boolean | null | "skipped"; error?: string } | null;
+    vmManage: { ok: boolean | null | "skipped"; error?: string } | null;
+  }>({
     create: null,
     read: null,
     edit: null,
@@ -60,36 +65,118 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
     setChecking(true);
     setShowChecks(true);
     setResults({ create: null, read: null, edit: null, vmManage: null });
+
     try {
-      const resp = await actions.sandbox_checkAllPermissions({ apiKey: values.apiKey });
-      if (resp?.data?.results) {
-        setResults(resp.data.results);
-        const allPassed = Object.values(resp.data.results).every((r: any) => r && r.ok);
-        if (allPassed) {
-          try {
-            const saveResult = await actions.sandbox_saveCodesandboxAccount({
+      // Step 1: Create sandbox
+      setResults((prev) => ({ ...prev, create: { ok: null } }));
+      const createResult = await actions.sandbox_createSandbox({ apiKey: values.apiKey });
+      if (createResult?.data?.ok && createResult.data.sandboxId) {
+        setResults((prev) => ({ ...prev, create: { ok: true } }));
+        const sandboxId = createResult.data.sandboxId;
+
+        // Step 2: Check read permission
+        setResults((prev) => ({ ...prev, read: { ok: null } }));
+        const readResult = await actions.sandbox_checkReadPermission({ apiKey: values.apiKey });
+        if (readResult?.data?.ok) {
+          setResults((prev) => ({ ...prev, read: { ok: true } }));
+
+          // Step 3: Check edit permission
+          setResults((prev) => ({ ...prev, edit: { ok: null } }));
+          const editResult = await actions.sandbox_checkEditPermission({
+            apiKey: values.apiKey,
+            sandboxId
+          });
+          if (editResult?.data?.ok) {
+            setResults((prev) => ({ ...prev, edit: { ok: true } }));
+
+            // Step 4: Check VM manage permission
+            setResults((prev) => ({ ...prev, vmManage: { ok: null } }));
+            const vmResult = await actions.sandbox_checkVMManagePermission({
               apiKey: values.apiKey,
+              sandboxId
             });
-            if (saveResult?.data?.ok) {
-              toast.success("API key is valid, has all required permissions, and is now saved!");
-              setEditMode(false);
+            if (vmResult?.data?.ok) {
+              setResults((prev) => ({ ...prev, vmManage: { ok: true } }));
+
+              // All checks passed - save the account
+              try {
+                const saveResult = await actions.sandbox_saveCodesandboxAccount({
+                  apiKey: values.apiKey,
+                });
+                if (saveResult?.data?.ok) {
+                  toast.success("API key is valid, has all required permissions, and is now saved!");
+                  setEditMode(false);
+                } else {
+                  toast.error("API key validated but failed to save in database.");
+                }
+              } catch (e) {
+                toast.error("API key validated but error saving in database.");
+              }
+
+              // Cleanup the test sandbox
+              try {
+                await actions.sandbox_cleanupTestSandbox({ apiKey: values.apiKey, sandboxId });
+              } catch (e) {
+                // Ignore cleanup errors
+              }
+
+              setChecking(false);
+              return;
             } else {
-              toast.error("API key validated but failed to save in database.");
+              setResults((prev) => ({
+                ...prev,
+                vmManage: {
+                  ok: false,
+                  error: vmResult?.data?.error || "VM Manage failed"
+                }
+              }));
+              toast.error(vmResult?.data?.error || "VM Manage permission check failed.");
             }
-          } catch (e) {
-            toast.error("API key validated but error saving in database.");
+          } else {
+            setResults((prev) => ({
+              ...prev,
+              edit: {
+                ok: false,
+                error: editResult?.data?.error || "Edit failed"
+              },
+              vmManage: { ok: "skipped" }
+            }));
+            toast.error(editResult?.data?.error || "Edit permission check failed.");
           }
         } else {
-          const firstError = Object.values(resp.data.results).find(
-            (r: any) => r && r.ok === false && r.error
-          )?.error;
-          toast.error(firstError || "API key is missing one or more required permissions.");
+          setResults((prev) => ({
+            ...prev,
+            read: {
+              ok: false,
+              error: readResult?.data?.error || "Read failed"
+            },
+            edit: { ok: "skipped" },
+            vmManage: { ok: "skipped" }
+          }));
+          toast.error(readResult?.data?.error || "Read permission check failed.");
+        }
+
+        // Cleanup the test sandbox
+        try {
+          await actions.sandbox_cleanupTestSandbox({ apiKey: values.apiKey, sandboxId });
+        } catch (e) {
+          // Ignore cleanup errors
         }
       } else {
-        toast.error("Unexpected error validating API key.");
+        setResults((prev) => ({
+          ...prev,
+          create: {
+            ok: false,
+            error: createResult?.data?.error || "Creation failed"
+          },
+          read: { ok: "skipped" },
+          edit: { ok: "skipped" },
+          vmManage: { ok: "skipped" }
+        }));
+        toast.error(createResult?.data?.error || "Sandbox creation failed.");
       }
     } catch (err: any) {
-      toast.error(err?.message || "API key is missing one or more required permissions.");
+      toast.error(err?.message || "An unexpected error occurred during validation.");
     } finally {
       setChecking(false);
     }
@@ -189,7 +276,7 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
           {showChecks && editMode && (
             <div className="mt-6 flex flex-col items-center justify-center">
               <div className="bg-transparent rounded-lg p-6 w-full max-w-sm flex flex-col gap-4 border">
-                <h4 className="text-center text-base font-semibold mb-2">Permission Checks</h4>
+                <h4 className="text-center text-base font-semibold mb-2">Preflight Checks</h4>
                 <PermissionCheck label="Sandbox Creation" result={results.create} />
                 <PermissionCheck label="Sandbox Read" result={results.read} />
                 <PermissionCheck label="Sandbox Edit" result={results.edit} />
@@ -203,20 +290,31 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
   );
 };
 
-function PermissionCheck({ label, result }: { label: string; result: any }) {
+function PermissionCheck({
+  label,
+  result
+}: {
+  label: string;
+  result: { ok: boolean | null | "skipped"; error?: string } | null
+}) {
   let icon = <Loader2 className="animate-spin w-4 h-4 text-gray-400" />;
   let errorMsg = "";
-  if (result && result.ok) {
+
+  if (result && result.ok === true) {
     icon = <CheckCircle2 className="text-green-600 w-4 h-4" />;
   } else if (result && result.ok === false) {
     icon = <XCircle className="text-red-600 w-4 h-4" />;
     errorMsg = result.error || "";
+  } else if (result && result.ok === "skipped") {
+    icon = <SkipForward className="w-4 h-4 text-gray-400" />;
   }
+
   return (
     <div className="flex items-center gap-2">
       <span className="flex-shrink-0">{icon}</span>
       <span className="font-medium">{label}</span>
       {errorMsg && <span className="text-xs text-red-500 ml-2">{errorMsg}</span>}
+      {result?.ok === "skipped" && <span className="text-xs text-gray-500 ml-2">Skipped</span>}
     </div>
   );
 }

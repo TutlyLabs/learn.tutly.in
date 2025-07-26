@@ -25,6 +25,12 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, url, request
     }
   }
 
+  if (url.hostname.includes("codesandbox.io")) {
+    const response = await next();
+    logRequest(request.method, pathname, response.status, Date.now() - start, null, requestBody);
+    return response;
+  }
+
   if (
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/reset-password") ||
