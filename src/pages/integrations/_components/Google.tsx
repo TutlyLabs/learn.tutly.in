@@ -50,7 +50,7 @@ export const GoogleIntegration = ({ google }: { google?: Account | undefined }) 
               <div className="flex items-center justify-between bg-white dark:bg-gray-900 border rounded-lg p-4 shadow-sm">
                 <span className="text-gray-700 dark:text-gray-200">Not linked</span>
                 <a
-                  href="/api/auth/signin/google"
+                  href="/api/auth/signin/google?link=true"
                   className="inline-block px-4 py-2 bg-[#4285F4] text-white rounded hover:bg-[#357ae8] transition-colors text-xs"
                 >
                   Link Google

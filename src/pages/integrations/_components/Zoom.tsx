@@ -48,7 +48,7 @@ export const ZoomIntegration = ({ zoom }: { zoom?: Account | undefined }) => {
               <div className="flex items-center justify-between bg-white dark:bg-gray-900 border rounded-lg p-4 shadow-sm">
                 <span className="text-gray-700 dark:text-gray-200">Not linked</span>
                 <a
-                  href="/api/auth/signin/zoom"
+                  href="/api/auth/signin/zoom?link=true"
                   className="inline-block px-4 py-2 bg-[#2D8CFF] text-white rounded hover:bg-[#1a6ed8] transition-colors text-xs"
                 >
                   Link Zoom
