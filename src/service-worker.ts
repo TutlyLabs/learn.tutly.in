@@ -14,7 +14,10 @@ clientsClaim();
 self.skipWaiting();
 
 registerRoute(
-  ({ request }) => request.mode === "navigate",
+  ({ request }) =>
+    request.mode === "navigate" &&
+    !request.url.includes("/api/") &&
+    !request.url.includes("/_actions"),
   new StaleWhileRevalidate({
     cacheName: "pages-cache",
   })

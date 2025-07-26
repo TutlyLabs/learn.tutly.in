@@ -6,6 +6,7 @@ import { env } from "@/lib/utils";
 
 export const GET: APIRoute = async ({ cookies, url, redirect }) => {
   const storedState = cookies.get("zoom_oauth_state")?.value;
+  const isLinking = cookies.get("zoom_oauth_link")?.value === "true";
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
 
@@ -102,21 +103,27 @@ export const GET: APIRoute = async ({ cookies, url, redirect }) => {
     },
   });
 
-  // Create session
-  const session = await db.session.create({
-    data: {
-      userId: userWithAccounts.id,
-      userAgent: "Zoom OAuth",
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    },
-  });
+  // Clean up link cookie
+  cookies.delete("zoom_oauth_link", { path: "/" });
 
-  cookies.set(AUTH_COOKIE_NAME, session.id, {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    expires: session.expiresAt,
-  });
+  // Only create session if not linking
+  if (!isLinking) {
+    // Create session
+    const session = await db.session.create({
+      data: {
+        userId: userWithAccounts.id,
+        userAgent: "Zoom OAuth",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      },
+    });
+
+    cookies.set(AUTH_COOKIE_NAME, session.id, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      expires: session.expiresAt,
+    });
+  }
 
   return redirect("/integrations");
 };

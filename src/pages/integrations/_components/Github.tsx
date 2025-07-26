@@ -66,7 +66,7 @@ export const GithubIntegration = ({ github }: { github?: Account | undefined }) 
               <div className="flex items-center justify-between bg-white dark:bg-gray-900 border rounded-lg p-4 shadow-sm">
                 <span className="text-gray-700 dark:text-gray-200">Not linked</span>
                 <a
-                  href="/api/auth/signin/github"
+                  href="/api/auth/signin/github?link=true"
                   className="inline-block px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors text-xs"
                 >
                   Link GitHub

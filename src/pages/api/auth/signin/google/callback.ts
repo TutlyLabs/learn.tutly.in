@@ -8,6 +8,7 @@ import db from "@/lib/db";
 export const GET: APIRoute = async ({ cookies, url, redirect }) => {
   const storedState = cookies.get("google_oauth_state")?.value;
   const codeVerifier = cookies.get("google_code_verifier")?.value;
+  const isLinking = cookies.get("google_oauth_link")?.value === "true";
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
 
@@ -94,21 +95,27 @@ export const GET: APIRoute = async ({ cookies, url, redirect }) => {
     },
   });
 
-  // 3. Create session
-  const session = await db.session.create({
-    data: {
-      userId: userWithAccounts.id,
-      userAgent: "Google OAuth",
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    },
-  });
+  // Clean up link cookie
+  cookies.delete("google_oauth_link", { path: "/" });
 
-  cookies.set(AUTH_COOKIE_NAME, session.id, {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    expires: session.expiresAt,
-  });
+  // Only create session if not linking
+  if (!isLinking) {
+    // 3. Create session
+    const session = await db.session.create({
+      data: {
+        userId: userWithAccounts.id,
+        userAgent: "Google OAuth",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      },
+    });
 
-  return redirect("/dashboard");
+    cookies.set(AUTH_COOKIE_NAME, session.id, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      expires: session.expiresAt,
+    });
+  }
+
+  return redirect("/integrations");
 };

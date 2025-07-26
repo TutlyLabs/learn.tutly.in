@@ -6,6 +6,7 @@ import db from "@/lib/db";
 
 export const GET: APIRoute = async ({ cookies, url, redirect }) => {
   const storedState = cookies.get("github_oauth_state")?.value;
+  const isLinking = cookies.get("github_oauth_link")?.value === "true";
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
 
@@ -94,21 +95,26 @@ export const GET: APIRoute = async ({ cookies, url, redirect }) => {
     },
   });
 
-  // Create session
-  const session = await db.session.create({
-    data: {
-      userId: userWithAccounts.id,
-      userAgent: "GitHub OAuth",
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    },
-  });
+  // Clean up link cookie
+  cookies.delete("github_oauth_link", { path: "/" });
 
-  cookies.set(AUTH_COOKIE_NAME, session.id, {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    expires: session.expiresAt,
-  });
+  if (!isLinking) {
+    // Create session
+    const session = await db.session.create({
+      data: {
+        userId: userWithAccounts.id,
+        userAgent: "GitHub OAuth",
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      },
+    });
+
+    cookies.set(AUTH_COOKIE_NAME, session.id, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      expires: session.expiresAt,
+    });
+  }
 
   return redirect("/integrations");
 };
