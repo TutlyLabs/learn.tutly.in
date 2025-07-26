@@ -13,9 +13,10 @@ interface Props {
   title?: string;
   forceClose?: boolean;
   className?: string;
+  hideHeader?: boolean;
 }
 
-const { title = "Tutly", forceClose = false, className } = Astro.props;
+const { title = "Tutly", forceClose = false, className, hideHeader = false } = Astro.props;
 
 const pathname = Astro.url.pathname;
 const user = Astro.locals.user!;
@@ -76,7 +77,7 @@ globalThis.pathname = pathname;
             />
           </div>
           <main class="w-full">
-            <AppHeader client:load user={user} pathname={pathname} />
+            {!hideHeader && <AppHeader client:load user={user} pathname={pathname} />}
             <div class={`p-4 ${className}`}>
               <slot />
             </div>

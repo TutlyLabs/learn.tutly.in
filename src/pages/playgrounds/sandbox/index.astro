@@ -3,13 +3,11 @@ import RootLayout from "@/layouts/RootLayout.astro";
 import { SandboxEmbed } from "./_components/SandboxEmbed";
 import { SandboxHeader } from "./_components/SandboxHeader";
 import { posthog } from "@/lib/posthog";
+import { SANDBOX_TEMPLATES, SandpackPredefinedTemplate } from "@codesandbox/sandpack-react";
 
-const id = Astro.url.searchParams.get("id");
+const template = Astro.url.searchParams.get("template") || "react";
+const templateName = Astro.url.searchParams.get("name") || "React";
 const currentUser = Astro.locals.user;
-
-if (!id) {
-  return Astro.redirect("/playgrounds");
-}
 
 if (!currentUser) {
   return Astro.redirect("/auth/signin");
@@ -21,14 +19,19 @@ if (!isSandboxEnabled) {
   return Astro.redirect("/playgrounds");
 }
 
+const validTemplates = Object.keys(SANDBOX_TEMPLATES);
+if (!validTemplates.includes(template)) {
+  return Astro.redirect("/playgrounds");
+}
+
 Astro.response.headers.set("X-Frame-Options", "ALLOWALL");
 ---
 
-<RootLayout title={`Playground - ${id}`} forceClose className="!p-0 pr-2">
-  <div class="h-screen flex flex-col rounded overflow-hidden">
-    <SandboxHeader sandboxId={id} client:only="react" />
-    <div class="flex-1">
-      <SandboxEmbed sandboxId={id} client:only="react" />
+<RootLayout title={`${templateName} Playground`} forceClose className="!p-0" hideHeader>
+  <div class="h-screen w-full flex flex-col bg-background overflow-hidden">
+    <SandboxHeader templateName={templateName} client:only="react" />
+    <div class="flex-1 w-full h-full overflow-hidden">
+      <SandboxEmbed template={template as SandpackPredefinedTemplate} client:only="react" />
     </div>
   </div>
 </RootLayout>

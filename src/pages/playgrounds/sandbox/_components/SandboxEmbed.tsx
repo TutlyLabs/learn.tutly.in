@@ -1,49 +1,197 @@
 "use client";
 
-import { useState } from "react";
+import {
+  SandpackProvider,
+  SandpackCodeEditor,
+  SandpackPreview,
+  SandpackFileExplorer,
+  SandpackConsole,
+  SandpackTheme,
+} from "@codesandbox/sandpack-react";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import "./styles.css";
+import { SandpackPredefinedTemplate } from "@codesandbox/sandpack-react";
 
 interface SandboxEmbedProps {
-  sandboxId: string;
+  template: SandpackPredefinedTemplate;
 }
 
-export function SandboxEmbed({ sandboxId }: SandboxEmbedProps) {
-  const [error, setError] = useState<string | null>(null);
+const glassyTheme: SandpackTheme = {
+  colors: {
+    surface1: "#161618",
+    surface2: "#1d1d20",
+    surface3: "#222225",
+    disabled: "#706e77",
+    base: "#edecee",
+    clickable: "#2fc8ee",
+    hover: "#68ddfd",
+    accent: "#25d0ab",
+    error: "#ff666b",
+    errorSurface: "rgba(255, 102, 107, 0.1)",
+    warning: "#f0c000",
+    warningSurface: "rgba(240, 192, 0, 0.1)",
+  },
+  syntax: {
+    plain: "#edecee",
+    comment: {
+      color: "#a1a0a7",
+      fontStyle: "italic",
+    },
+    keyword: "#8099ff",
+    tag: "#f76e99",
+    punctuation: "#bf7af0",
+    definition: "#9f8dfc",
+    property: "#00c1d6",
+    static: "#ffc266",
+    string: "#70e1c8",
+  },
+  font: {
+    body: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
+    mono: '"JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace',
+    size: "14px",
+    lineHeight: "1.6",
+  },
+};
 
-  const iframeSrc = `https://codesandbox.io/p/sandbox/${sandboxId}?embed=1&file=%2Findex.html`;
-
-  const handleIframeError = () => {
-    setError("Failed to load sandbox");
-  };
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <a
-            href={`https://codesandbox.io/s/${sandboxId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Open in CodeSandbox
-          </a>
-        </div>
-      </div>
-    );
-  }
-
+export function SandboxEmbed({ template }: SandboxEmbedProps) {
   return (
-    <div className="relative h-full">
-      <iframe
-        src={iframeSrc}
-        className="h-full w-full border-0"
-        title="CodeSandbox"
-        allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-        sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-        onError={handleIframeError}
-        referrerPolicy="unsafe-url"
-      />
+    <div className="h-full w-full relative">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-black"></div>
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, rgba(30, 30, 30, 0.3) 0%, transparent 70%)' }}></div>
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at bottom right, rgba(37, 208, 171, 0.02) 0%, transparent 60%)' }}></div>
+
+      <SandpackProvider
+        template={template}
+        theme={glassyTheme}
+      >
+        <ResizablePanelGroup direction="horizontal" className="h-full w-full min-h-[calc(100vh-3rem)] relative z-10">
+          {/* File Explorer */}
+          <ResizablePanel defaultSize={18} minSize={15} maxSize={25}>
+            <div className="w-full backdrop-blur-xl border-r flex flex-col h-full rounded-l-xl shadow-2xl" style={{
+              background: 'linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)',
+              borderColor: 'rgba(100, 100, 100, 0.2)'
+            }}>
+              <div className="p-3 h-[42px] border-b backdrop-blur-xl flex-shrink-0 rounded-tl-xl" style={{
+                borderColor: 'rgba(60, 60, 60, 0.4)',
+                background: 'linear-gradient(90deg, rgba(10, 10, 10, 0.98) 0%, rgba(25, 25, 25, 0.95) 100%)'
+              }}>
+                <h3 className="text-sm font-semibold flex items-center" style={{ color: '#ffffff' }}>
+                  <span className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm" style={{
+                    backgroundColor: '#10b981',
+                    boxShadow: '0 0 4px rgba(16, 185, 129, 0.5)'
+                  }}></span>
+                  Files
+                </h3>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <SandpackFileExplorer style={{ height: '100%' }} />
+              </div>
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)' }} className="hover:opacity-80 transition-opacity" />
+
+          {/* Editor and Preview */}
+          <ResizablePanel defaultSize={82}>
+            <ResizablePanelGroup direction="horizontal" className="h-full">
+              {/* Editor */}
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <div className="flex flex-col h-full backdrop-blur-xl shadow-2xl" style={{
+                  backgroundColor: 'rgba(0, 0, 0, 1)'
+                }}>
+                  <SandpackCodeEditor
+                    showTabs
+                    showLineNumbers
+                    showInlineErrors
+                    wrapContent
+                    closableTabs
+                    style={{
+                      height: '100%',
+                      flex: 1,
+                    }}
+                  />
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)' }} className="hover:opacity-80 transition-opacity" />
+
+              {/* Preview and Console */}
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <ResizablePanelGroup direction="vertical" className="h-full">
+                  {/* Preview */}
+                  <ResizablePanel defaultSize={70} minSize={40}>
+                    <div className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl" style={{
+                      borderColor: 'rgba(100, 100, 100, 0.2)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.95)'
+                    }}>
+                      <div className="h-[42px] backdrop-blur-xl border-b flex items-center px-4 flex-shrink-0" style={{
+                        borderColor: 'rgba(100, 100, 100, 0.2)',
+                        background: 'linear-gradient(90deg, rgba(20, 20, 20, 0.9) 0%, rgba(40, 40, 40, 0.8) 100%)'
+                      }}>
+                        <div className="text-sm font-semibold flex items-center" style={{ color: '#ffffff' }}>
+                          <span className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm" style={{
+                            backgroundColor: '#f59e0b',
+                            boxShadow: '0 0 4px rgba(245, 158, 11, 0.5)'
+                          }}></span>
+                          Preview
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <SandpackPreview
+                          showOpenInCodeSandbox={false}
+                          showRefreshButton
+                          showSandpackErrorOverlay={false}
+                          showOpenNewtab
+                          style={{
+                            height: '100%',
+                            width: '100%',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </ResizablePanel>
+
+                  <ResizableHandle style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)' }} className="hover:opacity-80 transition-opacity" />
+
+                  {/* Console */}
+                  <ResizablePanel defaultSize={30} minSize={6}>
+                    <div className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl rounded-br-xl" style={{
+                      borderColor: 'rgba(100, 100, 100, 0.2)',
+                      background: 'linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)'
+                    }}>
+                      {/* Console Header */}
+                      <div className="h-[42px] backdrop-blur-xl border-b flex items-center px-4 flex-shrink-0" style={{
+                        borderColor: 'rgba(100, 100, 100, 0.2)',
+                        background: 'linear-gradient(90deg, rgba(20, 20, 20, 0.9) 0%, rgba(40, 40, 40, 0.8) 100%)'
+                      }}>
+                        <div className="text-sm font-semibold flex items-center" style={{ color: '#ffffff' }}>
+                          <span className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm" style={{
+                            backgroundColor: '#06b6d4',
+                            boxShadow: '0 0 4px rgba(6, 182, 212, 0.5)'
+                          }}></span>
+                          Console
+                        </div>
+                      </div>
+
+                      {/* Console Content */}
+                      <div className="flex-1 overflow-y-auto rounded-br-xl">
+                        <SandpackConsole
+                          style={{
+                            height: '100%',
+                            width: '100%',
+                            overflow: 'auto',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </SandpackProvider>
     </div>
   );
 } 

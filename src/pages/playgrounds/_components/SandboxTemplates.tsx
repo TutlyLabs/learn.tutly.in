@@ -1,15 +1,10 @@
 "use client";
 
-import { actions } from "astro:actions";
-import { useState } from "react";
-import { toast } from "sonner";
 import { IoLogoHtml5 } from "react-icons/io5";
 import { RiReactjsFill } from "react-icons/ri";
 import { SiVuedotjs, SiNodedotjs, SiNextdotjs, SiAngular, SiTypescript } from "react-icons/si";
-import { useRouter } from "@/hooks/use-router";
 
 interface Template {
-  id: string;
   name: string;
   description: string;
   icon: any;
@@ -17,14 +12,8 @@ interface Template {
   template: string;
 }
 
-interface SandboxTemplatesProps {
-  currentUser?: any;
-  hasSandboxIntegration?: boolean;
-}
-
 const templates: Template[] = [
   {
-    id: "kmwy42",
     name: "Vanilla",
     description: "HTML, CSS, and JavaScript",
     icon: IoLogoHtml5,
@@ -32,31 +21,20 @@ const templates: Template[] = [
     template: "vanilla",
   },
   {
-    id: "s267rm",
-    name: "Vite",
-    description: "React with JavaScript",
+    name: "Vite + React",
+    description: "React with Vite bundler",
     icon: RiReactjsFill,
     color: "text-sky-400",
-    template: "react",
+    template: "vite-react",
   },
   {
-    id: "7rp8q9",
-    name: "Vite TypeScript",
-    description: "React with TypeScript",
+    name: "Vite + React TS",
+    description: "React with TypeScript and Vite",
     icon: SiTypescript,
     color: "text-blue-600",
-    template: "react-ts",
+    template: "vite-react-ts",
   },
   {
-    id: "pb6sit",
-    name: "Vue",
-    description: "Vue.js framework",
-    icon: SiVuedotjs,
-    color: "text-green-600",
-    template: "vue",
-  },
-  {
-    id: "k8dsq1",
     name: "Node.js",
     description: "Node.js backend",
     icon: SiNodedotjs,
@@ -64,7 +42,6 @@ const templates: Template[] = [
     template: "node",
   },
   {
-    id: "fxis37",
     name: "Next.js",
     description: "Next.js framework",
     icon: SiNextdotjs,
@@ -72,88 +49,35 @@ const templates: Template[] = [
     template: "nextjs",
   },
   {
-    id: "angular",
     name: "Angular",
     description: "Angular framework",
     icon: SiAngular,
     color: "text-red-600",
     template: "angular",
   },
+  {
+    name: "Vue",
+    description: "Vue.js framework",
+    icon: SiVuedotjs,
+    color: "text-green-600",
+    template: "vue",
+  },
 ];
 
-export default function SandboxTemplates({ currentUser, hasSandboxIntegration }: SandboxTemplatesProps) {
-  const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
-  const router = useRouter();
-
-  const handleTemplateClick = async (template: Template) => {
-    if (!template.id || !template.name) return;
-
-    try {
-      setLoadingTemplate(template.id);
-
-      const result = await actions.sandbox_createSandboxWithSession({
-        template: template.id,
-        templateName: template.name,
-      });
-
-      if (result?.data?.ok) {
-        router.push(`/playgrounds/sandbox?id=${result.data.sandboxId}`);
-        toast.success(`${template.name} sandbox created successfully!`);
-      } else {
-        if (result?.data?.redirectTo) {
-          window.location.href = result.data.redirectTo;
-        } else {
-          toast.error(result?.data?.error || "Failed to create sandbox");
-        }
-      }
-    } catch (error) {
-      toast.error("An unexpected error occurred");
-    } finally {
-      setLoadingTemplate(null);
-    }
+export default function SandboxTemplates() {
+  const handleTemplateClick = (template: Template) => {
+    window.location.href = `/playgrounds/sandbox?template=${template.template}&name=${encodeURIComponent(template.name)}`;
   };
 
-  if (!currentUser) {
-    return (
-      <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded">
-        <p className="font-semibold">Authentication Required</p>
-        <p>
-          Please{" "}
-          <a href="/auth/signin" className="underline">
-            sign in
-          </a>{" "}
-          to use CodeSandbox templates.
-        </p>
-      </div>
-    );
-  }
-
-  if (!hasSandboxIntegration) {
-    return (
-      <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded">
-        <p className="font-semibold">CodeSandbox Integration Required</p>
-        <p>
-          Please set up your CodeSandbox integration in the{" "}
-          <a href="/integrations" className="underline">
-            Integrations tab
-          </a>{" "}
-          to use these templates.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-wrap gap-10">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {templates.map((template) => {
         const IconComponent = template.icon;
-        const isLoading = loadingTemplate === template.id;
 
         return (
           <div
-            key={template.id}
-            className={`flex w-[350px] items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black cursor-pointer transition-colors ${isLoading ? "opacity-50 pointer-events-none" : ""
-              }`}
+            key={template.template}
+            className="flex items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black cursor-pointer transition-colors"
             onClick={() => handleTemplateClick(template)}
           >
             <div>

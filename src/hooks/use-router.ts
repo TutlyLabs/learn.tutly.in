@@ -2,15 +2,13 @@ import { navigate } from "astro:transitions/client";
 import { useEffect, useState } from "react";
 
 export function useRouter() {
-  const defaultPathname = globalThis.window
-    ? globalThis.window.location.pathname
-    : // @ts-ignore we're setting it from root layout
-      globalThis.pathname;
-  const [pathname, setPathname] = useState(defaultPathname);
+  const [pathname, setPathname] = useState(
+    typeof window !== "undefined" ? window.location.pathname : "/"
+  );
 
   useEffect(() => {
     const handleRouteChange = (event: any) => {
-      setPathname(event.location.pathname);
+      setPathname(event?.location?.pathname || window.location.pathname);
     };
 
     window.addEventListener("astro:page-load", handleRouteChange);
@@ -20,8 +18,16 @@ export function useRouter() {
     };
   }, []);
 
+  const push = async (path: string) => {
+    try {
+      await navigate(path);
+    } catch (err) {
+      window.location.href = path;
+    }
+  };
+
   return {
     pathname,
-    push: (path: string) => navigate(path),
+    push,
   };
 }

@@ -3,68 +3,49 @@ import RootLayout from "@/layouts/RootLayout.astro";
 import { RiReactjsFill } from "react-icons/ri";
 import { IoLogoHtml5 } from "react-icons/io5";
 import SandboxTemplates from "./_components/SandboxTemplates";
-import db from "@/lib/db";
 import { posthog } from "@/lib/posthog";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
-
-const hasSandboxIntegration = await db.account.findFirst({
-  where: {
-    type: "api-key",
-    provider: "codesandbox",
-  },
-});
 
 const isSandboxEnabled = await posthog.isFeatureEnabled("sandbox_templates", currentUser?.id);
 ---
 
 <RootLayout>
   <div class="flex flex-col gap-8">
-    <div>
-      <h2 class="text-2xl font-bold mb-6">Local Playgrounds</h2>
-      <div class="flex flex-wrap gap-10">
-        <a href="/playgrounds/html-css-js">
-          <div
-            class="flex w-[350px] items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black"
-          >
-            <div>
-              <IoLogoHtml5 className="h-20 w-20 rounded-md bg-slate-200 p-2 text-orange-600" />
-            </div>
-            <div>
-              <h1 class="text-lg font-bold">HTML/CSS/JS</h1>
-              <p class="text-sm text-slate-500">Playground for html, css, and js</p>
-            </div>
-          </div>
-        </a>
-        <a href="/playgrounds/react">
-          <div
-            class="flex w-[350px] items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black"
-          >
-            <div>
-              <RiReactjsFill className="h-20 w-20 rounded-md bg-slate-200 p-1.5 text-sky-400" />
-            </div>
-            <div>
-              <h1 class="text-lg font-bold">React.js</h1>
-              <p class="text-sm text-slate-500">Playground for React</p>
-            </div>
-          </div>
-        </a>
-      </div>
-    </div>
-
     {
-      isSandboxEnabled && (
+      isSandboxEnabled ? (
         <div>
-          <h2 class="text-2xl font-bold mb-2">CodeSandbox Templates</h2>
-          <p class="text-gray-600 mb-4">
-            Create cloud-based sandboxes with popular frameworks and templates
-          </p>
-          <SandboxTemplates
-            currentUser={currentUser}
-            hasSandboxIntegration={!!hasSandboxIntegration}
-            client:only="react"
-          />
+          <h2 class="text-2xl font-bold mb-4">Framework Templates</h2>
+          <SandboxTemplates client:only="react" />
+        </div>
+      ) : (
+        <div>
+          <h2 class="text-2xl font-bold mb-6">Local Playgrounds</h2>
+          <div class="flex flex-wrap gap-10">
+            <a href="/playgrounds/html-css-js">
+              <div class="flex w-[350px] items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black">
+                <div>
+                  <IoLogoHtml5 className="h-20 w-20 rounded-md bg-slate-200 p-2 text-orange-600" />
+                </div>
+                <div>
+                  <h1 class="text-lg font-bold">HTML/CSS/JS</h1>
+                  <p class="text-sm text-slate-500">Playground for html, css, and js</p>
+                </div>
+              </div>
+            </a>
+            <a href="/playgrounds/react">
+              <div class="flex w-[350px] items-center gap-6 rounded-lg border-2 border-slate-300 p-3 px-5 hover:border-gray-500 dark:bg-white dark:text-black">
+                <div>
+                  <RiReactjsFill className="h-20 w-20 rounded-md bg-slate-200 p-1.5 text-sky-400" />
+                </div>
+                <div>
+                  <h1 class="text-lg font-bold">React.js</h1>
+                  <p class="text-sm text-slate-500">Playground for React</p>
+                </div>
+              </div>
+            </a>
+          </div>
         </div>
       )
     }

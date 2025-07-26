@@ -187,7 +187,7 @@ export function SignIn({
                       style={{ width: 20, height: 20 }}
                     />
                     {isGoogleLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isGoogleLoading ? "Connecting..." : "Sign in with Google"}
+                    {isGoogleLoading ? "Connecting..." : "Continue with Google"}
                   </Button>
                 )}
                 {isGithubSignInEnabled && (
@@ -203,7 +203,7 @@ export function SignIn({
                       className="rounded-full w-5 h-5 bg-white"
                     />
                     {isGithubLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isGithubLoading ? "Connecting..." : "Sign in with GitHub"}
+                    {isGithubLoading ? "Connecting..." : "Continue with GitHub"}
                   </Button>
                 )}
               </div>
