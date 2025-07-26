@@ -4,7 +4,7 @@ import type { WorkboxPlugin } from "workbox-core";
 import { ExpirationPlugin } from "workbox-expiration";
 import { precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from "workbox-strategies";
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -18,7 +18,7 @@ registerRoute(
     request.mode === "navigate" &&
     !request.url.includes("/api/") &&
     !request.url.includes("/_actions"),
-  new StaleWhileRevalidate({
+  new NetworkFirst({
     cacheName: "pages-cache",
   })
 );
