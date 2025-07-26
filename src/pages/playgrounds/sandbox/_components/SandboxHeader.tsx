@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Maximize2, Minimize2, Download, RotateCcw } from "lucide-react";
+import { ArrowLeft, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 
 interface SandboxHeaderProps {
   templateName: string;
