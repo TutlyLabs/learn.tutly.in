@@ -54,6 +54,7 @@ interface Props {
     totalPages: number;
     pageSize: number;
   };
+  isSandboxConfigured: boolean;
 }
 
 export default function AssignmentPage({
@@ -65,6 +66,7 @@ export default function AssignmentPage({
   username,
   mentors,
   pagination,
+  isSandboxConfigured,
 }: Props) {
   const haveAdminAccess = currentUser && (currentUser.role === "INSTRUCTOR" || isCourseAdmin);
 
@@ -170,7 +172,11 @@ export default function AssignmentPage({
         </div>
 
         {currentUser?.role === "STUDENT" ? (
-          <StudentAssignmentSubmission courseId={assignment.courseId} assignment={assignment} />
+          <StudentAssignmentSubmission
+            courseId={assignment.courseId}
+            assignment={assignment}
+            isSandboxConfigured={isSandboxConfigured}
+          />
         ) : (
           <AdminAssignmentTable
             assignmentId={assignment.id}
@@ -197,9 +203,11 @@ export default function AssignmentPage({
 const StudentAssignmentSubmission = ({
   assignment,
   courseId,
+  isSandboxConfigured,
 }: {
   assignment: any;
   courseId: string;
+  isSandboxConfigured: boolean;
 }) => {
   const [externalLink, setExternalLink] = useState("");
 
@@ -248,7 +256,10 @@ const StudentAssignmentSubmission = ({
           </div>
         ) : isPlaygroundSubmission ? (
           <Button asChild>
-            <a href={`/playgrounds/html-css-js?assignmentId=${assignment.id}`} target="_blank">
+            <a
+              href={`/playgrounds/${isSandboxConfigured ? "sandbox" : "html-css-js"}?assignmentId=${assignment.id}`}
+              target="_blank"
+            >
               {assignment?.submissions.length === 0
                 ? "Submit through Playground"
                 : "Submit another response"}
@@ -313,7 +324,7 @@ const StudentAssignmentSubmission = ({
 
               const totalScore = Object.values(points).reduce((sum, score) => sum + score, 0);
               const submissionUrl = isPlaygroundSubmission
-                ? `/playgrounds/html-css-js?submissionId=${submission.id}`
+                ? `/playgrounds/sandbox?submissionId=${submission.id}`
                 : submission.submissionLink;
 
               return (
@@ -733,7 +744,7 @@ const AdminAssignmentTable = ({
                                 <a
                                   href={
                                     assignment.submissionMode === "HTML_CSS_JS"
-                                      ? `/playgrounds/html-css-js?submissionId=${submission.id}`
+                                      ? `/playgrounds/sandbox?submissionId=${submission.id}`
                                       : submission.submissionLink
                                   }
                                   target="_blank"

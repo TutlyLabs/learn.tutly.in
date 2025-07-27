@@ -103,7 +103,7 @@ if (username) {
 const submission = filteredSubmissions.find((submission: any) => submission?.id == submissionId);
 ---
 
-<RootLayout title="Evaluate" forceClose={true}>
+<RootLayout title="Evaluate" forceClose={true} hideCrisp>
   <ResizablePanelLayout
     assignmentId={assignmentId}
     assignment={assignment}
@@ -111,6 +111,7 @@ const submission = filteredSubmissions.find((submission: any) => submission?.id 
     submissionId={submissionId}
     username={username}
     submission={submission}
+    submissionMode={assignment?.submissionMode!}
     client:only="react"
   />
 </RootLayout>

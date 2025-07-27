@@ -93,6 +93,10 @@ const AssignmentTable = ({
 }: {
   searchFilteredAssignments: (Assignment & { status: string })[];
 }) => {
+  const handleAssignmentClick = (assignmentId: string) => {
+    window.location.href = `/assignments/${assignmentId}`;
+  };
+
   return (
     <ScrollArea className="h-[310px] overflow-y-auto">
       <Table>
@@ -106,13 +110,17 @@ const AssignmentTable = ({
         </TableHeader>
         <TableBody>
           {searchFilteredAssignments.map((assignment: any) => (
-            <TableRow key={assignment.id} className="cursor-pointer text-left">
+            <TableRow
+              key={assignment.id}
+              className="cursor-pointer text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              onClick={() => handleAssignmentClick(assignment.id)}
+            >
               <TableCell>
                 <Badge variant={assignment.status === "Submitted" ? "default" : "destructive"}>
                   {assignment.status}
                 </Badge>
               </TableCell>
-              <TableCell>{assignment.title}</TableCell>
+              <TableCell className="font-medium">{assignment.title}</TableCell>
               <TableCell>{assignment.submissions?.length || 0}</TableCell>
               <TableCell>
                 {assignment.submissions?.reduce(

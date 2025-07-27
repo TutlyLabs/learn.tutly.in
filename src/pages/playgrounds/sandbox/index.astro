@@ -5,10 +5,12 @@ import { posthog } from "@/lib/posthog";
 import { SANDBOX_TEMPLATES } from "@codesandbox/sandpack-react";
 import db from "@/lib/db";
 import { Buffer } from "node:buffer";
+import PlaygroundPage from "@/pages/assignments/_components/PlaygroundPage";
 
 const template = Astro.url.searchParams.get("template") || "static";
 const templateName = Astro.url.searchParams.get("name") || "Starter Template";
 const assignmentId = Astro.url.searchParams.get("assignmentId");
+const submissionId = Astro.url.searchParams.get("submissionId");
 const editTemplate = Astro.url.searchParams.get("editTemplate");
 const currentUser = Astro.locals.user;
 
@@ -24,6 +26,33 @@ const isSandboxEnabled = await posthog.isFeatureEnabled(
 if (!isSandboxEnabled) {
   return Astro.redirect("/playgrounds");
 }
+
+const submission = submissionId
+  ? await db.submission.findUnique({
+      where: { id: submissionId },
+      include: {
+        enrolledUser: {
+          include: {
+            user: true,
+          },
+        },
+        points: true,
+        assignment: true,
+      },
+    })
+  : null;
+
+const studentAccess =
+  currentUser.role === "STUDENT" && submission?.enrolledUser.username === currentUser.username;
+const mentorAccess =
+  currentUser.role === "MENTOR" && submission?.enrolledUser.mentorUsername === currentUser.username;
+const instrctorAccess = currentUser.role === "INSTRUCTOR";
+
+if (!studentAccess && !mentorAccess && !instrctorAccess && submissionId) {
+  return Astro.redirect("/404");
+}
+
+const showActions = instrctorAccess || mentorAccess;
 
 const assignment = assignmentId
   ? await db.attachment.findUnique({
@@ -65,14 +94,27 @@ Astro.response.headers.set("X-Frame-Options", "ALLOWALL");
 
 <RootLayout title={`${templateName} Playground`} forceClose className="!p-0" hideHeader hideCrisp>
   <div class="h-screen w-full flex flex-col bg-background overflow-hidden">
-    <SandboxWrapper
-      assignmentId={assignmentId ?? null}
-      template={template}
-      templateName={templateName}
-      canEditTemplate={canEditTemplate}
-      isEditingTemplate={editTemplate === "true"}
-      assignment={assignmentWithDecodedTemplate}
-      client:only="react"
-    />
+    {
+      submissionId && submission ? (
+        <PlaygroundPage
+          submission={submission}
+          submissionMode={submission.assignment.submissionMode}
+          showActions={showActions}
+          showAssignment={true}
+          client:only="react"
+        />
+      ) : (
+        <SandboxWrapper
+          assignmentId={assignmentId ?? null}
+          template={template}
+          templateName={templateName}
+          canEditTemplate={canEditTemplate}
+          isEditingTemplate={editTemplate === "true"}
+          assignment={assignmentWithDecodedTemplate}
+          currentUser={currentUser}
+          client:only="react"
+        />
+      )
+    }
   </div>
 </RootLayout>

@@ -112,7 +112,8 @@ export function BottomTabs() {
             verbose
             showVerboseButton={false}
             // showWatchButton={false}
-            watchMode={false}
+            // watchMode={false}
+            watchMode
             onComplete={(_specs) => {
               setTestStatus("complete");
               //todo: use the specs to update the test results, call an attempt to backend

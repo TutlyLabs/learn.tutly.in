@@ -3,6 +3,7 @@ import RootLayout from "@layouts/RootLayout.astro";
 import AssignmentPage from "../_components/AssignmentPage";
 import db from "@/lib/db";
 import type { Attachment, submission as Submission } from "@prisma/client";
+import { posthog } from "@/lib/posthog";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
@@ -370,6 +371,13 @@ const mentors = assignment?.course?.enrolledUsers
       new Set(assignment.course.enrolledUsers.map((user) => user.mentorUsername).filter(Boolean))
     )
   : [];
+
+const isSandboxSubmissionEnabled = await posthog.isFeatureEnabled(
+  "sandbox_submission",
+  currentUser.email ?? currentUser.username
+);
+
+const isSandboxConfigured = isSandboxSubmissionEnabled && assignment.sandboxTemplate !== null;
 ---
 
 <RootLayout title="Assignments">
@@ -386,6 +394,7 @@ const mentors = assignment?.course?.enrolledUsers
       totalPages,
       pageSize: limit,
     }}
+    isSandboxConfigured={isSandboxConfigured ?? false}
     client:only="react"
   />
 </RootLayout>

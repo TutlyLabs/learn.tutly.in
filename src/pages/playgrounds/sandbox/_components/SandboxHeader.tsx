@@ -2,7 +2,16 @@
 
 import { SandpackProps } from "@codesandbox/sandpack-react";
 import { actions } from "astro:actions";
-import { ArrowLeft, Edit, Maximize2, Minimize2, RotateCcw, Save, Settings } from "lucide-react";
+import {
+  ArrowLeft,
+  Edit,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Save,
+  Settings,
+  Upload,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -14,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import SubmitAssignment from "@/pages/playgrounds/_components/SubmitAssignment";
 import { templates } from "@/pages/playgrounds/templetes";
 
 import { SandboxSettingsModal } from "./SandboxSettingsModal";
@@ -24,6 +34,7 @@ interface SandboxHeaderProps {
   isEditTemplate: boolean;
   isEditingTemplate: boolean;
   assignmentId?: string | null;
+  currentUser?: any;
   onReset?: () => void;
   savedTemplate: SandpackProps;
   onConfigUpdate: (config: SandpackProps) => void;
@@ -110,6 +121,7 @@ export function SandboxHeader({
   isEditTemplate,
   isEditingTemplate,
   assignmentId,
+  currentUser,
   onReset,
   savedTemplate,
   onConfigUpdate,
@@ -198,6 +210,10 @@ export function SandboxHeader({
               </Button>
             )}
           </>
+        )}
+
+        {assignmentId && !isEditingTemplate && (
+          <SubmitAssignment currentUser={currentUser} assignmentId={assignmentId} />
         )}
 
         {onReset && (

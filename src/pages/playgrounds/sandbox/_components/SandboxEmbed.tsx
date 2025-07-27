@@ -46,7 +46,7 @@ export function SandboxEmbed({ assignment, isEditTemplate, config }: SandboxEmbe
         {/* Assignment Panel - Only show if assignment exists */}
         {assignment && (
           <>
-            <ResizablePanel defaultSize={isEditTemplate ? 20 : 35} minSize={0} maxSize={40}>
+            <ResizablePanel defaultSize={isEditTemplate ? 20 : 35} minSize={1}>
               <AssignmentPreview assignment={assignment} />
             </ResizablePanel>
 
@@ -63,7 +63,7 @@ export function SandboxEmbed({ assignment, isEditTemplate, config }: SandboxEmbe
             {/* File Explorer  */}
             {config.fileExplorer && (
               <>
-                <ResizablePanel defaultSize={18} minSize={15} maxSize={25}>
+                <ResizablePanel defaultSize={18} minSize={1}>
                   <div
                     className="w-full backdrop-blur-xl border-r flex flex-col h-full shadow-2xl"
                     style={{
@@ -97,7 +97,7 @@ export function SandboxEmbed({ assignment, isEditTemplate, config }: SandboxEmbe
             <ResizablePanel defaultSize={config.fileExplorer ? 82 : 100}>
               <ResizablePanelGroup direction="horizontal" className="h-full">
                 {/* Editor */}
-                <ResizablePanel defaultSize={50} minSize={30}>
+                <ResizablePanel defaultSize={50} minSize={1}>
                   <div
                     className="flex flex-col h-full backdrop-blur-xl shadow-2xl"
                     style={{
@@ -125,10 +125,10 @@ export function SandboxEmbed({ assignment, isEditTemplate, config }: SandboxEmbe
                 />
 
                 {/* Preview and Bottom Tabs */}
-                <ResizablePanel defaultSize={50} minSize={30}>
+                <ResizablePanel defaultSize={50} minSize={10}>
                   <ResizablePanelGroup direction="vertical" className="h-full">
                     {/* Preview */}
-                    <ResizablePanel defaultSize={70} minSize={40}>
+                    <ResizablePanel defaultSize={70} minSize={10}>
                       <div
                         className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl"
                         style={{
@@ -179,7 +179,7 @@ export function SandboxEmbed({ assignment, isEditTemplate, config }: SandboxEmbe
                     />
 
                     {/* Bottom Tabs (Console and Tests) */}
-                    <ResizablePanel defaultSize={30} minSize={20}>
+                    <ResizablePanel defaultSize={30} minSize={10}>
                       <div
                         className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl rounded-br-xl"
                         style={{

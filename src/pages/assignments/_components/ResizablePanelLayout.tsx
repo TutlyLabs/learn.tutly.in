@@ -1,3 +1,5 @@
+import { submissionMode } from "@prisma/client";
+
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 import PlaygroundPage from "./PlaygroundPage";
@@ -10,6 +12,7 @@ interface ResizablePanelLayoutProps {
   submissionId: string | null;
   username: string | null;
   submission: any;
+  submissionMode: submissionMode;
 }
 
 const ResizablePanelLayout = ({
@@ -19,6 +22,7 @@ const ResizablePanelLayout = ({
   submissionId,
   username,
   submission,
+  submissionMode,
 }: ResizablePanelLayoutProps) => {
   return (
     <ResizablePanelGroup direction="horizontal" className="max-h-[95vh] w-full">
@@ -33,7 +37,7 @@ const ResizablePanelLayout = ({
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel defaultSize={85}>
-        <PlaygroundPage submission={submission} />
+        <PlaygroundPage submission={submission} submissionMode={submissionMode} showActions />
       </ResizablePanel>
     </ResizablePanelGroup>
   );
