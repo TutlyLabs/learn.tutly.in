@@ -10,7 +10,10 @@ import db from "@/lib/db";
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
 
-const isIntegrationsEnabled = await posthog.isFeatureEnabled("integrations_tab", currentUser.id);
+const isIntegrationsEnabled = await posthog.isFeatureEnabled(
+  "integrations_tab",
+  currentUser.email ?? currentUser.username
+);
 if (!isIntegrationsEnabled) {
   return Astro.redirect("/");
 }
@@ -63,7 +66,11 @@ let zoom = await db.account.findFirst({
 ---
 
 <RootLayout title="Integrations">
-  {features?.codesandbox && <SandboxIntegration sandbox={sandbox ?? undefined} client:only="react" />}
+  {
+    features?.codesandbox && (
+      <SandboxIntegration sandbox={sandbox ?? undefined} client:only="react" />
+    )
+  }
   {features?.zoom && <ZoomIntegration zoom={zoom ?? undefined} client:only="react" />}
   {features?.github && <GithubIntegration github={github ?? undefined} client:only="react" />}
   {features?.google && <GoogleIntegration google={google ?? undefined} client:only="react" />}

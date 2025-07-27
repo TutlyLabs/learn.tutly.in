@@ -22,7 +22,10 @@ const pathname = Astro.url.pathname;
 const user = Astro.locals.user!;
 const organization = Astro.locals.organization!;
 
-const isIntegrationsEnabled = await posthog.isFeatureEnabled("integrations_tab", user.id);
+const isIntegrationsEnabled = await posthog.isFeatureEnabled(
+  "integrations_tab",
+  user.email ?? user.username
+);
 
 // @ts-ignore
 globalThis.pathname = pathname;
