@@ -109,6 +109,7 @@ export function SandboxEmbed({ assignment, isEditTemplate, config }: SandboxEmbe
                       showLineNumbers
                       showInlineErrors
                       wrapContent
+                      closableTabs={config.closableTabs}
                       style={{
                         height: "100%",
                         maxHeight: "calc(100vh - 2rem)",
