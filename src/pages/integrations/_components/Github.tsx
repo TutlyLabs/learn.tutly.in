@@ -57,7 +57,7 @@ export const GithubIntegration = ({ github }: { github?: Account | undefined }) 
                 <button
                   onClick={handleUnlink}
                   disabled={isUnlinking}
-                  className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs border border-gray-300 disabled:opacity-60"
+                  className="px-3 py-1 rounded bg-[#4285F4] hover:bg-[#357ae8] text-white text-xs border border-blue-600 disabled:opacity-60"
                 >
                   {isUnlinking ? "Unlinking..." : "Unlink"}
                 </button>
@@ -67,7 +67,7 @@ export const GithubIntegration = ({ github }: { github?: Account | undefined }) 
                 <span className="text-gray-700 dark:text-gray-200">Not linked</span>
                 <a
                   href="/api/auth/signin/github?link=true"
-                  className="inline-block px-4 py-2 bg-[#24292e] text-white rounded hover:bg-[#1c2128] transition-colors text-xs"
+                  className="inline-block px-4 py-2 bg-[#4285F4] text-white rounded hover:bg-[#357ae8] transition-colors text-xs"
                 >
                   Link GitHub
                 </a>
