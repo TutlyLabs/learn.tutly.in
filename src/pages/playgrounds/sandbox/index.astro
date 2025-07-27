@@ -63,7 +63,7 @@ const canEditTemplate = currentUser.role === "INSTRUCTOR" || currentUser.role ==
 Astro.response.headers.set("X-Frame-Options", "ALLOWALL");
 ---
 
-<RootLayout title={`${templateName} Playground`} forceClose className="!p-0" hideHeader>
+<RootLayout title={`${templateName} Playground`} forceClose className="!p-0" hideHeader hideCrisp>
   <div class="h-screen w-full flex flex-col bg-background overflow-hidden">
     <SandboxWrapper
       assignmentId={assignmentId ?? null}

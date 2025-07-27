@@ -14,18 +14,17 @@ clientsClaim();
 self.skipWaiting();
 
 registerRoute(
-  ({ request, url }) =>
+  ({ request }) =>
     request.mode === "navigate" &&
     !request.url.includes("/api/") &&
-    !request.url.includes("/_actions") &&
-    !url.hostname.includes("codesandbox.io"),
+    !request.url.includes("/_actions"),
   new NetworkFirst({
     cacheName: "pages-cache",
   })
 );
 
 registerRoute(
-  ({ request, url }) => request.destination === "image" && !url.hostname.includes("codesandbox.io"),
+  ({ request }) => request.destination === "image",
   new CacheFirst({
     cacheName: "images-cache",
     plugins: [
@@ -38,11 +37,10 @@ registerRoute(
 );
 
 registerRoute(
-  ({ request, url }) =>
-    (request.destination === "style" ||
-      request.destination === "script" ||
-      request.destination === "worker") &&
-    !url.hostname.includes("codesandbox.io"),
+  ({ request }) =>
+    request.destination === "style" ||
+    request.destination === "script" ||
+    request.destination === "worker",
   new StaleWhileRevalidate({
     cacheName: "assets-cache",
   })

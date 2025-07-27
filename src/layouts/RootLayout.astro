@@ -14,9 +14,10 @@ interface Props {
   forceClose?: boolean;
   className?: string;
   hideHeader?: boolean;
+  hideCrisp?: boolean;
 }
 
-const { title = "Tutly", forceClose = false, className, hideHeader = false } = Astro.props;
+const { title = "Tutly", forceClose = false, className, hideHeader = false, hideCrisp = false } = Astro.props;
 
 const pathname = Astro.url.pathname;
 const user = Astro.locals.user!;
@@ -90,7 +91,7 @@ globalThis.pathname = pathname;
     }
     <SonnerToaster client:load />
     <ShadcnToaster client:load />
-    <Crisp client:only="react" user={user} organization={organization} />
+    {!hideCrisp && <Crisp client:only="react" user={user} organization={organization} />}
     <script>
       const isRunningStandalone = () => {
         return (
