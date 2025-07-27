@@ -101,7 +101,7 @@
 .file-explorer > div > div {
   padding: 0 !important;
 }
-.file-explorer ul {
+.file-explorer > div > div > ul {
   padding: 8px !important;
 }
 
@@ -153,6 +153,30 @@
 /* Hide entry label */
 .file-explorer li > div > span:nth-child(2) {
   opacity: 0 !important;
+}
+
+/* Add left padding to folders and mask the [+]/[-] */
+.file-explorer li > div > span[style*="cursor: pointer"] {
+  padding-left: 4px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.file-explorer li > div > span[style*="cursor: pointer"] > svg {
+  margin-right: 8px !important;
+}
+
+/* Mask to hide [+]/[-] characters from the right side */
+.file-explorer li > div > span[style*="cursor: pointer"]::after {
+  content: "" !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 18px !important;
+  background: var(--sp-colors-surface1, #161618) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
 }
 
 /* File Explorer Item Styling */
