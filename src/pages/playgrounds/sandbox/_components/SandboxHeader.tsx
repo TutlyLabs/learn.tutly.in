@@ -163,7 +163,7 @@ export function SandboxHeader({
       </div>
 
       <div className="flex items-center gap-2 -ml-48">
-        {isEditTemplate && (
+        {isEditTemplate && assignmentId && (
           <>
             {isEditingTemplate ? (
               <div className="flex items-center gap-2">

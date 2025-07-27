@@ -16,7 +16,7 @@ interface SandboxEmbedProps {
   isEditTemplate: boolean;
   config: {
     fileExplorer: boolean;
-    showInitialFiles: boolean;
+    closableTabs: boolean;
   };
 }
 export function SandboxEmbed({ assignment, isEditTemplate, config }: SandboxEmbedProps) {

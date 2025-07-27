@@ -67,16 +67,15 @@ export function SandboxWrapper({
   assignment,
 }: SandboxWrapperProps) {
   const config = {
-    fileExplorer: !assignment || canEditTemplate,
-    showInitialFiles: true,
+    fileExplorer: !assignment || (canEditTemplate && isEditingTemplate),
+    closableTabs: !assignment,
   };
 
   const baseTemplate: SandpackProps = useMemo(
     () => ({
       template: template as SandpackPredefinedTemplate,
       options: {
-        ...(config.showInitialFiles && { visibleFiles: ["*"] }),
-        closableTabs: !config.showInitialFiles,
+        closableTabs: config.closableTabs,
         readOnly: false,
         showTabs: true,
         showLineNumbers: true,
@@ -87,7 +86,7 @@ export function SandboxWrapper({
         showConsole: false,
       },
     }),
-    [template, config.showInitialFiles]
+    [template, config.closableTabs]
   );
 
   const initialSavedTemplate = assignment?.sandboxTemplate as SandpackProps | null;
