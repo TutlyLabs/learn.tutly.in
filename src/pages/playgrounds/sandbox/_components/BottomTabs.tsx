@@ -25,7 +25,7 @@ export function BottomTabs() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[95%]">
       {/* Tab Headers */}
       <div
         className="h-[42px] backdrop-blur-xl border-b flex items-center justify-between px-4 flex-shrink-0"
