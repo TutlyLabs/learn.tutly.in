@@ -1,3 +1,11 @@
+:root {
+  --sp-layout-height: 95vh;
+}
+
+.sp-wrapper {
+  height: 100% !important;
+}
+
 .sp-console-wrapper {
   overflow-y: auto !important;
   max-height: 100% !important;

@@ -158,3 +158,28 @@ export const updateAttachment = defineAction({
     }
   },
 });
+
+export const updateAttachmentSandboxTemplate = defineAction({
+  input: z.object({
+    id: z.string(),
+    sandboxTemplate: z.any(),
+  }),
+  async handler({ id, sandboxTemplate }, { locals }) {
+    const currentUser = locals.user;
+    if (!currentUser || currentUser.role !== "INSTRUCTOR") {
+      return { error: "Unauthorized" };
+    }
+
+    const templateString = JSON.stringify(sandboxTemplate);
+    const base64Template = Buffer.from(templateString, "utf-8").toString("base64");
+
+    const attachment = await db.attachment.update({
+      where: { id },
+      data: {
+        sandboxTemplate: base64Template,
+      },
+    });
+
+    return { success: true, data: attachment };
+  },
+});

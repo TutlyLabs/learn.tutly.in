@@ -403,18 +403,19 @@ enum submissionMode {
 }
 
 model Attachment {
-  id             String         @id @default(uuid())
-  title          String         @default("Attachment")
-  details        String?
-  attachmentType attachmentType
-  link           String?
-  submissions    submission[]
-  maxSubmissions Int?           @default(1)
-  classId        String?
-  class          Class?         @relation(fields: [classId], references: [id])
-  courseId       String?
-  course         Course?        @relation(fields: [courseId], references: [id])
-  submissionMode submissionMode @default(HTML_CSS_JS)
+  id              String         @id @default(uuid())
+  title           String         @default("Attachment")
+  details         String?
+  attachmentType  attachmentType
+  link            String?
+  submissions     submission[]
+  maxSubmissions  Int?           @default(1)
+  classId         String?
+  class           Class?         @relation(fields: [classId], references: [id])
+  courseId        String?
+  course          Course?        @relation(fields: [courseId], references: [id])
+  submissionMode  submissionMode @default(HTML_CSS_JS)
+  sandboxTemplate String?        @db.Text
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

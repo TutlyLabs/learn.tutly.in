@@ -1,12 +1,15 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import { SandboxEmbed } from "./_components/SandboxEmbed";
-import { SandboxHeader } from "./_components/SandboxHeader";
+import { SandboxWrapper } from "./_components/SandboxWrapper";
 import { posthog } from "@/lib/posthog";
-import { SANDBOX_TEMPLATES, SandpackPredefinedTemplate } from "@codesandbox/sandpack-react";
+import { SANDBOX_TEMPLATES } from "@codesandbox/sandpack-react";
+import db from "@/lib/db";
+import { Buffer } from "node:buffer";
 
-const template = Astro.url.searchParams.get("template") || "react";
-const templateName = Astro.url.searchParams.get("name") || "React";
+const template = Astro.url.searchParams.get("template") || "static";
+const templateName = Astro.url.searchParams.get("name") || "Starter Template";
+const assignmentId = Astro.url.searchParams.get("assignmentId");
+const editTemplate = Astro.url.searchParams.get("editTemplate");
 const currentUser = Astro.locals.user;
 
 if (!currentUser) {
@@ -22,19 +25,54 @@ if (!isSandboxEnabled) {
   return Astro.redirect("/playgrounds");
 }
 
+const assignment = assignmentId
+  ? await db.attachment.findUnique({
+      where: {
+        id: assignmentId,
+        attachmentType: "ASSIGNMENT",
+      },
+    })
+  : null;
+
+let decodedSandboxTemplate = null;
+if (assignment?.sandboxTemplate) {
+  try {
+    const decodedString = Buffer.from(assignment.sandboxTemplate as string, "base64").toString(
+      "utf-8"
+    );
+    decodedSandboxTemplate = JSON.parse(decodedString);
+  } catch (error) {
+    decodedSandboxTemplate = assignment.sandboxTemplate;
+  }
+}
+
+const assignmentWithDecodedTemplate = assignment
+  ? {
+      ...assignment,
+      sandboxTemplate: decodedSandboxTemplate,
+    }
+  : null;
+
 const validTemplates = Object.keys(SANDBOX_TEMPLATES);
-if (!validTemplates.includes(template)) {
+if (!validTemplates.includes(template) && !assignmentId) {
   return Astro.redirect("/playgrounds");
 }
+
+const canEditTemplate = currentUser.role === "INSTRUCTOR" || currentUser.role === "ADMIN";
 
 Astro.response.headers.set("X-Frame-Options", "ALLOWALL");
 ---
 
 <RootLayout title={`${templateName} Playground`} forceClose className="!p-0" hideHeader>
   <div class="h-screen w-full flex flex-col bg-background overflow-hidden">
-    <SandboxHeader templateName={templateName} client:only="react" />
-    <div class="flex-1 w-full h-full overflow-hidden">
-      <SandboxEmbed template={template as SandpackPredefinedTemplate} client:only="react" />
-    </div>
+    <SandboxWrapper
+      assignmentId={assignmentId ?? null}
+      template={template}
+      templateName={templateName}
+      canEditTemplate={canEditTemplate}
+      isEditingTemplate={editTemplate === "true"}
+      assignment={assignmentWithDecodedTemplate}
+      client:only="react"
+    />
   </div>
 </RootLayout>
