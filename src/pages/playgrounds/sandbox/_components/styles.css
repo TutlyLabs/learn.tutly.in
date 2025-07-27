@@ -54,10 +54,22 @@
   width: 100% !important;
 }
 
+.sp-test-spec-error {
+  display: none !important;
+}
+
+.hide-test-details .sp-test-spec-error {
+  display: none !important;
+}
+
+.show-test-details .sp-test-spec-error {
+  display: block !important;
+}
+
 /* Style the built-in file explorer header */
 .file-explorer div[style*="min-height: 40px"] {
   padding: 12px !important;
-  height: 42px !important;
+  height: 44px !important;
   border-bottom: 1px solid rgba(60, 60, 60, 0.4) !important;
   backdrop-filter: blur(12px) !important;
   background: linear-gradient(

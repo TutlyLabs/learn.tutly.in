@@ -2,7 +2,6 @@
 
 import {
   SandpackCodeEditor,
-  SandpackConsole,
   SandpackPreview,
   SandpackProvider,
   SandpackTheme,
@@ -13,6 +12,7 @@ import { SandpackFileExplorer } from "sandpack-file-explorer";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
+import { BottomTabs } from "./BottomTabs";
 import "./styles.css";
 
 interface SandboxEmbedProps {
@@ -96,6 +96,7 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                 style={
                   {
                     "--sp-layout-height": "95vh",
+                    maxHeight: "100vh",
                   } as React.CSSProperties
                 }
               >
@@ -128,6 +129,7 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                     closableTabs
                     style={{
                       height: "100%",
+                      maxHeight: "calc(100vh - 3rem)",
                       flex: 1,
                     }}
                   />
@@ -139,7 +141,7 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                 className="hover:opacity-80 transition-opacity"
               />
 
-              {/* Preview and Console */}
+              {/* Preview and Bottom Tabs */}
               <ResizablePanel defaultSize={50} minSize={30}>
                 <ResizablePanelGroup direction="vertical" className="h-full">
                   {/* Preview */}
@@ -193,8 +195,8 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                     className="hover:opacity-80 transition-opacity"
                   />
 
-                  {/* Console */}
-                  <ResizablePanel defaultSize={30} minSize={6}>
+                  {/* Bottom Tabs (Console and Tests) */}
+                  <ResizablePanel defaultSize={30} minSize={20}>
                     <div
                       className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl rounded-br-xl"
                       style={{
@@ -203,40 +205,7 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                           "linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)",
                       }}
                     >
-                      {/* Console Header */}
-                      <div
-                        className="h-[42px] backdrop-blur-xl border-b flex items-center px-4 flex-shrink-0"
-                        style={{
-                          borderColor: "rgba(100, 100, 100, 0.2)",
-                          background:
-                            "linear-gradient(90deg, rgba(20, 20, 20, 0.9) 0%, rgba(40, 40, 40, 0.8) 100%)",
-                        }}
-                      >
-                        <div
-                          className="text-sm font-semibold flex items-center"
-                          style={{ color: "#ffffff" }}
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm"
-                            style={{
-                              backgroundColor: "#06b6d4",
-                              boxShadow: "0 0 4px rgba(6, 182, 212, 0.5)",
-                            }}
-                          ></span>
-                          Console
-                        </div>
-                      </div>
-
-                      {/* Console Content */}
-                      <div className="flex-1 overflow-y-auto rounded-br-xl">
-                        <SandpackConsole
-                          style={{
-                            height: "100%",
-                            width: "100%",
-                            overflow: "auto",
-                          }}
-                        />
-                      </div>
+                      <BottomTabs />
                     </div>
                   </ResizablePanel>
                 </ResizablePanelGroup>
