@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { ArrowLeft, Maximize2, Minimize2, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface SandboxHeaderProps {
   templateName: string;
@@ -16,12 +16,12 @@ export function SandboxHeader({ templateName, onReset }: SandboxHeaderProps) {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const toggleFullscreen = () => {
-    const container = document.querySelector('.h-screen');
+    const container = document.querySelector(".h-screen");
 
     if (!document.fullscreenElement) {
       container?.requestFullscreen();
@@ -40,9 +40,7 @@ export function SandboxHeader({ templateName, onReset }: SandboxHeaderProps) {
           <ArrowLeft className="w-4 h-4" />
           Back
         </a>
-        <div className="text-sm font-medium text-white">
-          {templateName} Playground
-        </div>
+        <div className="text-sm font-medium text-white">{templateName} Playground</div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -51,11 +49,7 @@ export function SandboxHeader({ templateName, onReset }: SandboxHeaderProps) {
           className="p-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
           title="Toggle fullscreen"
         >
-          {isFullscreen ? (
-            <Minimize2 className="w-4 h-4" />
-          ) : (
-            <Maximize2 className="w-4 h-4" />
-          )}
+          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
 
         {onReset && (
@@ -70,4 +64,4 @@ export function SandboxHeader({ templateName, onReset }: SandboxHeaderProps) {
       </div>
     </div>
   );
-} 
+}

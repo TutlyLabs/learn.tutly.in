@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Account } from "@prisma/client";
 import { actions } from "astro:actions";
-import { CheckCircle2, Loader2, XCircle, SkipForward } from "lucide-react";
+import { CheckCircle2, Loader2, SkipForward, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -84,7 +84,7 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
           setResults((prev) => ({ ...prev, edit: { ok: null } }));
           const editResult = await actions.sandbox_checkEditPermission({
             apiKey: values.apiKey,
-            sandboxId
+            sandboxId,
           });
           if (editResult?.data?.ok) {
             setResults((prev) => ({ ...prev, edit: { ok: true } }));
@@ -93,7 +93,7 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
             setResults((prev) => ({ ...prev, vmManage: { ok: null } }));
             const vmResult = await actions.sandbox_checkVMManagePermission({
               apiKey: values.apiKey,
-              sandboxId
+              sandboxId,
             });
             if (vmResult?.data?.ok) {
               setResults((prev) => ({ ...prev, vmManage: { ok: true } }));
@@ -104,7 +104,9 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
                   apiKey: values.apiKey,
                 });
                 if (saveResult?.data?.ok) {
-                  toast.success("API key is valid, has all required permissions, and is now saved!");
+                  toast.success(
+                    "API key is valid, has all required permissions, and is now saved!"
+                  );
                   setEditMode(false);
                 } else {
                   toast.error("API key validated but failed to save in database.");
@@ -127,8 +129,8 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
                 ...prev,
                 vmManage: {
                   ok: false,
-                  error: vmResult?.data?.error || "VM Manage failed"
-                }
+                  error: vmResult?.data?.error || "VM Manage failed",
+                },
               }));
               toast.error(vmResult?.data?.error || "VM Manage permission check failed.");
             }
@@ -137,9 +139,9 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
               ...prev,
               edit: {
                 ok: false,
-                error: editResult?.data?.error || "Edit failed"
+                error: editResult?.data?.error || "Edit failed",
               },
-              vmManage: { ok: "skipped" }
+              vmManage: { ok: "skipped" },
             }));
             toast.error(editResult?.data?.error || "Edit permission check failed.");
           }
@@ -148,10 +150,10 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
             ...prev,
             read: {
               ok: false,
-              error: readResult?.data?.error || "Read failed"
+              error: readResult?.data?.error || "Read failed",
             },
             edit: { ok: "skipped" },
-            vmManage: { ok: "skipped" }
+            vmManage: { ok: "skipped" },
           }));
           toast.error(readResult?.data?.error || "Read permission check failed.");
         }
@@ -167,11 +169,11 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
           ...prev,
           create: {
             ok: false,
-            error: createResult?.data?.error || "Creation failed"
+            error: createResult?.data?.error || "Creation failed",
           },
           read: { ok: "skipped" },
           edit: { ok: "skipped" },
-          vmManage: { ok: "skipped" }
+          vmManage: { ok: "skipped" },
         }));
         toast.error(createResult?.data?.error || "Sandbox creation failed.");
       }
@@ -292,10 +294,10 @@ export const SandboxIntegration = ({ sandbox }: { sandbox?: Account | undefined 
 
 function PermissionCheck({
   label,
-  result
+  result,
 }: {
   label: string;
-  result: { ok: boolean | null | "skipped"; error?: string } | null
+  result: { ok: boolean | null | "skipped"; error?: string } | null;
 }) {
   let icon = <Loader2 className="animate-spin w-4 h-4 text-gray-400" />;
   let errorMsg = "";

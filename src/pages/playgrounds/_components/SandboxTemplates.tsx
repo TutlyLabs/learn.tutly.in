@@ -2,7 +2,7 @@
 
 import { IoLogoHtml5 } from "react-icons/io5";
 import { RiReactjsFill } from "react-icons/ri";
-import { SiVuedotjs, SiNodedotjs, SiNextdotjs, SiAngular, SiTypescript } from "react-icons/si";
+import { SiAngular, SiNextdotjs, SiNodedotjs, SiTypescript, SiVuedotjs } from "react-icons/si";
 
 interface Template {
   name: string;

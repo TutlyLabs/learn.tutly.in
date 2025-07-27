@@ -25,7 +25,7 @@ registerRoute(
 );
 
 registerRoute(
-  ({ request, url }) => request.destination === "image" && !url.hostname.includes("codesandbox.io"), 
+  ({ request, url }) => request.destination === "image" && !url.hostname.includes("codesandbox.io"),
   new CacheFirst({
     cacheName: "images-cache",
     plugins: [

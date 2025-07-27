@@ -1,17 +1,19 @@
 "use client";
 
 import {
-  SandpackProvider,
   SandpackCodeEditor,
-  SandpackPreview,
   SandpackConsole,
+  SandpackPreview,
+  SandpackProvider,
   SandpackTheme,
 } from "@codesandbox/sandpack-react";
-// @ts-ignore
-import { SandpackFileExplorer } from 'sandpack-file-explorer';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import "./styles.css";
 import { SandpackPredefinedTemplate } from "@codesandbox/sandpack-react";
+// @ts-ignore
+import { SandpackFileExplorer } from "sandpack-file-explorer";
+
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+
+import "./styles.css";
 
 interface SandboxEmbedProps {
   template: SandpackPredefinedTemplate;
@@ -59,41 +61,65 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
     <div className="h-full w-full relative">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-black"></div>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, rgba(30, 30, 30, 0.3) 0%, transparent 70%)' }}></div>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at bottom right, rgba(37, 208, 171, 0.02) 0%, transparent 60%)' }}></div>
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(30, 30, 30, 0.3) 0%, transparent 70%)",
+        }}
+      ></div>
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at bottom right, rgba(37, 208, 171, 0.02) 0%, transparent 60%)",
+        }}
+      ></div>
 
-      <SandpackProvider
-        template={template}
-        theme={glassyTheme}
-      >
-        <ResizablePanelGroup direction="horizontal" className="h-full w-full min-h-[calc(100vh-3rem)] relative z-10">
+      <SandpackProvider template={template} theme={glassyTheme}>
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full w-full min-h-[calc(100vh-3rem)] relative z-10"
+        >
           {/* File Explorer */}
           <ResizablePanel defaultSize={18} minSize={15} maxSize={25}>
-            <div className="w-full backdrop-blur-xl border-r flex flex-col h-full rounded-l-xl shadow-2xl" style={{
-              background: 'linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)',
-              borderColor: 'rgba(100, 100, 100, 0.2)'
-            }}>
+            <div
+              className="w-full backdrop-blur-xl border-r flex flex-col h-full rounded-l-xl shadow-2xl"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)",
+                borderColor: "rgba(100, 100, 100, 0.2)",
+              }}
+            >
               <div
                 className="flex-1 overflow-y-auto file-explorer"
-                style={{
-                  '--sp-layout-height': '95vh',
-                } as React.CSSProperties}
+                style={
+                  {
+                    "--sp-layout-height": "95vh",
+                  } as React.CSSProperties
+                }
               >
                 <SandpackFileExplorer />
               </div>
             </div>
           </ResizablePanel>
 
-          <ResizableHandle style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)' }} className="hover:opacity-80 transition-opacity" />
+          <ResizableHandle
+            style={{ backgroundColor: "rgba(100, 100, 100, 0.2)" }}
+            className="hover:opacity-80 transition-opacity"
+          />
 
           {/* Editor and Preview */}
           <ResizablePanel defaultSize={82}>
             <ResizablePanelGroup direction="horizontal" className="h-full">
               {/* Editor */}
               <ResizablePanel defaultSize={50} minSize={30}>
-                <div className="flex flex-col h-full backdrop-blur-xl shadow-2xl" style={{
-                  backgroundColor: 'rgba(0, 0, 0, 1)'
-                }}>
+                <div
+                  className="flex flex-col h-full backdrop-blur-xl shadow-2xl"
+                  style={{
+                    backgroundColor: "rgba(0, 0, 0, 1)",
+                  }}
+                >
                   <SandpackCodeEditor
                     showTabs
                     showLineNumbers
@@ -101,33 +127,49 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                     wrapContent
                     closableTabs
                     style={{
-                      height: '100%',
+                      height: "100%",
                       flex: 1,
                     }}
                   />
                 </div>
               </ResizablePanel>
 
-              <ResizableHandle style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)' }} className="hover:opacity-80 transition-opacity" />
+              <ResizableHandle
+                style={{ backgroundColor: "rgba(100, 100, 100, 0.2)" }}
+                className="hover:opacity-80 transition-opacity"
+              />
 
               {/* Preview and Console */}
               <ResizablePanel defaultSize={50} minSize={30}>
                 <ResizablePanelGroup direction="vertical" className="h-full">
                   {/* Preview */}
                   <ResizablePanel defaultSize={70} minSize={40}>
-                    <div className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl" style={{
-                      borderColor: 'rgba(100, 100, 100, 0.2)',
-                      backgroundColor: 'rgba(0, 0, 0, 0.95)'
-                    }}>
-                      <div className="h-[42px] backdrop-blur-xl border-b flex items-center px-4 flex-shrink-0" style={{
-                        borderColor: 'rgba(100, 100, 100, 0.2)',
-                        background: 'linear-gradient(90deg, rgba(20, 20, 20, 0.9) 0%, rgba(40, 40, 40, 0.8) 100%)'
-                      }}>
-                        <div className="text-sm font-semibold flex items-center" style={{ color: '#ffffff' }}>
-                          <span className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm" style={{
-                            backgroundColor: '#f59e0b',
-                            boxShadow: '0 0 4px rgba(245, 158, 11, 0.5)'
-                          }}></span>
+                    <div
+                      className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl"
+                      style={{
+                        borderColor: "rgba(100, 100, 100, 0.2)",
+                        backgroundColor: "rgba(0, 0, 0, 0.95)",
+                      }}
+                    >
+                      <div
+                        className="h-[42px] backdrop-blur-xl border-b flex items-center px-4 flex-shrink-0"
+                        style={{
+                          borderColor: "rgba(100, 100, 100, 0.2)",
+                          background:
+                            "linear-gradient(90deg, rgba(20, 20, 20, 0.9) 0%, rgba(40, 40, 40, 0.8) 100%)",
+                        }}
+                      >
+                        <div
+                          className="text-sm font-semibold flex items-center"
+                          style={{ color: "#ffffff" }}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm"
+                            style={{
+                              backgroundColor: "#f59e0b",
+                              boxShadow: "0 0 4px rgba(245, 158, 11, 0.5)",
+                            }}
+                          ></span>
                           Preview
                         </div>
                       </div>
@@ -138,32 +180,49 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                           showSandpackErrorOverlay={false}
                           showOpenNewtab
                           style={{
-                            height: '100%',
-                            width: '100%',
+                            height: "100%",
+                            width: "100%",
                           }}
                         />
                       </div>
                     </div>
                   </ResizablePanel>
 
-                  <ResizableHandle style={{ backgroundColor: 'rgba(100, 100, 100, 0.2)' }} className="hover:opacity-80 transition-opacity" />
+                  <ResizableHandle
+                    style={{ backgroundColor: "rgba(100, 100, 100, 0.2)" }}
+                    className="hover:opacity-80 transition-opacity"
+                  />
 
                   {/* Console */}
                   <ResizablePanel defaultSize={30} minSize={6}>
-                    <div className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl rounded-br-xl" style={{
-                      borderColor: 'rgba(100, 100, 100, 0.2)',
-                      background: 'linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)'
-                    }}>
+                    <div
+                      className="border-l flex flex-col h-full backdrop-blur-xl shadow-2xl rounded-br-xl"
+                      style={{
+                        borderColor: "rgba(100, 100, 100, 0.2)",
+                        background:
+                          "linear-gradient(180deg, rgba(35, 35, 35, 1) 0%, rgba(25, 25, 25, 1) 50%, rgba(20, 20, 20, 1) 100%)",
+                      }}
+                    >
                       {/* Console Header */}
-                      <div className="h-[42px] backdrop-blur-xl border-b flex items-center px-4 flex-shrink-0" style={{
-                        borderColor: 'rgba(100, 100, 100, 0.2)',
-                        background: 'linear-gradient(90deg, rgba(20, 20, 20, 0.9) 0%, rgba(40, 40, 40, 0.8) 100%)'
-                      }}>
-                        <div className="text-sm font-semibold flex items-center" style={{ color: '#ffffff' }}>
-                          <span className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm" style={{
-                            backgroundColor: '#06b6d4',
-                            boxShadow: '0 0 4px rgba(6, 182, 212, 0.5)'
-                          }}></span>
+                      <div
+                        className="h-[42px] backdrop-blur-xl border-b flex items-center px-4 flex-shrink-0"
+                        style={{
+                          borderColor: "rgba(100, 100, 100, 0.2)",
+                          background:
+                            "linear-gradient(90deg, rgba(20, 20, 20, 0.9) 0%, rgba(40, 40, 40, 0.8) 100%)",
+                        }}
+                      >
+                        <div
+                          className="text-sm font-semibold flex items-center"
+                          style={{ color: "#ffffff" }}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full mr-2 animate-pulse shadow-sm"
+                            style={{
+                              backgroundColor: "#06b6d4",
+                              boxShadow: "0 0 4px rgba(6, 182, 212, 0.5)",
+                            }}
+                          ></span>
                           Console
                         </div>
                       </div>
@@ -172,9 +231,9 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
                       <div className="flex-1 overflow-y-auto rounded-br-xl">
                         <SandpackConsole
                           style={{
-                            height: '100%',
-                            width: '100%',
-                            overflow: 'auto',
+                            height: "100%",
+                            width: "100%",
+                            overflow: "auto",
                           }}
                         />
                       </div>
@@ -188,4 +247,4 @@ export function SandboxEmbed({ template }: SandboxEmbedProps) {
       </SandpackProvider>
     </div>
   );
-} 
+}
