@@ -377,7 +377,6 @@ const isSandboxSubmissionEnabled = await posthog.isFeatureEnabled(
   currentUser.email ?? currentUser.username
 );
 
-const isSandboxConfigured = isSandboxSubmissionEnabled && assignment.sandboxTemplate !== null;
 ---
 
 <RootLayout title="Assignments">
@@ -394,7 +393,7 @@ const isSandboxConfigured = isSandboxSubmissionEnabled && assignment.sandboxTemp
       totalPages,
       pageSize: limit,
     }}
-    isSandboxConfigured={isSandboxConfigured ?? false}
+    isSandboxSubmissionEnabled={isSandboxSubmissionEnabled ?? false}
     client:only="react"
   />
 </RootLayout>

@@ -229,10 +229,9 @@ const NewAttachmentPage = ({
                     <SelectItem className="text-base hover:bg-secondary-800" value="HTML_CSS_JS">
                       HTML CSS JS
                     </SelectItem>
-                    {/* todo: add react */}
-                    {/* <SelectItem className="text-base hover:bg-secondary-800" value="REACT">
-                      REACT
-                    </SelectItem> */}
+                    <SelectItem className="text-base hover:bg-secondary-800" value="SANDBOX">
+                      SANDBOX
+                    </SelectItem>
                     <SelectItem className="text-base hover:bg-secondary-800" value="EXTERNAL_LINK">
                       EXTERNAL LINK
                     </SelectItem>

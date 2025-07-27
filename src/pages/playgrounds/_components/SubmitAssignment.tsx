@@ -38,6 +38,7 @@ const SubmitAssignment = ({
     fetch();
   }, [assignmentId]);
 
+  if (currentUser?.role !== "STUDENT") return null;
   return (
     assignmentId &&
     (assignmentDetails ? (

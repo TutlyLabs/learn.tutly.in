@@ -54,7 +54,7 @@ interface Props {
     totalPages: number;
     pageSize: number;
   };
-  isSandboxConfigured: boolean;
+  isSandboxSubmissionEnabled: boolean;
 }
 
 export default function AssignmentPage({
@@ -66,8 +66,9 @@ export default function AssignmentPage({
   username,
   mentors,
   pagination,
-  isSandboxConfigured,
+  isSandboxSubmissionEnabled,
 }: Props) {
+  const isSandboxConfigured = isSandboxSubmissionEnabled && assignment.sandboxTemplate !== null;
   const haveAdminAccess = currentUser && (currentUser.role === "INSTRUCTOR" || isCourseAdmin);
 
   const [_, setSearchParams] = useSearchParams();
@@ -112,9 +113,8 @@ export default function AssignmentPage({
         <div className="flex items-center justify-center gap-4">
           {assignment?.dueDate != null && (
             <div
-              className={`rounded p-1 px-2 text-white ${
-                new Date(assignment?.dueDate) > new Date() ? "bg-primary-600" : "bg-secondary-500"
-              }`}
+              className={`rounded p-1 px-2 text-white ${new Date(assignment?.dueDate) > new Date() ? "bg-primary-600" : "bg-secondary-500"
+                }`}
             >
               Last Date : {assignment?.dueDate.toISOString().split("T")[0]}
             </div>
@@ -127,6 +127,17 @@ export default function AssignmentPage({
           <h1 className="rounded-md border p-1 text-sm">
             Max responses : {assignment?.maxSubmissions}
           </h1>
+          {haveAdminAccess && isSandboxSubmissionEnabled && (
+            <Button asChild className="rounded-md bg-blue-600 p-1 px-3 hover:bg-blue-700">
+              <a
+                href={`/playgrounds/sandbox?assignmentId=${assignment.id}&editTemplate=true`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {isSandboxConfigured ? "Update Sandbox" : "Configure Sandbox"}
+              </a>
+            </Button>
+          )}
           {haveAdminAccess && (
             <Dialog>
               <DialogTrigger asChild>

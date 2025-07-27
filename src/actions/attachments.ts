@@ -14,7 +14,7 @@ export const createAttachment = defineAction({
     courseId: z.string(),
     classId: z.string(),
     maxSubmissions: z.number().optional(),
-    submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK"]),
+    submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK", "SANDBOX"]),
   }),
   async handler(
     {
@@ -111,7 +111,7 @@ export const updateAttachment = defineAction({
     courseId: z.string(),
     classId: z.string(),
     maxSubmissions: z.number().optional(),
-    submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK"]),
+    submissionMode: z.enum(["HTML_CSS_JS", "REACT", "EXTERNAL_LINK", "SANDBOX"]),
   }),
   async handler(
     {
