@@ -245,7 +245,7 @@ const StudentAssignmentSubmission = ({
   };
 
   const isMaxSubmissionsReached = assignment?.maxSubmissions <= assignment.submissions.length;
-  const isPlaygroundSubmission = assignment.submissionMode === "HTML_CSS_JS";
+  const isPlaygroundSubmission = assignment.submissionMode === "HTML_CSS_JS" || isSandboxConfigured;
 
   return (
     <div className="space-y-6">
