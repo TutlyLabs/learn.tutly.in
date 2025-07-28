@@ -7,12 +7,12 @@ const user = Astro.locals.user;
 
 const isGoogleSignInEnabled = await posthog.isFeatureEnabled(
   "google_sign_in",
-  user?.email ?? user?.username ?? "unauthenticated"
+  user?.id ?? "unauthenticated"
 );
 
 const isGithubSignInEnabled = await posthog.isFeatureEnabled(
   "github_sign_in",
-  user?.email ?? user?.username ?? "unauthenticated"
+  user?.id ?? "unauthenticated"
 );
 ---
 

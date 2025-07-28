@@ -1,9 +1,14 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
 import AIChat from "./_components/AIChat";
+import { posthog } from "@/lib/posthog";
 
 const user = Astro.locals.user!;
 if (user.role !== "INSTRUCTOR") {
+  return Astro.redirect("/404");
+}
+const isAIAssistantEnabled = await posthog.isFeatureEnabled("ai_assistant", user.id);
+if (!isAIAssistantEnabled) {
   return Astro.redirect("/404");
 }
 ---

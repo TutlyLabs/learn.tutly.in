@@ -8,10 +8,7 @@ import { posthog } from "@/lib/posthog";
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
 
-const isSandboxEnabled = await posthog.isFeatureEnabled(
-  "sandbox_templates",
-  currentUser.email ?? currentUser.username
-);
+const isSandboxEnabled = await posthog.isFeatureEnabled("sandbox_templates", currentUser.id);
 ---
 
 <RootLayout>

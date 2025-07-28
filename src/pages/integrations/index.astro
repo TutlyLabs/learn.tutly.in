@@ -11,10 +11,7 @@ import db from "@/lib/db";
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
 
-const isIntegrationsEnabled = await posthog.isFeatureEnabled(
-  "integrations_tab",
-  currentUser.email ?? currentUser.username
-);
+const isIntegrationsEnabled = await posthog.isFeatureEnabled("integrations_tab", currentUser.id);
 if (!isIntegrationsEnabled) {
   return Astro.redirect("/");
 }
@@ -29,10 +26,7 @@ const features = (await posthog.getFeatureFlagPayload("integrations_tab", curren
     }
   | undefined;
 
-const isAIAssistantEnabled = await posthog.isFeatureEnabled(
-  "ai_assistant",
-  currentUser.email ?? currentUser.username
-);
+const isAIAssistantEnabled = await posthog.isFeatureEnabled("ai_assistant", currentUser.id);
 
 let sandbox = await db.account.findFirst({
   where: {

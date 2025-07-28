@@ -18,10 +18,7 @@ if (!currentUser) {
   return Astro.redirect("/auth/signin");
 }
 
-const isSandboxEnabled = await posthog.isFeatureEnabled(
-  "sandbox_templates",
-  currentUser.email ?? currentUser.username
-);
+const isSandboxEnabled = await posthog.isFeatureEnabled("sandbox_templates", currentUser.id);
 
 if (!isSandboxEnabled) {
   return Astro.redirect("/playgrounds");
