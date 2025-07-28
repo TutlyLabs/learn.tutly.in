@@ -29,6 +29,11 @@ const features = (await posthog.getFeatureFlagPayload("integrations_tab", curren
     }
   | undefined;
 
+const isAIAssistantEnabled = await posthog.isFeatureEnabled(
+  "ai_assistant",
+  currentUser.email ?? currentUser.username
+);
+
 let sandbox = await db.account.findFirst({
   where: {
     userId: currentUser.id,
@@ -92,5 +97,9 @@ if (gemini && gemini.access_token) {
   {features?.zoom && <ZoomIntegration zoom={zoom ?? undefined} client:only="react" />}
   {features?.github && <GithubIntegration github={github ?? undefined} client:only="react" />}
   {features?.google && <GoogleIntegration google={google ?? undefined} client:only="react" />}
-  {features?.gemini && <GeminiIntegration gemini={gemini ?? undefined} client:only="react" />}
+  {
+    features?.gemini && isAIAssistantEnabled && (
+      <GeminiIntegration gemini={gemini ?? undefined} client:only="react" />
+    )
+  }
 </RootLayout>
