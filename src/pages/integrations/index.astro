@@ -5,6 +5,7 @@ import { SandboxIntegration } from "./_components/Sandbox";
 import { ZoomIntegration } from "./_components/Zoom";
 import { GithubIntegration } from "./_components/Github";
 import { GoogleIntegration } from "./_components/Google";
+import { GeminiIntegration } from "./_components/Gemini";
 import db from "@/lib/db";
 
 const currentUser = Astro.locals.user;
@@ -24,6 +25,7 @@ const features = (await posthog.getFeatureFlagPayload("integrations_tab", curren
       github?: boolean;
       google?: boolean;
       zoom?: boolean;
+      gemini?: boolean;
     }
   | undefined;
 
@@ -63,6 +65,22 @@ let zoom = await db.account.findFirst({
     provider: "zoom",
   },
 });
+
+let gemini = await db.account.findFirst({
+  where: {
+    userId: currentUser.id,
+    provider: "gemini",
+  },
+});
+
+if (gemini && gemini.access_token) {
+  const token = gemini.access_token;
+  if (token.length > 6) {
+    gemini.access_token = token.slice(0, 7) + "*".repeat(25) + token.slice(-3);
+  } else {
+    gemini.access_token = "*".repeat(token.length);
+  }
+}
 ---
 
 <RootLayout title="Integrations">
@@ -74,4 +92,5 @@ let zoom = await db.account.findFirst({
   {features?.zoom && <ZoomIntegration zoom={zoom ?? undefined} client:only="react" />}
   {features?.github && <GithubIntegration github={github ?? undefined} client:only="react" />}
   {features?.google && <GoogleIntegration google={google ?? undefined} client:only="react" />}
+  {features?.gemini && <GeminiIntegration gemini={gemini ?? undefined} client:only="react" />}
 </RootLayout>

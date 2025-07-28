@@ -34,6 +34,11 @@ const isIntegrationsEnabled = await posthog.isFeatureEnabled(
   user.email ?? user.username
 );
 
+const isAIAssistantEnabled = await posthog.isFeatureEnabled(
+  "ai_assistant",
+  user.email ?? user.username
+);
+
 // @ts-ignore
 globalThis.pathname = pathname;
 ---
@@ -84,6 +89,7 @@ globalThis.pathname = pathname;
               pathname={pathname}
               forceClose={forceClose}
               isIntegrationsEnabled={isIntegrationsEnabled}
+              isAIAssistantEnabled={isAIAssistantEnabled}
             />
           </div>
           <main class="w-full">

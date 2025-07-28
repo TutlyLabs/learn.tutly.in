@@ -35,6 +35,7 @@ interface AppSidebarProps {
   className?: string;
   pathname: string;
   isIntegrationsEnabled: boolean | undefined;
+  isAIAssistantEnabled: boolean | undefined;
 }
 
 export function AppSidebar({
@@ -43,6 +44,7 @@ export function AppSidebar({
   className,
   pathname,
   isIntegrationsEnabled,
+  isAIAssistantEnabled,
 }: AppSidebarProps) {
   const organizationName = "Tutly";
 
@@ -50,6 +52,7 @@ export function AppSidebar({
     role: user.role,
     isAdmin: user.isAdmin,
     isIntegrationsEnabled: isIntegrationsEnabled ?? false,
+    isAIAssistantEnabled: isAIAssistantEnabled ?? false,
   });
   const [isOpen, setIsOpen] = useState(() => !forceClose);
 

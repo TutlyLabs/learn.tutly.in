@@ -1,0 +1,15 @@
+---
+import RootLayout from "@/layouts/RootLayout.astro";
+import AIChat from "./_components/AIChat";
+
+const user = Astro.locals.user!;
+if (user.role !== "INSTRUCTOR") {
+  return Astro.redirect("/404");
+}
+---
+
+<RootLayout title="AI Assistant - Tutly" className="p-0" hideCrisp>
+  <div class="flex-1 overflow-hidden h-[88vh]">
+    <AIChat client:only="react" user={user} />
+  </div>
+</RootLayout>

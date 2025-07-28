@@ -2,15 +2,7 @@
 
 import { SandpackProps } from "@codesandbox/sandpack-react";
 import { actions } from "astro:actions";
-import {
-  ArrowLeft,
-  Edit,
-  Maximize2,
-  Minimize2,
-  RotateCcw,
-  Save,
-  Settings,
-} from "lucide-react";
+import { ArrowLeft, Edit, Maximize2, Minimize2, RotateCcw, Save, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 

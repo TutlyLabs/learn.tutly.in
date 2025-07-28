@@ -2,6 +2,7 @@ import { Role } from "@prisma/client";
 import {
   BarChart,
   Bookmark,
+  Brain,
   Calendar,
   ClipboardList,
   GraduationCap,
@@ -380,22 +381,16 @@ const StudentItems = [
   },
 ];
 
-const commonItems = [
-  {
-    title: "Integrations",
-    url: "/integrations",
-    icon: Plug,
-  },
-];
-
 export function getDefaultSidebarItems({
   role,
   isAdmin = false,
   isIntegrationsEnabled = false,
+  isAIAssistantEnabled = false,
 }: {
   role: Role;
   isAdmin?: boolean;
   isIntegrationsEnabled?: boolean;
+  isAIAssistantEnabled?: boolean;
 }): SidebarItem[] {
   let items: SidebarItem[] = [];
   if (role === "INSTRUCTOR") {
@@ -411,10 +406,25 @@ export function getDefaultSidebarItems({
   } else {
     items = [];
   }
-
   if (isIntegrationsEnabled) {
-    items = [...items, ...commonItems];
+    items = [
+      ...items,
+      {
+        title: "Integrations",
+        url: "/integrations",
+        icon: Plug,
+      },
+    ];
   }
-
+  if (isAIAssistantEnabled) {
+    items = [
+      ...items,
+      {
+        title: "AI Assistant",
+        url: "/ai",
+        icon: Brain,
+      },
+    ];
+  }
   return items;
 }

@@ -1,5 +1,6 @@
 import { groupActions } from "@/lib/group";
 
+import * as aiQuery from "./aiQuery";
 import * as assignments from "./assignments";
 import * as attachments from "./attachments";
 import * as attendances from "./attendance";
@@ -10,6 +11,7 @@ import * as courses from "./courses";
 import * as doubts from "./doubts";
 import * as fileupload from "./fileupload";
 import * as folders from "./folders";
+import * as gemini from "./gemini";
 import * as leaderboard from "./getLeaderboard";
 import * as holidays from "./holidays";
 import * as mentors from "./mentors";
@@ -50,5 +52,7 @@ export const server = {
   ...groupActions("reset_password", resetPassword, "_"),
   ...groupActions("folders", folders, "_"),
   ...groupActions("sandbox", sandbox, "_"),
+  ...groupActions("gemini", gemini, "_"),
   ...groupActions("oauth", oauth, "_"),
+  ...groupActions("aiQuery", aiQuery, "_"),
 };

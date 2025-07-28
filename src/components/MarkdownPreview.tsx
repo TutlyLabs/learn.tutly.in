@@ -89,6 +89,32 @@ const MarkdownPreview = ({
                 : ""
             }
             ${fontSize ? getFontSizeStyles() : ""}
+            
+            /* Table styling with transparent background */
+            .wmde-markdown table {
+              background-color: transparent !important;
+              border-collapse: collapse !important;
+              margin: 0.5rem 0 !important;
+              border-radius: 0.5rem !important;
+              overflow: hidden !important;
+              border: 1px solid hsl(var(--border)) !important;
+            }
+            .wmde-markdown table th,
+            .wmde-markdown table td {
+              background-color: transparent !important;
+              border: 1px solid hsl(var(--border)) !important;
+              padding: 0.5rem !important;
+            }
+            .wmde-markdown table th {
+              font-weight: 600 !important;
+              background-color: hsl(var(--muted) / 0.3) !important;
+            }
+            .wmde-markdown table tr:nth-child(even) {
+              background-color: hsl(var(--muted) / 0.1) !important;
+            }
+            .wmde-markdown table tr:hover {
+              background-color: hsl(var(--muted) / 0.2) !important;
+            }
           `,
           }}
         />
