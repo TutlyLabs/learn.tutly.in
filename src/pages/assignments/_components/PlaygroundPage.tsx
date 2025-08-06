@@ -46,7 +46,6 @@ function SubmissionSandbox({ files, assignment }: { files: SandpackFiles; assign
 
 const PlaygroundPage = ({
   submission,
-  submissionMode,
   assignment,
   showActions = false,
   showAssignment = false,
@@ -57,16 +56,6 @@ const PlaygroundPage = ({
   showActions?: boolean;
   showAssignment?: boolean;
 }) => {
-  let template = null;
-  // todo : add more templates
-  if (submissionMode === "HTML_CSS_JS") {
-    template = "static";
-  } else if (submissionMode === "REACT") {
-    template = "react";
-  } else {
-    template = submissionMode;
-  }
-
   if (!submission) return <NoDataFound message="No submission found" />;
 
   return (

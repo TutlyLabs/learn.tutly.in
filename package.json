@@ -1,11 +1,11 @@
 {
   "name": "tutly",
   "type": "module",
-  "version": "2.2.4.beta.004",
+  "version": "2.2.5",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && prisma generate && astro build",
+    "build": "rm -rf dist && astro check && prisma generate && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "format:check": "prettier --check .",
