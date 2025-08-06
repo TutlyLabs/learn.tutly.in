@@ -37,7 +37,12 @@ const ResizablePanelLayout = ({
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel defaultSize={85}>
-        <PlaygroundPage submission={submission} submissionMode={submissionMode} showActions />
+        <PlaygroundPage
+          submission={submission}
+          submissionMode={submissionMode}
+          assignment={assignment}
+          showActions
+        />
       </ResizablePanel>
     </ResizablePanelGroup>
   );

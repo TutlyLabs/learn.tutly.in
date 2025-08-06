@@ -2,6 +2,7 @@
 import RootLayout from "@/layouts/RootLayout.astro";
 import db from "@/lib/db";
 import ResizablePanelLayout from "@/pages/assignments/_components/ResizablePanelLayout";
+import { Buffer } from "node:buffer";
 
 const assignmentId = Astro.params.id!;
 const submissionId = Astro.url.searchParams.get("submissionId");
@@ -13,41 +14,32 @@ if (user?.role === "STUDENT") {
 }
 
 const assignment = await db.attachment.findUnique({
-  where: {
-    id: assignmentId,
-  },
-  include: {
-    class: {
-      include: {
-        course: true,
-      },
-    },
-  },
-});
-const assignmenttemp = await db.attachment.findUnique({
-  where: {
-    id: assignmentId!,
-  },
+  where: { id: assignmentId },
+  include: { class: { include: { course: true } } },
 });
 
+let decodedSandboxTemplate = null;
+if (assignment?.sandboxTemplate) {
+  try {
+    const decodedString = Buffer.from(assignment.sandboxTemplate as string, "base64").toString(
+      "utf-8"
+    );
+    decodedSandboxTemplate = JSON.parse(decodedString);
+  } catch (error) {
+    decodedSandboxTemplate = assignment.sandboxTemplate;
+  }
+}
+
+const assignmentWithDecodedTemplate = assignment
+  ? { ...assignment, sandboxTemplate: decodedSandboxTemplate }
+  : null;
+
+const assignmenttemp = await db.attachment.findUnique({ where: { id: assignmentId! } });
+
 const submissions = await db.submission.findMany({
-  where: {
-    attachmentId: assignmentId!,
-  },
-  include: {
-    enrolledUser: {
-      include: {
-        user: true,
-      },
-    },
-    points: true,
-    assignment: true,
-  },
-  orderBy: {
-    enrolledUser: {
-      username: "asc",
-    },
-  },
+  where: { attachmentId: assignmentId! },
+  include: { enrolledUser: { include: { user: true } }, points: true, assignment: true },
+  orderBy: { enrolledUser: { username: "asc" } },
 });
 
 let filteredSubmissions: any[] = [];
@@ -65,12 +57,8 @@ if (user?.role === "MENTOR") {
 if (assignmenttemp?.maxSubmissions && assignmenttemp.maxSubmissions > 1) {
   const submissionCount = await db.submission.groupBy({
     by: ["enrolledUserId"],
-    where: {
-      attachmentId: assignmentId!,
-    },
-    _count: {
-      id: true,
-    },
+    where: { attachmentId: assignmentId! },
+    _count: { id: true },
   });
 
   filteredSubmissions.forEach((submission) => {
@@ -106,12 +94,12 @@ const submission = filteredSubmissions.find((submission: any) => submission?.id 
 <RootLayout title="Evaluate" forceClose={true} hideCrisp>
   <ResizablePanelLayout
     assignmentId={assignmentId}
-    assignment={assignment}
+    assignment={assignmentWithDecodedTemplate}
     submissions={filteredSubmissions}
     submissionId={submissionId}
     username={username}
     submission={submission}
-    submissionMode={assignment?.submissionMode!}
+    submissionMode={assignmentWithDecodedTemplate?.submissionMode!}
     client:only="react"
   />
 </RootLayout>

@@ -1,60 +1,44 @@
-import { SandpackFiles, SandpackProps, SandpackProvider } from "@codesandbox/sandpack-react";
+import { SandpackFiles, SandpackProvider } from "@codesandbox/sandpack-react";
 import { submissionMode } from "@prisma/client";
 import { useMemo } from "react";
 
 import NoDataFound from "@/components/NoDataFound";
 import { SandboxEmbed } from "@/pages/playgrounds/sandbox/_components/SandboxEmbed";
-// Import required styles for the sandbox
 import "@/pages/playgrounds/sandbox/_components/styles.css";
 import { glassyTheme } from "@/pages/playgrounds/sandbox/_components/theme";
 
 import EvaluateSubmission from "./evaluateSubmission";
 
-// Simple sandbox component for viewing submissions
-function SubmissionSandbox({
-  files,
-  template,
-  readOnly = true,
-  assignment,
-}: {
-  files: SandpackFiles;
-  template?: string;
-  readOnly?: boolean;
-  assignment?: any;
-}) {
+function SubmissionSandbox({ files, assignment }: { files: SandpackFiles; assignment?: any }) {
   const config = {
-    fileExplorer: true,
-    closableTabs: true,
+    fileExplorer: false,
+    closableTabs: false,
   };
 
-  const sandpackProps: SandpackProps = useMemo(
-    () => ({
-      files,
-      template: template as any,
-      options: {
-        closableTabs: false,
-        readOnly,
-        showTabs: true,
-        showLineNumbers: true,
-        showInlineErrors: true,
-        wrapContent: true,
-        showRefreshButton: true,
-        showConsoleButton: true,
-        showConsole: false,
-      },
-      theme: glassyTheme,
-    }),
-    [files, template, readOnly]
-  );
+  const sandpackProps = useMemo(() => {
+    if (assignment?.sandboxTemplate) {
+      return {
+        ...assignment.sandboxTemplate,
+        theme: glassyTheme,
+        options: {
+          ...assignment.sandboxTemplate?.options,
+          readOnly: true,
+        },
+        files,
+      };
+    }
 
-  if (!files || Object.keys(files).length === 0) {
-    return <NoDataFound message="No files found in submission" />;
+    return null;
+  }, [files, assignment]);
+
+  if (!sandpackProps) {
+    return <NoDataFound message="No sandbox template found" />;
   }
 
   return (
     <SandpackProvider {...sandpackProps}>
       <div className="h-full w-full">
-        <SandboxEmbed assignment={assignment} isEditTemplate={false} config={config} />
+        <SandboxEmbed assignment={null} isEditTemplate={false} config={config} />
       </div>
     </SandpackProvider>
   );
@@ -63,11 +47,13 @@ function SubmissionSandbox({
 const PlaygroundPage = ({
   submission,
   submissionMode,
+  assignment,
   showActions = false,
   showAssignment = false,
 }: {
   submission: any;
   submissionMode: submissionMode;
+  assignment?: any;
   showActions?: boolean;
   showAssignment?: boolean;
 }) => {
@@ -96,9 +82,8 @@ const PlaygroundPage = ({
           />
         ) : (
           <SubmissionSandbox
-            assignment={showAssignment ? submission.assignment : null}
+            assignment={assignment || (showAssignment ? submission.assignment : null)}
             files={submission.data as SandpackFiles}
-            template={template ?? "static"}
           />
         )}
       </div>
