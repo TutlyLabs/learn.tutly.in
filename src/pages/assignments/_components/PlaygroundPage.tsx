@@ -16,19 +16,15 @@ function SubmissionSandbox({ files, assignment }: { files: SandpackFiles; assign
   };
 
   const sandpackProps = useMemo(() => {
-    if (assignment?.sandboxTemplate) {
-      return {
-        ...assignment.sandboxTemplate,
-        theme: glassyTheme,
-        options: {
-          ...assignment.sandboxTemplate?.options,
-          readOnly: true,
-        },
-        files,
-      };
-    }
-
-    return null;
+    return {
+      ...assignment?.sandboxTemplate,
+      theme: glassyTheme,
+      options: {
+        ...assignment?.sandboxTemplate?.options,
+        readOnly: true,
+      },
+      files,
+    };
   }, [files, assignment]);
 
   if (!sandpackProps) {
