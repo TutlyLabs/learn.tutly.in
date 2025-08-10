@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">tutly</string>
+    <string name="title_activity_main">tutly</string>
+    <string name="package_name">com.tutly.app</string>
+    <string name="custom_url_scheme">com.tutly.app</string>
+</resources>
