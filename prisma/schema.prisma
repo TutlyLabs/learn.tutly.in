@@ -154,11 +154,14 @@ model File {
 model PushSubscription {
   id String @id @default(uuid())
 
-  endpoint String @unique
-  p256dh   String
-  auth     String
+  // web push fields 
+  endpoint String? @unique
+  p256dh   String?
+  auth     String?
 
-  // deviceId  String   @unique
+  // mobile push notifications
+  deviceToken String? @unique
+  platform    String? // ios, android, web
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
@@ -167,6 +170,7 @@ model PushSubscription {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([deviceToken])
 }
 
 enum NotificationMedium {

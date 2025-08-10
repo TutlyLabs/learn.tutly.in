@@ -1,44 +1,88 @@
 import { NotificationEvent, NotificationMedium } from "@prisma/client";
 import { defineAction } from "astro:actions";
-import webPush from "web-push";
+import admin from "firebase-admin";
 import { z } from "zod";
 
 import db from "@/lib/db";
-import { envOrThrow } from "@/lib/utils";
+import { env } from "@/lib/utils";
 
-webPush.setVapidDetails(
-  envOrThrow("VAPID_SUBJECT"),
-  envOrThrow("PUBLIC_VAPID_PUBLIC_KEY"),
-  envOrThrow("VAPID_PRIVATE_KEY")
-);
+if (!admin.apps.length) {
+  const projectId = env("FIREBASE_PROJECT_ID");
+  const clientEmail = env("FIREBASE_CLIENT_EMAIL");
+  const privateKey = env("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n");
 
-async function sendPushNotification(userId: string, message: string, notificationId: string) {
+  if (!projectId || !clientEmail || !privateKey) {
+    console.error(
+      "Missing Firebase credentials. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables."
+    );
+  } else {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+    });
+  }
+}
+
+async function sendCapacitorPushNotification(
+  userId: string,
+  message: string,
+  notificationId: string
+) {
   const subscription = await db.pushSubscription.findFirst({
     where: { userId },
   });
 
   if (!subscription) return;
 
+  const hasCapacitorToken = subscription.deviceToken;
+  const hasWebPushEndpoint = subscription.endpoint;
+
+  if (!hasCapacitorToken && !hasWebPushEndpoint) {
+    console.log("No valid push subscription found for user:", userId);
+    return;
+  }
+
   try {
-    await webPush.sendNotification(
-      {
-        endpoint: subscription.endpoint,
-        keys: {
-          p256dh: subscription.p256dh,
-          auth: subscription.auth,
+    if (hasCapacitorToken && subscription.deviceToken) {
+      const payload = {
+        notification: {
+          title: "Tutly",
+          body: message,
         },
-      },
-      JSON.stringify({
+        data: {
+          notificationId,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+        token: subscription.deviceToken,
+      };
+
+      const response = await admin.messaging().send(payload);
+      console.log("Successfully sent Capacitor push notification:", response);
+    } else if (hasWebPushEndpoint) {
+      console.log("Falling back to web push notification:", {
+        endpoint: subscription.endpoint,
         message,
-        id: notificationId,
-        type: "NOTIFICATION",
-      })
-    );
+        notificationId,
+      });
+      // TODO: Implement web push notification
+    }
   } catch (error) {
     console.error("Failed to send push notification:", error);
-    if ((error as any).statusCode === 410) {
+
+    if (
+      hasCapacitorToken &&
+      ((error as any).code === "messaging/registration-token-not-registered" ||
+        (error as any).code === "messaging/invalid-registration-token")
+    ) {
       await db.pushSubscription.delete({
-        where: { endpoint: subscription.endpoint },
+        where: { id: subscription.id },
+      });
+    } else if (hasWebPushEndpoint && (error as any).statusCode === 410) {
+      await db.pushSubscription.delete({
+        where: { id: subscription.id },
       });
     }
   }
@@ -104,41 +148,59 @@ export const getNotificationConfig = defineAction({
 export const updateNotificationConfig = defineAction({
   input: z.object({
     userId: z.string(),
-    config: z.object({
-      endpoint: z.string(),
-      p256dh: z.string(),
-      auth: z.string(),
-    }),
+    deviceToken: z.string(),
+    platform: z.string().optional(),
   }),
-  async handler({ userId, config }) {
-    const { endpoint, p256dh, auth } = config;
-
-    // Delete existing subscription if endpoint is empty
-    if (!endpoint) {
+  async handler({ userId, deviceToken, platform }) {
+    if (!deviceToken) {
       await db.pushSubscription.deleteMany({
         where: { userId },
       });
       return null;
     }
 
-    // Upsert subscription
-    const subscription = await db.pushSubscription.upsert({
+    const existingSubscription = await db.pushSubscription.findFirst({
       where: {
-        endpoint,
-      },
-      update: {
-        p256dh,
-        auth,
-      },
-      create: {
-        userId,
-        endpoint,
-        p256dh,
-        auth,
+        deviceToken,
+        userId: { not: userId },
       },
     });
 
-    return subscription;
+    if (existingSubscription) {
+      await db.pushSubscription.delete({
+        where: { id: existingSubscription.id },
+      });
+    }
+
+    const userSubscription = await db.pushSubscription.findFirst({
+      where: { userId },
+    });
+
+    if (userSubscription) {
+      const subscription = await db.pushSubscription.update({
+        where: { id: userSubscription.id },
+        data: {
+          deviceToken,
+          platform: platform || "unknown",
+          endpoint: deviceToken,
+          p256dh: platform || "unknown",
+          auth: "",
+        },
+      });
+      return subscription;
+    } else {
+      const subscription = await db.pushSubscription.create({
+        data: {
+          userId,
+          deviceToken,
+          platform: platform || "unknown",
+          endpoint: deviceToken,
+          p256dh: platform || "unknown",
+          auth: "",
+        },
+      });
+      return subscription;
+    }
   },
 });
 
@@ -158,7 +220,7 @@ export const notifyUser = defineAction({
       },
     });
 
-    await sendPushNotification(userId, message, notification.id);
+    await sendCapacitorPushNotification(userId, message, notification.id);
 
     return notification;
   },
@@ -204,7 +266,7 @@ export const notifyBulkUsers = defineAction({
         if (!notification) {
           throw new Error("Notification not found");
         }
-        await sendPushNotification(enrolled.user.id, message, notification.id);
+        await sendCapacitorPushNotification(enrolled.user.id, message, notification.id);
       })
     );
 
