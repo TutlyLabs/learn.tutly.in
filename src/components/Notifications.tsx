@@ -239,7 +239,7 @@ export default function Notifications({ user }: { user: SessionUser }) {
         return;
       }
 
-      // check if already registered
+      // Check if already registered
       const config = await actions.notifications_getNotificationConfig({ userId: user.id });
       if (config.data?.deviceToken) {
         setSubscriptionStatus("Subscribed");
@@ -247,7 +247,7 @@ export default function Notifications({ user }: { user: SessionUser }) {
         setSubscriptionStatus("NotSubscribed");
       }
 
-      // listeners
+      // Set up listeners
       PushNotifications.addListener("registration", async (token) => {
         const platform = Capacitor.getPlatform();
         await updateNotificationConfig(token.value, platform);
@@ -262,10 +262,12 @@ export default function Notifications({ user }: { user: SessionUser }) {
       });
 
       PushNotifications.addListener("pushNotificationReceived", (_notification) => {
+        // Refresh notifications when a new one is received
         fetchNotifications();
       });
 
       PushNotifications.addListener("pushNotificationActionPerformed", (notification) => {
+        // Handle notification tap - navigate to notification details
         if (notification.notification.data?.notificationId) {
           navigate(`/notifications/${notification.notification.data.notificationId}`);
         }
@@ -362,7 +364,15 @@ export default function Notifications({ user }: { user: SessionUser }) {
     } else if (subscriptionStatus === "NotSubscribed") {
       subscribe();
     } else {
-      toast.error("Push notifications are not supported on this device");
+      // On web, show toast encouraging app install
+      if (!Capacitor.isNativePlatform()) {
+        toast.message("Install our mobile app for push notifications!", {
+          description: "Push notifications are available in our Android and iOS apps",
+          duration: 5000,
+        });
+      } else {
+        toast.error("Push notifications are not supported on this device");
+      }
     }
   };
 
@@ -384,7 +394,19 @@ export default function Notifications({ user }: { user: SessionUser }) {
         return "Subscribe";
       case "NotSupported":
       default:
-        return "Not Supported";
+        return Capacitor.isNativePlatform() ? "Not Supported" : "Install App";
+    }
+  };
+
+  const getSubscriptionTooltipText = () => {
+    if (subscriptionStatus === "Subscribed") {
+      return "Disable push notifications";
+    } else if (subscriptionStatus === "NotSubscribed") {
+      return "Enable push notifications";
+    } else {
+      return Capacitor.isNativePlatform()
+        ? "Push notifications not supported on this device"
+        : "Install our mobile app to receive push notifications";
     }
   };
 
@@ -426,22 +448,29 @@ export default function Notifications({ user }: { user: SessionUser }) {
               </TabsTrigger>
             </TabsList>
             <div className="float-right flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSubscribeClick}
-                disabled={isSubscribing || subscriptionStatus === "NotSupported"}
-                className="flex px-1 items-center gap-1.5 text-xs text-muted-foreground hover:text-primary h-8"
-              >
-                {isSubscribing ? (
-                  <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
-                ) : subscriptionStatus === "Subscribed" ? (
-                  <BellOff className="h-3.5 w-3.5" />
-                ) : (
-                  <Bell className="h-3.5 w-3.5" />
-                )}
-                <span>{getSubscriptionButtonText()}</span>
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSubscribeClick}
+                      disabled={isSubscribing}
+                      className="flex px-1 items-center gap-1.5 text-xs text-muted-foreground hover:text-primary h-8"
+                    >
+                      {isSubscribing ? (
+                        <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
+                      ) : subscriptionStatus === "Subscribed" ? (
+                        <BellOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Bell className="h-3.5 w-3.5" />
+                      )}
+                      <span>{getSubscriptionButtonText()}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{getSubscriptionTooltipText()}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button
                 variant="ghost"
                 size="icon"
