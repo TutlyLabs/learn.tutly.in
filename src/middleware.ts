@@ -34,9 +34,7 @@ export const onRequest = defineMiddleware(async ({ cookies, locals, url, request
   if (
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/reset-password") ||
-    pathname.startsWith("/_actions/reset_password") ||
-    // todo: remove this later
-    pathname.startsWith("/_actions/notifications")
+    pathname.startsWith("/_actions/reset_password")
   ) {
     const response = await next();
     logRequest(request.method, pathname, response.status, Date.now() - start, null, requestBody);
