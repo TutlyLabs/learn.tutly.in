@@ -9,20 +9,30 @@ import { env } from "@/lib/utils";
 if (!admin.apps.length) {
   const projectId = env("FIREBASE_PROJECT_ID");
   const clientEmail = env("FIREBASE_CLIENT_EMAIL");
-  const privateKey = env("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n");
+  const rawPrivateKey = env("FIREBASE_PRIVATE_KEY");
+
+  const privateKey = rawPrivateKey
+    ?.replace(/\\\\n/g, "\n")
+    ?.replace(/\\n/g, "\n")
+    ?.replace(/\n\s+/g, "\n")
+    ?.trim();
 
   if (!projectId || !clientEmail || !privateKey) {
     console.error(
       "Missing Firebase credentials. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables."
     );
   } else {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId,
-        clientEmail,
-        privateKey,
-      }),
-    });
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to initialize Firebase Admin:", error);
+    }
   }
 }
 
