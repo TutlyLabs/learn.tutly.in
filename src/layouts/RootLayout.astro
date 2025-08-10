@@ -75,7 +75,10 @@ globalThis.pathname = pathname;
     <Toaster client:load />
     {
       user && (
-        <div class="flex min-h-screen">
+        <div
+          class="flex min-h-screen"
+          style="padding-top: constant(safe-area-inset-top); padding-top: calc(env(safe-area-inset-top) + 16px);"
+        >
           <div class="relative">
             <AppSidebar
               client:load
