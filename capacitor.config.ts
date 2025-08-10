@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "tutly",
   webDir: "dist",
   server: {
-    url: "http://192.168.2.1:4321",
+    url: "https://learn.tutly.in",
     cleartext: false,
   },
 };
