@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   appName: "tutly",
   webDir: "dist",
   server: {
-    url: "https://learn.tutly.in",
+    url: "https://beta.tutly.in",
     cleartext: false,
   },
   plugins: {
