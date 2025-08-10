@@ -1,21 +1,7 @@
-import { Download, LockIcon, LogOut, UserIcon } from "lucide-react";
-// import {  Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { LockIcon, LogOut, UserIcon } from "lucide-react";
+import { useState } from "react";
 import { FaCaretDown } from "react-icons/fa";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { ToastAction } from "@/components/ui/toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useToast } from "@/hooks/use-toast";
 import { SessionUser } from "@/lib/auth/session";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -35,102 +21,6 @@ interface UserMenuProps {
 
 export function UserMenu({ user }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isStandalone, setIsStandalone] = useState(false);
-  const { toast } = useToast();
-  const [showOpenInAppDialog, setShowOpenInAppDialog] = useState(false);
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const checkStandalone = () => {
-      const isInStandaloneMode =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone ||
-        document.referrer.includes("android-app://");
-      setIsStandalone(isInStandaloneMode);
-    };
-
-    checkStandalone();
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    const handleAppInstalled = () => {
-      setDeferredPrompt(null);
-      setIsStandalone(true);
-      localStorage.setItem("appInstalled", "true");
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleAppInstalled);
-    window.matchMedia("(display-mode: standalone)").addEventListener("change", checkStandalone);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleAppInstalled);
-      window
-        .matchMedia("(display-mode: standalone)")
-        .removeEventListener("change", checkStandalone);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isMobile && !isStandalone && deferredPrompt) {
-      const lastInstallPromptTime = localStorage.getItem("lastInstallPromptTime");
-      const appInstalled = localStorage.getItem("appInstalled");
-      const currentTime = new Date().getTime();
-      const oneWeek = 7 * 24 * 60 * 60 * 1000;
-
-      if (
-        (!lastInstallPromptTime || currentTime - parseInt(lastInstallPromptTime) > oneWeek) &&
-        !appInstalled
-      ) {
-        toast({
-          title: "Install our app",
-          description: "Install our app for a better experience!",
-          action: (
-            <ToastAction altText="Install app" onClick={handleInstallClick}>
-              Install
-            </ToastAction>
-          ),
-          duration: 10000,
-        });
-        localStorage.setItem("lastInstallPromptTime", currentTime.toString());
-      }
-    }
-  }, [isStandalone, deferredPrompt, isMobile, toast]);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      if (isStandalone) {
-        return;
-      }
-
-      toast({
-        title: "Installation not supported",
-        description:
-          "Your browser doesn't support app installation or the app is already installed.",
-        duration: 5000,
-      });
-      return;
-    }
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
-
-    if (outcome === "accepted") {
-      setShowOpenInAppDialog(true);
-    }
-  };
-
-  const handleOpenInApp = () => {
-    const appUrl = window.location.href;
-    window.location.href = appUrl;
-    setShowOpenInAppDialog(false);
-  };
 
   return (
     <div className="relative">
@@ -196,36 +86,6 @@ export function UserMenu({ user }: UserMenuProps) {
                 Manage Password
               </DropdownMenuItem>
             </a>
-            {/* {user.role === "STUDENT" && (
-              <a href="/certificate">
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                  <GrCertificate className="h-5 w-5" />
-                  Certificate
-                </DropdownMenuItem>
-              </a>
-            )} */}
-
-            {/* <a href="/sessions">
-              <DropdownMenuItem
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <Settings className="h-5 w-5" />
-                Security Settings
-              </DropdownMenuItem>
-            </a> */}
-            {/* <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-              <Bell className="h-5 w-5" />
-              Notifications
-            </DropdownMenuItem> */}
-            {!isStandalone && deferredPrompt && (
-              <DropdownMenuItem
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={handleInstallClick}
-              >
-                <Download className="h-5 w-5" />
-                Install App
-              </DropdownMenuItem>
-            )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <a href="/api/auth/signout">
@@ -236,21 +96,6 @@ export function UserMenu({ user }: UserMenuProps) {
           </a>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <AlertDialog open={showOpenInAppDialog} onOpenChange={setShowOpenInAppDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Open in App</AlertDialogTitle>
-            <AlertDialogDescription>
-              The app has been installed successfully. Would you like to open it now?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Stay on Web</AlertDialogCancel>
-            <AlertDialogAction onClick={handleOpenInApp}>Open App</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

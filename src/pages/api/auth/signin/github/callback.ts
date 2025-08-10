@@ -104,7 +104,7 @@ export const GET: APIRoute = async ({ cookies, url, redirect }) => {
       data: {
         userId: userWithAccounts.id,
         userAgent: "GitHub OAuth",
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
       },
     });
 

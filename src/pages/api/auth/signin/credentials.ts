@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
     const userAgent = request.headers.get("user-agent");
     const { sessionId, isPasswordSet } = await signInWithCredentials(email, password, userAgent);
 
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 1 day
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
     // const isProduction = import.meta.env.PROD;
 
     const cookieOptions = [

@@ -68,7 +68,7 @@ export async function signInWithCredentials(
       data: {
         userId: user.id,
         userAgent: userAgent || "Unknown Device",
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 1 day
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 30 days
       },
       include: {
         user: {

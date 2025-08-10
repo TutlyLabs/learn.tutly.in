@@ -12,5 +12,6 @@
       "@lib/*": ["./src/lib/*"]
     },
     "resolveJsonModule": true
-  }
+  },
+  "exclude": ["node_modules", "dist", "android", "ios"]
 }

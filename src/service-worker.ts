@@ -46,61 +46,6 @@ registerRoute(
   })
 );
 
-self.addEventListener("push", async function (event) {
-  if (event.data) {
-    const data = JSON.parse(event.data.text());
-
-    if (["PUSH_MESSAGE", "MESSAGE"].includes(data?.type)) {
-      self.clients.matchAll().then((clients) => {
-        if (clients.length > 0) {
-          clients[0]?.postMessage(data);
-        }
-      });
-    } else if (data.type === "NOTIFICATION") {
-      const url = `/notifications/${data.id}`;
-      event.waitUntil(
-        self.registration.showNotification("Tutly", {
-          body: data.message,
-          tag: data.id,
-          icon: "/logo-192x192.png",
-          badge: "/logo-192x192.png",
-          data: {
-            url,
-            notificationId: data.id,
-          },
-        } as NotificationOptions)
-      );
-    }
-  }
-});
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-
-  const notificationData = event.notification.data;
-  const url = notificationData?.url;
-
-  if (!url) {
-    console.error("No URL found in notification data");
-    return;
-  }
-
-  event.waitUntil(
-    self.clients.matchAll({ type: "window" }).then((clientsArr) => {
-      const hadWindowToFocus = clientsArr.some((windowClient) => {
-        if (windowClient.url.includes(url)) {
-          return windowClient.focus();
-        }
-        return false;
-      });
-
-      if (!hadWindowToFocus) {
-        self.clients.openWindow(url).then((windowClient) => windowClient?.focus());
-      }
-    })
-  );
-});
-
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();

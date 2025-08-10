@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core";
+import { PushNotifications } from "@capacitor/push-notifications";
 import type { Notification, NotificationEvent } from "@prisma/client";
 import { actions } from "astro:actions";
 import { navigate } from "astro:transitions/client";
@@ -30,7 +32,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { SessionUser } from "@/lib/auth/session";
 import day from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
@@ -158,13 +159,7 @@ const filterCategories = Object.entries(NOTIFICATION_TYPES).map(([type, config])
   label: config.label,
 }));
 
-type SubscriptionStatus = "NotSubscribed" | "SubscribedOnThisDevice" | "SubscribedOnAnotherDevice";
-
-interface PushSubscriptionConfig {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-}
+type SubscriptionStatus = "NotSubscribed" | "Subscribed" | "NotSupported";
 
 function getNotificationLink(notification: Notification): string | null {
   const config = NOTIFICATION_TYPES[notification.eventType] || DEFAULT_NOTIFICATION_CONFIG;
@@ -174,7 +169,7 @@ function getNotificationLink(notification: Notification): string | null {
 
 export default function Notifications({ user }: { user: SessionUser }) {
   const [isSubscribing, setIsSubscribing] = useState(false);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>("NotSubscribed");
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>("NotSupported");
   const [activeTab, setActiveTab] = useState("all");
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -212,142 +207,89 @@ export default function Notifications({ user }: { user: SessionUser }) {
     }
   };
 
-  const getNotificationConfig = async (userId: string) => {
-    const result = await actions.notifications_getNotificationConfig({ userId });
-    return result.data;
-  };
-
-  const updateNotificationConfig = async (userId: string, config: PushSubscriptionConfig) => {
+  const updateNotificationConfig = async (deviceToken: string, platform: string) => {
     try {
-      await actions.notifications_updateNotificationConfig({ userId, config });
+      await actions.notifications_updateNotificationConfig({
+        userId: user.id,
+        deviceToken,
+        platform,
+      });
     } catch {
       toast.error("Failed to update notification config");
     }
   };
 
-  const initialSubscriptionState = async () => {
+  const initializeCapacitorPushNotifications = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      setSubscriptionStatus("NotSupported");
+      return;
+    }
+
     try {
-      if (!user?.id) return;
+      // Check current permission status
+      let permissionStatus = await PushNotifications.checkPermissions();
 
-      const config = await getNotificationConfig(user.id);
-      const reg = await navigator.serviceWorker.ready;
-      const subscription = await reg.pushManager.getSubscription();
+      if (permissionStatus.receive === "prompt") {
+        // Request permission if not granted
+        permissionStatus = await PushNotifications.requestPermissions();
+      }
 
-      // If no config endpoint exists, user is not subscribed anywhere
-      if (!config?.endpoint) {
-        // If we have a subscription on this device but no config, clean it up
-        if (subscription) {
-          await subscription.unsubscribe();
-        }
-        setSubscriptionStatus("NotSubscribed");
+      if (permissionStatus.receive !== "granted") {
+        setSubscriptionStatus("NotSupported");
         return;
       }
 
-      // If there's a subscription on this device
-      if (subscription) {
-        // Compare current subscription endpoint with stored config
-        if (subscription.endpoint === config.endpoint) {
-          setSubscriptionStatus("SubscribedOnThisDevice");
-        } else {
-          // Different subscription exists on this device - clean up and
-          // recognize the one on the server as the valid one
-          console.log("Different subscription exists - cleaning up local subscription");
-          await subscription.unsubscribe(); // Clean up old subscription
-          setSubscriptionStatus("SubscribedOnAnotherDevice");
-        }
+      // Check if already registered
+      const config = await actions.notifications_getNotificationConfig({ userId: user.id });
+      if (config.data?.deviceToken) {
+        setSubscriptionStatus("Subscribed");
       } else {
-        // No subscription on this device, but config exists
-        setSubscriptionStatus("SubscribedOnAnotherDevice");
+        setSubscriptionStatus("NotSubscribed");
       }
+
+      // Set up listeners
+      PushNotifications.addListener("registration", async (token) => {
+        const platform = Capacitor.getPlatform();
+        await updateNotificationConfig(token.value, platform);
+        setSubscriptionStatus("Subscribed");
+        toast.success("Push notifications enabled");
+      });
+
+      PushNotifications.addListener("registrationError", (err) => {
+        console.error("Registration error: ", err.error);
+        toast.error("Failed to enable push notifications");
+        setSubscriptionStatus("NotSupported");
+      });
+
+      PushNotifications.addListener("pushNotificationReceived", (_notification) => {
+        // Refresh notifications when a new one is received
+        fetchNotifications();
+      });
+
+      PushNotifications.addListener("pushNotificationActionPerformed", (notification) => {
+        // Handle notification tap - navigate to notification details
+        if (notification.notification.data?.notificationId) {
+          navigate(`/notifications/${notification.notification.data.notificationId}`);
+        }
+      });
     } catch (error) {
-      console.error("Failed to fetch subscription status:", error);
-      toast.error("Failed to fetch subscription status");
+      console.error("Failed to initialize Capacitor push notifications:", error);
+      setSubscriptionStatus("NotSupported");
     }
   };
 
   const subscribe = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !Capacitor.isNativePlatform()) {
+      toast.error("Push notifications are not supported");
+      return;
+    }
 
     try {
       setIsSubscribing(true);
-
-      if (!("serviceWorker" in navigator)) {
-        toast.error("Service Workers are not supported in this browser");
-        return;
-      }
-
-      if (!("PushManager" in window)) {
-        toast.error("Push notifications are not supported in this browser");
-        return;
-      }
-
-      if (Notification.permission === "denied") {
-        toast.warning("Notification permission denied");
-        return;
-      }
-
-      if (Notification.permission !== "granted") {
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") {
-          toast.warning("Notification permission denied");
-          return;
-        }
-      }
-
-      const public_key =
-        "BIXtNCh-RojjGDEG9fEl9FNLY6YTFI-WeNhiumk9VYBTObZOs6l6thdm2Lrtttu4q-qL-QeAoaMD--vcavgR9d8";
-      // if (!public_key) {
-      //   toast.error("Failed to get public key");
-      //   return;
-      // }
-
-      try {
-        const sw = await navigator.serviceWorker.ready;
-        if (!sw.pushManager) {
-          toast.error("Push manager not available");
-          return;
-        }
-
-        const subscription = await sw.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: public_key,
-        });
-
-        if (!subscription) {
-          toast.error("Failed to create subscription");
-          return;
-        }
-
-        const p256dh = btoa(
-          String.fromCharCode.apply(
-            null,
-            Array.from(new Uint8Array(subscription.getKey("p256dh") as ArrayBuffer))
-          )
-        );
-
-        const auth = btoa(
-          String.fromCharCode.apply(
-            null,
-            Array.from(new Uint8Array(subscription.getKey("auth") as ArrayBuffer))
-          )
-        );
-
-        const config: PushSubscriptionConfig = {
-          endpoint: subscription.endpoint,
-          p256dh: p256dh,
-          auth: auth,
-        };
-
-        await updateNotificationConfig(user.id, config);
-
-        setSubscriptionStatus("SubscribedOnThisDevice");
-        toast.success("Subscribed successfully");
-      } catch {
-        toast.error("Service worker subscription failed");
-        return;
-      }
-    } catch {
-      toast.error("Subscription failed");
+      await PushNotifications.register();
+    } catch (error) {
+      console.error("Failed to register for push notifications:", error);
+      toast.error("Failed to enable push notifications");
     } finally {
       setIsSubscribing(false);
     }
@@ -357,29 +299,21 @@ export default function Notifications({ user }: { user: SessionUser }) {
     if (!user?.id) return;
 
     try {
-      const reg = await navigator.serviceWorker.ready;
-      if (!reg.pushManager) {
-        toast.error("Push manager not available");
-        return;
-      }
-
       setIsSubscribing(true);
-      const subscription = await reg.pushManager.getSubscription();
 
-      if (subscription) {
-        await subscription.unsubscribe();
+      // Remove device token from server
+      await updateNotificationConfig("", "");
 
-        await updateNotificationConfig(user.id, {
-          endpoint: "",
-          p256dh: "",
-          auth: "",
-        });
-
-        setSubscriptionStatus("NotSubscribed");
-        toast.warning("Unsubscribed successfully");
+      if (Capacitor.isNativePlatform()) {
+        // Remove all listeners
+        await PushNotifications.removeAllListeners();
       }
-    } catch {
-      toast.error("Unsubscribe failed");
+
+      setSubscriptionStatus("NotSubscribed");
+      toast.warning("Push notifications disabled");
+    } catch (error) {
+      console.error("Failed to unsubscribe:", error);
+      toast.error("Failed to disable push notifications");
     } finally {
       setIsSubscribing(false);
     }
@@ -425,31 +359,27 @@ export default function Notifications({ user }: { user: SessionUser }) {
   };
 
   const handleSubscribeClick = () => {
-    if (!navigator.serviceWorker) {
-      toast.error("Push notifications are not supported in this browser");
-      return;
-    }
-
-    if (subscriptionStatus === "SubscribedOnThisDevice") {
+    if (subscriptionStatus === "Subscribed") {
       unsubscribe();
-    } else {
+    } else if (subscriptionStatus === "NotSubscribed") {
       subscribe();
+    } else {
+      // On web, show toast encouraging app install
+      if (!Capacitor.isNativePlatform()) {
+        toast.message("Install our mobile app for push notifications!", {
+          description: "Push notifications are available in our Android and iOS apps",
+          duration: 5000,
+        });
+      } else {
+        toast.error("Push notifications are not supported on this device");
+      }
     }
   };
 
   useEffect(() => {
-    let mounted = true;
-
-    const checkSubscription = async () => {
-      if (!mounted) return;
-      await initialSubscriptionState();
-    };
-
-    checkSubscription();
-
-    return () => {
-      mounted = false;
-    };
+    if (user?.id) {
+      initializeCapacitorPushNotifications();
+    }
   }, [user?.id]);
 
   useEffect(() => {
@@ -458,38 +388,29 @@ export default function Notifications({ user }: { user: SessionUser }) {
 
   const getSubscriptionButtonText = () => {
     switch (subscriptionStatus) {
-      case "SubscribedOnThisDevice":
+      case "Subscribed":
         return "Unsubscribe";
-      case "SubscribedOnAnotherDevice":
-        return "Subscribe on this device";
       case "NotSubscribed":
-      default:
         return "Subscribe";
+      case "NotSupported":
+      default:
+        return Capacitor.isNativePlatform() ? "Not Supported" : "Install App";
+    }
+  };
+
+  const getSubscriptionTooltipText = () => {
+    if (subscriptionStatus === "Subscribed") {
+      return "Disable push notifications";
+    } else if (subscriptionStatus === "NotSubscribed") {
+      return "Enable push notifications";
+    } else {
+      return Capacitor.isNativePlatform()
+        ? "Push notifications not supported on this device"
+        : "Install our mobile app to receive push notifications";
     }
   };
 
   const refetchNotifications = fetchNotifications;
-
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    if (isMobile && subscriptionStatus === "NotSubscribed") {
-      const lastToastTime = localStorage.getItem("lastNotificationToastTime");
-      const currentTime = new Date().getTime();
-      const oneWeek = 7 * 24 * 60 * 60 * 1000; // One week in milliseconds
-
-      if (!lastToastTime || currentTime - parseInt(lastToastTime) > oneWeek) {
-        toast.message("Enable notifications", {
-          description: "Stay updated with your course notifications",
-          action: {
-            label: "Subscribe",
-            onClick: handleSubscribeClick,
-          },
-        });
-        localStorage.setItem("lastNotificationToastTime", currentTime.toString());
-      }
-    }
-  }, [isMobile, subscriptionStatus]);
 
   return (
     <Popover>
@@ -527,22 +448,29 @@ export default function Notifications({ user }: { user: SessionUser }) {
               </TabsTrigger>
             </TabsList>
             <div className="float-right flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSubscribeClick}
-                disabled={isSubscribing}
-                className="flex px-1 items-center gap-1.5 text-xs text-muted-foreground hover:text-primary h-8"
-              >
-                {isSubscribing ? (
-                  <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
-                ) : subscriptionStatus === "SubscribedOnThisDevice" ? (
-                  <BellOff className="h-3.5 w-3.5" />
-                ) : (
-                  <Bell className="h-3.5 w-3.5" />
-                )}
-                <span>{getSubscriptionButtonText()}</span>
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSubscribeClick}
+                      disabled={isSubscribing}
+                      className="flex px-1 items-center gap-1.5 text-xs text-muted-foreground hover:text-primary h-8"
+                    >
+                      {isSubscribing ? (
+                        <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
+                      ) : subscriptionStatus === "Subscribed" ? (
+                        <BellOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Bell className="h-3.5 w-3.5" />
+                      )}
+                      <span>{getSubscriptionButtonText()}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{getSubscriptionTooltipText()}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button
                 variant="ghost"
                 size="icon"

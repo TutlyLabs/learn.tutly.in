@@ -18,6 +18,11 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+google-services.json
+GoogleService-Info.plist
+firebase-adminsdk-*.json
+serviceAccountKey.json
+
 # macOS-specific files
 .DS_Store
 
