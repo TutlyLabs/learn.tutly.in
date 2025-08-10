@@ -111,6 +111,11 @@ const InstructorItems = [
     url: "/drive",
     icon: HardDrive,
   },
+  {
+    title: "Workflows",
+    url: "/tutor/workflows",
+    icon: Plug,
+  },
 ];
 
 const AdminItems = [
@@ -123,6 +128,11 @@ const AdminItems = [
     title: "Schedule",
     url: "/schedule",
     icon: Calendar,
+  },
+  {
+    title: "Workflows",
+    url: "/tutor/workflows",
+    icon: Plug,
   },
   {
     title: "Learning",

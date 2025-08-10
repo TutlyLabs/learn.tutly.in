@@ -1,0 +1,14 @@
+---
+import WorkflowsManager from "./_components/WorkflowsManager";
+import RootLayout from "@/layouts/RootLayout.astro";
+---
+
+<RootLayout>
+  <h1 class="text-2xl font-semibold mb-4">Workflows</h1>
+  <p class="text-sm text-muted-foreground mb-6">
+    Control global messaging workflows. Configure your n8n instance and manage activation.
+  </p>
+  <div class="mt-4">
+    <WorkflowsManager client:only="react" />
+  </div>
+</RootLayout>
