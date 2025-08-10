@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -73,10 +73,43 @@ export function AppSidebar({
 
   const isMobile = useIsMobile();
 
+  const mobileTabs = useMemo(() => {
+    const tabs = sidebarItems
+      .map((item) => {
+        const children: SidebarItem[] = Array.isArray(item.items) ? item.items : [];
+        const hasChildren = children.length > 0;
+        const targetUrl =
+          item.url && item.url !== "#" ? item.url : hasChildren ? children[0]?.url : "#";
+        if (!targetUrl || targetUrl === "#") return null;
+        const isSubActive = hasChildren
+          ? children.some((s) => pathname === s.url || pathname.startsWith(s.url))
+          : false;
+        const isRootActive =
+          item.url && item.url !== "#"
+            ? pathname === item.url || pathname.startsWith(item.url)
+            : false;
+        const active = Boolean(isSubActive || isRootActive || item.isActive);
+        return {
+          title: item.title,
+          url: targetUrl,
+          icon: item.icon,
+          active,
+        };
+      })
+      .filter(Boolean) as Array<{
+      title: string;
+      url: string;
+      icon: React.ElementType;
+      active: boolean;
+    }>;
+
+    return tabs.slice(0, 5);
+  }, [sidebarItems, pathname]);
+
   return (
     <SidebarProvider onOpenChange={handleOpenChange} open={isOpen && !forceClose}>
       {isMobile && !forceClose && (
-        <div className="fixed left-2 top-4 flex items-center gap-2">
+        <div className="fixed left-2 top-[18px] flex items-center gap-2 z-50">
           <SidebarTrigger className="hover:bg-accent" />
         </div>
       )}
@@ -150,7 +183,7 @@ export function AppSidebar({
                               tooltip={{
                                 children: (
                                   <div className="flex w-[160px] flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
-                                    {item.items.map((subItem) => (
+                                    {item.items?.map((subItem) => (
                                       <a
                                         key={subItem.title}
                                         href={subItem.url}
@@ -183,7 +216,7 @@ export function AppSidebar({
                           {isOpen && (
                             <CollapsibleContent>
                               <SidebarMenuSub>
-                                {item.items.map((subItem) => (
+                                {item.items?.map((subItem) => (
                                   <SidebarMenuSubItem key={subItem.title}>
                                     <SidebarMenuSubButton
                                       asChild
@@ -227,6 +260,38 @@ export function AppSidebar({
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
+
+      {isMobile && !forceClose && mobileTabs.length > 0 && (
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <ul className="flex items-stretch justify-between px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
+            {mobileTabs.map((tab) => {
+              const TabIcon = tab.icon;
+              return (
+                <li key={tab.title} className="flex-1">
+                  <a
+                    href={tab.url}
+                    aria-current={tab.active ? "page" : undefined}
+                    className={cn(
+                      "group flex flex-col items-center justify-center gap-0.5 py-2 text-xs",
+                      tab.active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "grid place-items-center rounded-full size-9",
+                        tab.active ? "bg-primary/10" : ""
+                      )}
+                    >
+                      <TabIcon className={cn("size-5")} />
+                    </div>
+                    <span className="leading-none">{tab.title}</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
     </SidebarProvider>
   );
 }

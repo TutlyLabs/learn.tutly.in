@@ -17,9 +17,9 @@ export function AppHeader({ user, pathname, crumbReplacement = {} }: AppHeaderPr
   const isMobile = useIsMobile();
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-1 sm:gap-2 border-b px-2 sm:px-4">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-1 sm:gap-2 border-b px-2 sm:px-4 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 pl-4 sm:pl-0">
           {isMobile && <Separator orientation="vertical" className="h-4 ml-3 sm:ml-5" />}
           <DynamicBreadcrumbs pathname={pathname} crumbReplacement={crumbReplacement} />
         </div>

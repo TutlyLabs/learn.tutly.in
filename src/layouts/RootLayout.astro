@@ -88,7 +88,7 @@ globalThis.pathname = pathname;
           </div>
           <main class="w-full">
             {!hideHeader && <AppHeader client:load user={user} pathname={pathname} />}
-            <div class={`p-4 ${className}`}>
+            <div class={`p-4 pb-24 sm:pb-4 ${className}`}>
               <slot />
             </div>
           </main>
