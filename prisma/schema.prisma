@@ -225,6 +225,12 @@ model Course {
   isPublished  Boolean @default(false)
   courseAdmins User[]  @relation("CourseAdmins")
 
+  // WhatsApp Integration
+  whatsappGroupId    String? // WhatsApp group chat ID
+  whatsappGroupName  String? // Group name for reference
+  whatsappBotEnabled Boolean @default(false) // Enable/disable bot for this course
+  whatsappBotConfig  Json?   @default("{}") // Bot configuration (schedules, templates, etc.)
+
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   ScheduleEvent ScheduleEvent[]

@@ -3,6 +3,86 @@ import { z } from "zod";
 
 import db from "@/lib/db";
 
+type ClassEvent = "class.created" | "class.updated";
+
+async function triggerN8nForClassEvent(params: {
+  event: ClassEvent;
+  classId: string;
+  classTitle: string;
+  courseId: string;
+  previousCreatedAt?: Date;
+  newCreatedAt?: Date;
+}) {
+  try {
+    const n8nUrl = import.meta.env.N8N_CLASS_WEBHOOK_URL as string | undefined;
+    if (!n8nUrl) return;
+
+    const course = await db.course.findUnique({
+      where: { id: params.courseId },
+      select: {
+        id: true,
+        title: true,
+        whatsappGroupId: true,
+        whatsappGroupName: true,
+        whatsappBotEnabled: true,
+        whatsappBotConfig: true,
+      },
+    });
+
+    const payload: any = {
+      event: params.event,
+      class: {
+        id: params.classId,
+        title: params.classTitle,
+        courseId: params.courseId,
+      },
+      course: course
+        ? {
+            id: course.id,
+            title: course.title,
+            whatsappGroupId: course.whatsappGroupId,
+            whatsappGroupName: course.whatsappGroupName,
+            whatsappBotEnabled: course.whatsappBotEnabled,
+            whatsappBotConfig: course.whatsappBotConfig,
+          }
+        : undefined,
+      meta: {
+        triggeredAt: new Date().toISOString(),
+        correlationId: params.classId,
+      },
+    };
+
+    if (params.previousCreatedAt && params.newCreatedAt) {
+      payload.class.previousCreatedAt = params.previousCreatedAt.toISOString();
+      payload.class.newCreatedAt = params.newCreatedAt.toISOString();
+    }
+
+    const controller = new AbortController();
+    const timeoutMs = Number(import.meta.env.N8N_TIMEOUT_MS ?? 5000);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      await fetch(n8nUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(import.meta.env.N8N_AUTH_TOKEN
+            ? { Authorization: `Bearer ${import.meta.env.N8N_AUTH_TOKEN}` }
+            : {}),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      console.error(`n8n webhook (${params.event}) failed:`, err);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  } catch (outerErr) {
+    console.error("n8n trigger wrapper failed:", outerErr);
+  }
+}
+
 export const createClass = defineAction({
   input: z.object({
     classTitle: z.string().trim().min(1, {
@@ -42,7 +122,7 @@ export const createClass = defineAction({
       };
 
       if (folderId) {
-        return await db.class.create({
+        const created = await db.class.create({
           data: {
             ...classData,
             Folder: {
@@ -52,8 +132,16 @@ export const createClass = defineAction({
             },
           },
         });
+        // Fire-and-forget n8n trigger
+        triggerN8nForClassEvent({
+          event: "class.created",
+          classId: created.id,
+          classTitle,
+          courseId,
+        }).catch(() => {});
+        return created;
       } else if (folderName) {
-        return await db.class.create({
+        const created = await db.class.create({
           data: {
             ...classData,
             Folder: {
@@ -64,11 +152,27 @@ export const createClass = defineAction({
             },
           },
         });
+        // Fire-and-forget n8n trigger
+        triggerN8nForClassEvent({
+          event: "class.created",
+          classId: created.id,
+          classTitle,
+          courseId,
+        }).catch(() => {});
+        return created;
       }
 
-      return await db.class.create({
+      const created = await db.class.create({
         data: classData,
       });
+      // Fire-and-forget n8n trigger
+      triggerN8nForClassEvent({
+        event: "class.created",
+        classId: created.id,
+        classTitle,
+        courseId,
+      }).catch(() => {});
+      return created;
     } catch (error) {
       console.error("Error creating class:", error);
       throw new Error("Error creating class");
@@ -76,7 +180,6 @@ export const createClass = defineAction({
   },
 });
 
-// Update the EditClassType interface
 export const editClassSchema = z.object({
   classId: z.string(),
   courseId: z.string(),
@@ -106,7 +209,6 @@ export const updateClass = defineAction({
     const { classId, classTitle, videoLink, videoType, folderId, folderName, createdAt } = data;
 
     try {
-      // First get the existing class
       const existingClass = await db.class.findUnique({
         where: { id: classId },
         include: { video: true },
@@ -116,7 +218,8 @@ export const updateClass = defineAction({
         throw new Error("Class not found");
       }
 
-      // Update video
+      const previousCreatedAt = existingClass.createdAt;
+
       await db.video.update({
         where: { id: existingClass.video!.id },
         data: {
@@ -125,11 +228,9 @@ export const updateClass = defineAction({
         },
       });
 
-      // Handle folder logic
       let finalFolderId: string | null = null;
 
       if (folderName) {
-        // Create new folder
         const newFolder = await db.folder.create({
           data: {
             title: folderName,
@@ -138,10 +239,8 @@ export const updateClass = defineAction({
         });
         finalFolderId = newFolder.id;
       } else if (folderId) {
-        // Use existing folder
         finalFolderId = folderId;
       }
-      // If neither folderName nor folderId is provided, finalFolderId remains null
 
       const updatedClass = await db.class.update({
         where: { id: classId },
@@ -155,6 +254,15 @@ export const updateClass = defineAction({
           Folder: true,
         },
       });
+
+      triggerN8nForClassEvent({
+        event: "class.updated",
+        classId,
+        classTitle,
+        courseId: data.courseId,
+        previousCreatedAt,
+        newCreatedAt: updatedClass.createdAt,
+      }).catch(() => {});
 
       return { success: true, data: updatedClass };
     } catch (error) {
