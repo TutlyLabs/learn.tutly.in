@@ -1,6 +1,6 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
-import { posthog } from "@/lib/posthog";
+import { isFeatureEnabled, getFeatureFlagPayload } from "@/lib/featureFlags";
 import { SandboxIntegration } from "./_components/Sandbox";
 import { ZoomIntegration } from "./_components/Zoom";
 import { GithubIntegration } from "./_components/Github";
@@ -11,22 +11,17 @@ import db from "@/lib/db";
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
 
-const isIntegrationsEnabled = await posthog.isFeatureEnabled("integrations_tab", currentUser.id);
+const isIntegrationsEnabled = await isFeatureEnabled("integrations_tab", currentUser);
 if (!isIntegrationsEnabled) {
   return Astro.redirect("/");
 }
 
-const features = (await posthog.getFeatureFlagPayload("integrations_tab", currentUser.id)) as
-  | {
-      codesandbox?: boolean;
-      github?: boolean;
-      google?: boolean;
-      zoom?: boolean;
-      gemini?: boolean;
-    }
-  | undefined;
+const features = (await getFeatureFlagPayload("integrations_tab", currentUser)) as Record<
+  string,
+  boolean
+>;
 
-const isAIAssistantEnabled = await posthog.isFeatureEnabled("ai_assistant", currentUser.id);
+const isAIAssistantEnabled = await isFeatureEnabled("ai_assistant", currentUser);
 
 let sandbox = await db.account.findFirst({
   where: {

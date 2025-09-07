@@ -3,7 +3,7 @@ import RootLayout from "@layouts/RootLayout.astro";
 import AssignmentPage from "../_components/AssignmentPage";
 import db from "@/lib/db";
 import type { Attachment, submission as Submission } from "@prisma/client";
-import { posthog } from "@/lib/posthog";
+import { isFeatureEnabled } from "@/lib/featureFlags";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
@@ -372,10 +372,7 @@ const mentors = assignment?.course?.enrolledUsers
     )
   : [];
 
-const isSandboxSubmissionEnabled = await posthog.isFeatureEnabled(
-  "sandbox_submission",
-  currentUser.id
-);
+const isSandboxSubmissionEnabled = await isFeatureEnabled("sandbox_submission", currentUser);
 ---
 
 <RootLayout title="Assignments">

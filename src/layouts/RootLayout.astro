@@ -8,7 +8,7 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import Crisp from "@/components/Crisp";
 import PageLoader from "@/components/loader/PageLoader.astro";
-import { posthog } from "@/lib/posthog";
+import { isFeatureEnabled } from "@/lib/featureFlags";
 interface Props {
   title?: string;
   forceClose?: boolean;
@@ -29,9 +29,9 @@ const pathname = Astro.url.pathname;
 const user = Astro.locals.user!;
 const organization = Astro.locals.organization!;
 
-const isIntegrationsEnabled = await posthog.isFeatureEnabled("integrations_tab", user.id);
+const isIntegrationsEnabled = await isFeatureEnabled("integrations_tab", user);
 
-const isAIAssistantEnabled = await posthog.isFeatureEnabled("ai_assistant", user.id);
+const isAIAssistantEnabled = await isFeatureEnabled("ai_assistant", user);
 
 // @ts-ignore
 globalThis.pathname = pathname;

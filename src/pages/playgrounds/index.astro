@@ -3,12 +3,12 @@ import RootLayout from "@/layouts/RootLayout.astro";
 import { RiReactjsFill } from "react-icons/ri";
 import { IoLogoHtml5 } from "react-icons/io5";
 import SandboxTemplates from "./_components/SandboxTemplates";
-import { posthog } from "@/lib/posthog";
+import { isFeatureEnabled } from "@/lib/featureFlags";
 
 const currentUser = Astro.locals.user;
 if (!currentUser) return null;
 
-const isSandboxEnabled = await posthog.isFeatureEnabled("sandbox_templates", currentUser.id);
+const isSandboxEnabled = await isFeatureEnabled("sandbox_templates", currentUser);
 ---
 
 <RootLayout>

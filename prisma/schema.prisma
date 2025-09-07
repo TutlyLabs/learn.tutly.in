@@ -602,3 +602,14 @@ model Otp {
 
   @@index([email, otp])
 }
+
+model FeatureFlag {
+  id           String  @id @default(uuid())
+  key          String  @unique
+  enabled      Boolean @default(true)
+  payload      Json?
+  allowedRoles Role[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

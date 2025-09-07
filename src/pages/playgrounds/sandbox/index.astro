@@ -1,7 +1,7 @@
 ---
 import RootLayout from "@/layouts/RootLayout.astro";
 import { SandboxWrapper } from "./_components/SandboxWrapper";
-import { posthog } from "@/lib/posthog";
+import { isFeatureEnabled } from "@/lib/featureFlags";
 import { SANDBOX_TEMPLATES } from "@codesandbox/sandpack-react";
 import db from "@/lib/db";
 import { Buffer } from "node:buffer";
@@ -18,7 +18,7 @@ if (!currentUser) {
   return Astro.redirect("/auth/signin");
 }
 
-const isSandboxEnabled = await posthog.isFeatureEnabled("sandbox_templates", currentUser.id);
+const isSandboxEnabled = await isFeatureEnabled("sandbox_templates", currentUser);
 
 if (!isSandboxEnabled) {
   return Astro.redirect("/playgrounds");
