@@ -43,7 +43,9 @@ const Submit = ({
       return;
     }
 
-    toast.error("Assignment submissions are temporarily paused. Please contact your mentor for details.")
+    toast.error(
+      "Assignment submissions are temporarily paused. Please contact your mentor for details."
+    );
     return;
 
     try {

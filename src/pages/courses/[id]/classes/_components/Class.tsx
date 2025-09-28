@@ -489,7 +489,10 @@ export default function Class({
       </Dialog>
 
       {/* Assignment Delete Alert Dialog */}
-      <AlertDialog open={isDeleteDialogOpenForAssignment} onOpenChange={setIsDeleteDialogOpenForAssignment}>
+      <AlertDialog
+        open={isDeleteDialogOpenForAssignment}
+        onOpenChange={setIsDeleteDialogOpenForAssignment}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

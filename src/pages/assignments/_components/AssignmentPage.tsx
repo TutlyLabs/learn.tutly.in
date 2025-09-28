@@ -231,9 +231,11 @@ const StudentAssignmentSubmission = ({
       return;
     }
 
-    toast.error("Assignment submissions are temporarily paused. Please contact your mentor for details.")
+    toast.error(
+      "Assignment submissions are temporarily paused. Please contact your mentor for details."
+    );
     return;
-    
+
     try {
       toast.loading("Submitting assignment...");
 
@@ -249,7 +251,7 @@ const StudentAssignmentSubmission = ({
         toast.error(`Error: ${res?.error}`);
         return;
       }
-      
+
       toast.success("Assignment submitted successfully");
       setExternalLink("");
       window.location.reload();

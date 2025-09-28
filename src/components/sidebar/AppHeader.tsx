@@ -1,3 +1,4 @@
+import { GithubStarButton } from "@/components/GithubStarButton";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SessionUser } from "@/lib/auth/session";
@@ -6,7 +7,6 @@ import { ModeToggle } from "../ModeToggle";
 import Notifications from "../Notifications";
 import { DynamicBreadcrumbs } from "./DynamicBreadcrumbs";
 import { UserMenu } from "./UserMenu";
-import {GithubStarButton} from "@/components/GithubStarButton"
 
 interface AppHeaderProps {
   user: SessionUser;
