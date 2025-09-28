@@ -137,8 +137,9 @@ export default function Class({
   };
 
   const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditDialogOpenForClass, setIsEditDialogOpenForClass] = useState(false);
+  const [isEditDialogOpenForAssignment, setIsEditDialogOpenForAssignment] = useState(false);
+  const [isDeleteDialogOpenForAssignment, setIsDeleteDialogOpenForAssignment] = useState(false);
   const [notes, setNotes] = useState(initialNote?.description);
   const [debouncedNotes] = useDebounce(notes, 1000);
   const [notesStatus, setNotesStatus] = useState("");
@@ -251,6 +252,8 @@ export default function Class({
     }
   };
 
+  console.log("Selected Attachment: ", selectedAttachment);
+
   return (
     <div className="flex flex-col gap-2 md:m-5">
       <div className="flex flex-wrap gap-6">
@@ -265,7 +268,7 @@ export default function Class({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setIsEditDialogOpen(true)}
+                        onClick={() => setIsEditDialogOpenForClass(true)}
                         className="hover:bg-secondary/80"
                       >
                         <RiEdit2Fill className="h-5 w-5" />
@@ -363,7 +366,7 @@ export default function Class({
                               <DropdownMenuItem
                                 onClick={() => {
                                   setSelectedAttachment(attachment);
-                                  setIsEditDialogOpen(true);
+                                  setIsEditDialogOpenForAssignment(true);
                                 }}
                               >
                                 <div className="flex items-center gap-2">
@@ -375,7 +378,7 @@ export default function Class({
                                 className="text-red-600"
                                 onClick={() => {
                                   setSelectedAttachment(attachment);
-                                  setIsDeleteDialogOpen(true);
+                                  setIsDeleteDialogOpenForAssignment(true);
                                 }}
                               >
                                 <div className="flex items-center gap-2">
@@ -458,16 +461,35 @@ export default function Class({
         />
       </div>
 
-      {/* Edit Dialog */}
+      {/* Class Edit Dialog */}
       <EditClassDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        isOpen={isEditDialogOpenForClass}
+        onOpenChange={setIsEditDialogOpenForClass}
         courseId={courseId}
         classDetails={details}
       />
 
-      {/* Delete Alert Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {/* Assignment Edit Dialog */}
+      <Dialog open={isEditDialogOpenForAssignment} onOpenChange={setIsEditDialogOpenForAssignment}>
+        <DialogContent className="min-w-[70vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit</DialogTitle>
+            <DialogDescription>Modify the assignment details.</DialogDescription>
+          </DialogHeader>
+          {selectedAttachment && (
+            <NewAttachmentPage
+              classes={classes}
+              courseId={courseId}
+              classId={classId}
+              isEditing={true}
+              attachment={selectedAttachment}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Assignment Delete Alert Dialog */}
+      <AlertDialog open={isDeleteDialogOpenForAssignment} onOpenChange={setIsDeleteDialogOpenForAssignment}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

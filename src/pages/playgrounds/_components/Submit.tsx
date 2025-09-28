@@ -43,6 +43,9 @@ const Submit = ({
       return;
     }
 
+    toast.error("Assignment submissions are temporarily paused. Please contact your mentor for details.")
+    return;
+
     try {
       const maxSubmissions = assignmentDetails.maxSubmissions;
       if (maxSubmissions <= assignmentDetails.submissions.length) {
@@ -81,7 +84,7 @@ const Submit = ({
           {status}
         </Button>
       </AlertDialogTrigger>
-      <div>
+      {/* <div>
         {confetti && (
           <Confetti
             width={1600}
@@ -91,7 +94,7 @@ const Submit = ({
             colors={["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff"]}
           />
         )}
-      </div>
+      </div> */}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
