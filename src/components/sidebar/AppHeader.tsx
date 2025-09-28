@@ -1,4 +1,4 @@
-import { GithubStarButton } from "@/components/GithubStarButton";
+// import { GithubStarButton } from "@/components/GithubStarButton";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SessionUser } from "@/lib/auth/session";
@@ -26,7 +26,7 @@ export function AppHeader({ user, pathname, crumbReplacement = {} }: AppHeaderPr
         </div>
         <div className="flex items-center gap-1.5 sm:gap-3">
           <span className="max-sm:hidden text-md font-medium">{user.role}</span>
-          <GithubStarButton />
+          {/* <GithubStarButton /> */}
           <ModeToggle />
           <Notifications user={user} />
           <UserMenu user={user} />
