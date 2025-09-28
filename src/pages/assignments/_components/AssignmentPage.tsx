@@ -214,7 +214,7 @@ export default function AssignmentPage({
 }
 const StudentAssignmentSubmission = ({
   assignment,
-  courseId,
+  // courseId,
   isSandboxConfigured,
 }: {
   assignment: any;
@@ -236,29 +236,29 @@ const StudentAssignmentSubmission = ({
     );
     return;
 
-    try {
-      toast.loading("Submitting assignment...");
+    // try {
+    //   toast.loading("Submitting assignment...");
 
-      const { data: res, error } = await actions.submissions_submitExternalLink({
-        assignmentId: assignment.id,
-        externalLink,
-        maxSubmissions: assignment.maxSubmissions,
-        courseId,
-      });
+    //   const { data: res, error } = await actions.submissions_submitExternalLink({
+    //     assignmentId: assignment.id,
+    //     externalLink,
+    //     maxSubmissions: assignment.maxSubmissions,
+    //     courseId,
+    //   });
 
-      toast.dismiss();
-      if (error || res?.error) {
-        toast.error(`Error: ${res?.error}`);
-        return;
-      }
+    //   toast.dismiss();
+    //   if (error || res?.error) {
+    //     toast.error(`Error: ${res?.error}`);
+    //     return;
+    //   }
 
-      toast.success("Assignment submitted successfully");
-      setExternalLink("");
-      window.location.reload();
-    } catch (error) {
-      toast.dismiss();
-      toast.error("Error submitting assignment");
-    }
+    //   toast.success("Assignment submitted successfully");
+    //   setExternalLink("");
+    //   window.location.reload();
+    // } catch (error) {
+    //   toast.dismiss();
+    //   toast.error("Error submitting assignment");
+    // }
   };
 
   const isMaxSubmissionsReached = assignment?.maxSubmissions <= assignment.submissions.length;

@@ -252,8 +252,6 @@ export default function Class({
     }
   };
 
-  console.log("Selected Attachment: ", selectedAttachment);
-
   return (
     <div className="flex flex-col gap-2 md:m-5">
       <div className="flex flex-wrap gap-6">

@@ -1,7 +1,7 @@
-import { useSandpack } from "@codesandbox/sandpack-react";
-import { actions } from "astro:actions";
+// import { useSandpack } from "@codesandbox/sandpack-react";
+// import { actions } from "astro:actions";
 import { useState } from "react";
-import Confetti from "react-confetti";
+// import Confetti from "react-confetti";
 import toast from "react-hot-toast";
 import { IoWarningOutline } from "react-icons/io5";
 
@@ -16,12 +16,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "@/hooks/use-router";
+
+// import { useRouter } from "@/hooks/use-router";
 
 const Submit = ({
   user,
   assignmentDetails,
-  mentorDetails,
+  // mentorDetails,
   isLoading,
 }: {
   user: any;
@@ -29,13 +30,13 @@ const Submit = ({
   mentorDetails: any;
   isLoading?: boolean;
 }) => {
-  const [confetti, setConfetti] = useState(false);
-  const [isSubmitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState("Submit");
-  const { sandpack } = useSandpack();
-  const { files } = sandpack || {};
+  // const [confetti, setConfetti] = useState(false);
+  const [isSubmitting] = useState(false);
+  const [status] = useState("Submit");
+  // const { sandpack } = useSandpack();
+  // const { files } = sandpack || {};
 
-  const router = useRouter();
+  // const router = useRouter();
 
   const handleSubmit = async () => {
     if (!user?.username || !user.email || !assignmentDetails?.title) {
@@ -48,33 +49,33 @@ const Submit = ({
     );
     return;
 
-    try {
-      const maxSubmissions = assignmentDetails.maxSubmissions;
-      if (maxSubmissions <= assignmentDetails.submissions.length) {
-        toast.error("Assignment has reached maximum number of submissions");
-        return;
-      }
-      setSubmitting(true);
-      toast.loading("Submitting assignment");
+    // try {
+    //   const maxSubmissions = assignmentDetails.maxSubmissions;
+    //   if (maxSubmissions <= assignmentDetails.submissions.length) {
+    //     toast.error("Assignment has reached maximum number of submissions");
+    //     return;
+    //   }
+    //   setSubmitting(true);
+    //   toast.loading("Submitting assignment");
 
-      await actions.submissions_createSubmission({
-        assignmentDetails,
-        mentorDetails,
-        files,
-      });
+    //   await actions.submissions_createSubmission({
+    //     assignmentDetails,
+    //     mentorDetails,
+    //     files,
+    //   });
 
-      toast.dismiss();
-      setConfetti(true);
-      setTimeout(() => setConfetti(false), 5000);
-      toast.success("Assignment submitted successfully");
-      setStatus("Submitted");
-      router.push("/assignments");
-    } catch (e) {
-      toast.dismiss();
-      toast.error("Error submitting assignment");
-    } finally {
-      setSubmitting(false);
-    }
+    //   toast.dismiss();
+    //   setConfetti(true);
+    //   setTimeout(() => setConfetti(false), 5000);
+    //   toast.success("Assignment submitted successfully");
+    //   setStatus("Submitted");
+    //   router.push("/assignments");
+    // } catch (e) {
+    //   toast.dismiss();
+    //   toast.error("Error submitting assignment");
+    // } finally {
+    //   setSubmitting(false);
+    // }
   };
   return (
     <AlertDialog>
