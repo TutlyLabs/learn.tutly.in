@@ -27,6 +27,7 @@ import * as schedule from "./schedule";
 import * as statistics from "./statistics";
 import * as submissions from "./submission";
 import * as users from "./users";
+import * as workflows from "./workflows";
 
 export const server = {
   ...groupActions("courses", courses, "_"),
@@ -55,4 +56,5 @@ export const server = {
   ...groupActions("gemini", gemini, "_"),
   ...groupActions("oauth", oauth, "_"),
   ...groupActions("aiQuery", aiQuery, "_"),
+  ...groupActions("workflows", workflows, "_"),
 };

@@ -28,6 +28,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@lexical/react": "^0.21.0",
     "@monaco-editor/react": "^4.6.0",
+    "@open-wa/wa-automate": "^4.76.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "@paralleldrive/cuid2": "^2.2.2",
